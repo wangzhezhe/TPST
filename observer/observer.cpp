@@ -1,5 +1,8 @@
 #include "observer.h"
+#include <execinfo.h> 
+#include <vector>
 
+/*
 static void _destroy(Observer* this)
 {
 	if (this != NULL) {
@@ -24,3 +27,14 @@ Observer* observerNew(void* impl, void (*notifyImpl)(void*, int, void*))
 
 	return this;
 }
+*/
+
+Observer *observerNew(void* tm, notifyFunc notifyfunc)
+{
+	Observer *obs = (Observer *)malloc(sizeof(Observer));
+	obs->tm = tm;
+	obs->notifyfunc = notifyfunc;
+	return obs;
+}
+
+

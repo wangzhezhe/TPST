@@ -3,8 +3,8 @@
  */
 
 #include <stdio.h>
-#include "models/cat.h"
-#include "models/dog.h"
+#include "./models/cat.h"
+#include "./models/dog.h"
 
 /**
  * Defining the basic DOG class/interface-a-like

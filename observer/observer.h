@@ -1,37 +1,19 @@
-#ifndef OBSERVER_H
-	#define OBSERVER_H
-	#include "common.h"
-	/**
-	 * Defining a 'interface-a-like' for the observer
-	 */
+#ifndef observer_h
+#define observer_h
 
-	typedef struct __observer {
-		/**
-		 * Method for performing garbage collection
-		 */
-		void (*destroy)(struct __observer *);
-		/**
-		 * A reference to the concrete OBSERVER
-		 */
-		void* impl;
-		/**
-		 * A method that any subject is able to trigger
-		 */
-		void (*notify)(struct __observer*, int, void *);
-		/**
-		 * The notify implementation (the actual function that is going to
-		 * be triggered)
-		 */
-		void (*notifyImpl)(void*, int, void*);
-	} Observer;
+#include <vector>
+#include "./taskcommon.h"
 
+using namespace std;
 
-	/**
+/**
 	 * Constructor, allocate memory and set up credentials.
 	 * @param vendor name of the observer manufacturer
 	 * @param serial serial number
 	 * @return an instance of Observer
 	 */
-	Observer * observerNew(void*, void (*)(void*, int, void*));
+Observer *observerNew(void *tm, notifyFunc notifyfunc);
+
+int callNotify(vector<HeadNode *> &es, TaskEvent *te, Observer *obs);
 
 #endif
