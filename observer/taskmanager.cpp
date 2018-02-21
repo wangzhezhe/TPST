@@ -3,7 +3,7 @@
 #include "taskmanager.h"
 #include "observer.h"
 
-TaskManager *Task_create(char *tmname)
+TaskManager *Task_create(const char *tmname)
 {
 
     TaskManager *tm = (TaskManager *)malloc(sizeof(TaskManager));
@@ -17,19 +17,19 @@ TaskManager *Task_create(char *tmname)
     return tm;
 }
 
-int Task_pushevent(TaskManager *tm, char *event_str)
+int Task_pushevent(TaskManager *tm, const char *event_str)
 {
     TaskEvent *te = (TaskEvent *)malloc(sizeof(TaskEvent));
-    memcpy(te->str, event_str, strlen(event_str));
+    memcpy(te->str, event_str, strlen(event_str)+1);
     tm->publishEvent = te;
     printf("taske manager %s will pub event:(%s)\n", tm->name, te->str);
     return 0;
 }
 
-int Task_listen(vector<HeadNode *> &es, TaskManager *tm, char *event_str)
+int Task_listen(vector<HeadNode *> &es, TaskManager *tm, const char *event_str)
 {
     TaskEvent *te = (TaskEvent *)malloc(sizeof(TaskEvent));
-    memcpy(te->str, event_str, strlen(event_str));
+    memcpy(te->str, event_str, strlen(event_str)+1);
     tm->watchEvent = te;
     printf("taske manager %s will listen event:(%s)\n", tm->name, te->str);
 

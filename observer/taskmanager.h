@@ -1,10 +1,7 @@
 
 #include "taskcommon.h"
 
-
-
-
-TaskManager *Task_create(char *tmname);
+TaskManager *Task_create(const char *tmname);
 
 int Task_destroy(TaskManager *tm);
 
@@ -12,8 +9,9 @@ int Task_registerAction(TaskManager *tm, notifyFunc notifyfun);
 
 void Task_handleEvent();
 
-int Task_pushevent(TaskManager *tm, char *event_str);
-int Task_listen(vector<HeadNode *> &es, TaskManager *tm, char *event_str);
+int Task_pushevent(TaskManager *tm, const char *event_str);
+int Task_listen(vector<HeadNode *> &es, TaskManager *tm, const char *event_str);
+
 
 int registerEvent(TaskManager *tm,TaskEvent *te, vector<HeadNode *> &es);
 

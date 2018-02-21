@@ -4,8 +4,6 @@
 #include "../observer/taskmanager.h"
 #include "../eventstore/eventStore.h"
 
-// g++ -o test-event ./test-eventstore.cpp ../eventstore/eventStore.cpp ../observer/taskmanager.c ../observer/observer.c
-
 static void notify_F1()
 {
     printf("call f1\n");
@@ -48,10 +46,13 @@ int main()
     TaskManager *t2 = Task_create("t2");
 
     TaskManager *t3 = Task_create("t3");
+    
     TaskManager *t4 = Task_create("t4");
 
     //listen or pushlish what event
     //In real case, there is filter function should be used to control the event registration
+    
+    //t1 will send the t1finish event to the event store after function finish
     Task_pushevent(t1, t1finish);
 
     Task_listen(es, t2, t1finish);

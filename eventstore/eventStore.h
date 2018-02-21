@@ -5,7 +5,7 @@
 #include "../observer/taskcommon.h"
 
 //event store
-vector<HeadNode *> initEventStore()
+vector<HeadNode *> initEventStore();
 void printEventStore(vector<HeadNode *> &es);
 
 #endif

@@ -1,0 +1,7 @@
+{
+  "name": "task1",
+  "listenEvent": "T1_START",
+  "publishEvent":"T1_FINISH",
+  "filterFunc": "t1_filter.so",
+  "actionFunc":"t1_action.so"
+}
