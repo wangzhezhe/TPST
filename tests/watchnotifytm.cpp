@@ -18,8 +18,8 @@
 #define EVENT_SIZE (sizeof(struct inotify_event))      /*size of one event*/
 #define BUF_LEN (MAX_EVENTS * (EVENT_SIZE + LEN_NAME)) /*buffer to store the data of events*/
 
-typedef void (*ACT_FUNC)();
-
+//typedef void (*ACT_FUNC)();
+typedef void (*notifyFunc)();
 using namespace rapidjson;
 enum EVENTTYPE
 {
@@ -39,6 +39,9 @@ int main(int argc, char **argv)
     char projectPath[50] = "/home/zw241/observerchain/tests";
     char tmDir[50] = "TaskManagerFiles";
     EVENTTYPE eventType;
+    // TODO If put the Document d in the while loop/
+    // it will crash when load the data for second time???
+    Document d;
     /* Initialize Inotify*/
     fd = inotify_init();
     if (fd < 0)
@@ -52,7 +55,8 @@ int main(int argc, char **argv)
     //TODO scan the dir before watch to register all the .json files automatically
     /* add watch to starting directory */
     wd = inotify_add_watch(fd, argv[1], IN_CREATE | IN_MODIFY | IN_DELETE);
-
+    //use the dynamic link load the function back
+    void *funcHandle;
     if (wd == -1)
     {
         printf("Couldn't add watch to %s\n", argv[1]);
@@ -131,7 +135,7 @@ int main(int argc, char **argv)
                     printf("test modified\n");
                     char *jsonbuffer = NULL;
                     jsonbuffer = loadFile(taskPath);
-                    Document d;
+                    
                     d.Parse(jsonbuffer);
                     const char *taskName;
                     const char *listenevent;
@@ -168,10 +172,9 @@ int main(int argc, char **argv)
 
                     printf("get action path %s\n", actionPath);
                     printf("get filter path %s\n", filterPath);
-                    //use the dynamic link load the function back
-                    void *funcHandle;
 
                     //open dynamic link library
+
                     funcHandle = dlopen(actionPath, RTLD_LAZY);
                     if (!funcHandle)
                     {
@@ -179,7 +182,7 @@ int main(int argc, char **argv)
                         exit(EXIT_FAILURE);
                     }
                     dlerror();
-                    ACT_FUNC act_func = NULL;
+                    notifyFunc act_func = NULL;
                     //TODO compile into .so file dynamically
                     *(void **)(&act_func) = dlsym(funcHandle, "action");
                     char *error;
@@ -189,10 +192,18 @@ int main(int argc, char **argv)
                         exit(EXIT_FAILURE);
                     }
                     //call the func
-                    (*act_func)();
+                    //printf("call the func %p\n", (*act_func));
+                    //(*act_func)();
 
-                    dlclose(funcHandle);
-                    //TODO else ,modify the old one
+                    //put the func into the tm
+                    Task_registerAction(t, act_func);
+                    
+                    //TODO use filter function to controle the excution of first
+                    //task in the flow
+                    if (strcmp(taskName, "tm0") == 0)
+                    {
+                        callNotify(t, es, t->publishEvent, t->observer);
+                    }
 
                     //register the function
                 }
@@ -236,6 +247,10 @@ int main(int argc, char **argv)
     }
 
     /* Clean up*/
+    //if handler is closed, the function could not be excuted!
+    //TODO use a new handler for the new function
+    dlclose(funcHandle);
+    //TODO else ,modify the old one
     inotify_rm_watch(fd, wd);
     close(fd);
 

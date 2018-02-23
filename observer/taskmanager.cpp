@@ -3,12 +3,12 @@
 #include "taskmanager.h"
 #include "observer.h"
 
-TaskManager *Task_create(const char *tmname,vector<HeadNode *> &es)
+TaskManager *Task_create(const char *tmname, vector<HeadNode *> &es)
 {
     //if exist<same name>, return the old one
 
     //if not exist, creat new one
-    TaskManager *tm = getTmfromES(tmname,es);
+    TaskManager *tm = getTmfromES(tmname, es);
 
     if (tm != NULL)
     {
@@ -16,7 +16,7 @@ TaskManager *Task_create(const char *tmname,vector<HeadNode *> &es)
     }
     tm = (TaskManager *)malloc(sizeof(TaskManager));
 
-    memcpy(tm->name, tmname, strlen(tmname)+1);
+    memcpy(tm->name, tmname, strlen(tmname) + 1);
     tm->observer = NULL;
     tm->subject = NULL;
     tm->publishEvent = NULL;
@@ -48,6 +48,8 @@ int Task_listen(vector<HeadNode *> &es, TaskManager *tm, const char *event_str)
 
 int Task_registerAction(TaskManager *tm, notifyFunc notifyfun)
 {
+
+    // ok to excute here notifyfun();
     if (tm->observer == NULL)
     {
         tm->observer = observerNew(tm, notifyfun);
@@ -58,7 +60,6 @@ int Task_registerAction(TaskManager *tm, notifyFunc notifyfun)
         printf("observer exist\n");
     }
     printf("%s register the function\n", tm->name);
-
     return 0;
 }
 
@@ -96,7 +97,9 @@ int registerEvent(TaskManager *tm, TaskEvent *te, vector<HeadNode *> &es)
 
     //traverse event cache, insert tm into list start with associated event node
     int i = 0;
+    int j = 0;
     int count = es.size();
+    int tmcount = 0;
 
     //comare the event node, if match insert
     //printf("curr count %d\n", count);
@@ -105,6 +108,16 @@ int registerEvent(TaskManager *tm, TaskEvent *te, vector<HeadNode *> &es)
         if (strcmp(te->str, es[i]->te->str) == 0)
         {
             //insert
+            //TODO if the tm have alreay been inserted, skip the operation
+            tmcount = es[i]->tmList.size();
+            for (j = 0; j < tmcount; j++)
+            {
+                if (strcmp(tm->name, es[i]->tmList[j]->name) == 0)
+                {
+                    //event exit, skip inserting operation
+                    return 0;
+                }
+            }
             es[i]->tmList.push_back(tm);
             return 0;
         }
@@ -118,8 +131,7 @@ int registerEvent(TaskManager *tm, TaskEvent *te, vector<HeadNode *> &es)
     newhead->tmList = newtmList;
     es.push_back(newhead);
 
-    int j;
-
+    
     return 0;
 }
 
@@ -249,7 +261,6 @@ int callNotify(TaskManager *tm, vector<HeadNode *> &es, TaskEvent *te, Observer 
     if (obs->notifyfunc != NULL)
     {
         //TODO matain a map from the pointer to the function name
-        //printf("call the func %p\n", obs->notifyfunc);
         obs->notifyfunc();
     }
     //call the function of the taskManager and put finish event into the store
