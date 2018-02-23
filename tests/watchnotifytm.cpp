@@ -49,6 +49,7 @@ int main(int argc, char **argv)
     //init operation create event store
     vector<HeadNode *> es = initEventStore();
 
+    //TODO scan the dir before watch to register all the .json files automatically
     /* add watch to starting directory */
     wd = inotify_add_watch(fd, argv[1], IN_CREATE | IN_MODIFY | IN_DELETE);
 
@@ -112,15 +113,22 @@ int main(int argc, char **argv)
             int rcode = ifjson(event->name);
             if (rcode == 1)
             {
+
+                //detect if the file exist
+                //if exist, update relevent info and update the event store
+
+                //if not exist, create and push to event store
                 //json file path
                 char taskPath[100];
                 snprintf(taskPath, sizeof taskPath, "%s/%s/%s", projectPath, tmDir, event->name);
                 printf("newtask file path %s\n", taskPath);
-                //create the task manager by file name
+                //printf("current eventmask %d\n", event->mask);
                 if (eventType == modified)
                 {
-                    printf("create tm by %s\n", taskPath);
+
+                    //create the task manager by file name
                     //load the tm json file
+                    printf("test modified\n");
                     char *jsonbuffer = NULL;
                     jsonbuffer = loadFile(taskPath);
                     Document d;
@@ -130,8 +138,9 @@ int main(int argc, char **argv)
                     const char *pushevent;
                     const char *actionfuncPath;
                     const char *filterfuncPath;
-                    taskName = d["name"].GetString();
-
+                    //get task name from json file direactly
+                    //taskName = d["name"].GetString();
+                    taskName = getTaskNameFromEventName(event->name);
                     listenevent = d["listenEvent"].GetString();
                     pushevent = d["publishEvent"].GetString();
                     actionfuncPath = d["actionFunc"].GetString();
@@ -141,7 +150,8 @@ int main(int argc, char **argv)
                     printf("get listenevent name %s\n", listenevent);
                     printf("get pushevent name %s\n", pushevent);
 
-                    TaskManager *t = Task_create(taskName);
+                    printf("create tm by %s\n", taskPath);
+                    TaskManager *t = Task_create(taskName, es);
                     //register relevent event and function
 
                     Task_pushevent(t, pushevent);
@@ -182,9 +192,40 @@ int main(int argc, char **argv)
                     (*act_func)();
 
                     dlclose(funcHandle);
-                    //TODO else  modify the old one
+                    //TODO else ,modify the old one
 
                     //register the function
+                }
+                else if (eventType == deleted)
+                {
+
+                    printf("test deleted\n");
+
+                    //file name should be same with the task manager name
+                    //when deleting, only the name of file will be captured
+
+                    //get task name from file
+                    char *taskName = getTaskNameFromEventName(event->name);
+
+                    printf("delete task with name %s\n", taskName);
+
+                    char *jsonbuffer = NULL;
+
+                    TaskManager *tm = getTmfromES(taskName, es);
+                    if (tm != NULL)
+                    {
+                        deleteTmfromES(tm, es);
+                    }
+                    else
+                    {
+                        printf("getTmfromEs return NULL, tm is already been deleted\n");
+                    }
+                    //event store layout after deletion
+                    printEventStore(es);
+                }
+                else
+                {
+                    printf("TODO: process eventtype %s case\n");
                 }
             }
             //than load the relavent  json  file, create the task manager

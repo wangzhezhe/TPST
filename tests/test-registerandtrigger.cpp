@@ -46,12 +46,12 @@ int main()
     TaskManager *t2 = Task_create("t2");
 
     TaskManager *t3 = Task_create("t3");
-    
+
     TaskManager *t4 = Task_create("t4");
 
     //listen or pushlish what event
     //In real case, there is filter function should be used to control the event registration
-    
+
     //t1 will send the t1finish event to the event store after function finish
     Task_pushevent(t1, t1finish);
 
@@ -84,6 +84,11 @@ int main()
 
     callNotify(t1, es, t1->publishEvent, t1->observer);
 
+    printf("delete t3\n");
+    //test delete function
+    //TODO fix bug when deleting t1
+    deleteTmfromES(t2, es);
+    printEventStore(es);
 
     return 0;
 }

@@ -3,6 +3,6 @@
 extern "C" {
 void action()
 {
-    printf("test action func\n");
+    printf("******Action func is excuted******\n");
 }
 }

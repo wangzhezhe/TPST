@@ -1,11 +1,13 @@
 
 #include "taskcommon.h"
 
-TaskManager *Task_create(const char *tmname);
-
+TaskManager *Task_create(const char *tmname,vector<HeadNode *> &es);
+TaskManager *getTmfromES(const char *tmname, vector<HeadNode *> &es);
 int Task_destroy(TaskManager *tm);
 
 int Task_registerAction(TaskManager *tm, notifyFunc notifyfun);
+
+int deleteTmfromES(TaskManager *tm, vector<HeadNode *> &es);
 
 void Task_handleEvent();
 

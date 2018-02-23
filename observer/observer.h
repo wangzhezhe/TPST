@@ -14,6 +14,6 @@ using namespace std;
 	 */
 Observer *observerNew(void *tm, notifyFunc notifyfunc);
 
-int callNotify(vector<HeadNode *> &es, TaskEvent *te, Observer *obs);
+
 
 #endif

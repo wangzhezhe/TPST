@@ -2,5 +2,6 @@
 
 void filter()
 {
-    printf("do sth in the filter\n");
+        printf("******Filter func is excuted******\n");
+
 }

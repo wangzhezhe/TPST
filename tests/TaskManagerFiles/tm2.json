@@ -1,7 +1,7 @@
 {
-  "name": "tm1",
+  "name": "tm2",
   "listenEvent": "T1_START",
-  "publishEvent":"T1_FINISH",
+  "publishEvent":"T2_FINISH",
   "filterFunc": "t1_filter.so",
   "actionFunc":"t1_action.so"
 }

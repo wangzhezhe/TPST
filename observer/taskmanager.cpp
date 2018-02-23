@@ -3,12 +3,20 @@
 #include "taskmanager.h"
 #include "observer.h"
 
-TaskManager *Task_create(const char *tmname)
+TaskManager *Task_create(const char *tmname,vector<HeadNode *> &es)
 {
+    //if exist<same name>, return the old one
 
-    TaskManager *tm = (TaskManager *)malloc(sizeof(TaskManager));
+    //if not exist, creat new one
+    TaskManager *tm = getTmfromES(tmname,es);
 
-    memcpy(tm->name, tmname, strlen(tmname));
+    if (tm != NULL)
+    {
+        return tm;
+    }
+    tm = (TaskManager *)malloc(sizeof(TaskManager));
+
+    memcpy(tm->name, tmname, strlen(tmname)+1);
     tm->observer = NULL;
     tm->subject = NULL;
     tm->publishEvent = NULL;
@@ -20,7 +28,7 @@ TaskManager *Task_create(const char *tmname)
 int Task_pushevent(TaskManager *tm, const char *event_str)
 {
     TaskEvent *te = (TaskEvent *)malloc(sizeof(TaskEvent));
-    memcpy(te->str, event_str, strlen(event_str)+1);
+    memcpy(te->str, event_str, strlen(event_str) + 1);
     tm->publishEvent = te;
     printf("taske manager %s will pub event:(%s)\n", tm->name, te->str);
     return 0;
@@ -29,7 +37,7 @@ int Task_pushevent(TaskManager *tm, const char *event_str)
 int Task_listen(vector<HeadNode *> &es, TaskManager *tm, const char *event_str)
 {
     TaskEvent *te = (TaskEvent *)malloc(sizeof(TaskEvent));
-    memcpy(te->str, event_str, strlen(event_str)+1);
+    memcpy(te->str, event_str, strlen(event_str) + 1);
     tm->watchEvent = te;
     printf("taske manager %s will listen event:(%s)\n", tm->name, te->str);
 
@@ -113,6 +121,62 @@ int registerEvent(TaskManager *tm, TaskEvent *te, vector<HeadNode *> &es)
     int j;
 
     return 0;
+}
+
+TaskManager *getTmfromES(const char *tmname, vector<HeadNode *> &es)
+{
+    //TODO update here
+    //use other search algorithm to improve the index speed
+    int count = es.size();
+    int tmlistCount;
+    int i, j;
+    for (i = 0; i < count; i++)
+    {
+        //range list and find task manger
+        tmlistCount = es[i]->tmList.size();
+        for (j = 0; j < tmlistCount; j++)
+        {
+            if (strcmp(tmname, es[i]->tmList[j]->name) == 0)
+            {
+                //delete tmlist[j]
+                return es[i]->tmList[j];
+            }
+        }
+    }
+    //TODO delete the associated event that the tm attached to
+    //add another element in event node to label how many tm will publish this event
+    return NULL;
+}
+
+//delete the task manager from the event srore
+//assume that element in the tm is initialised
+int deleteTmfromES(TaskManager *tm, vector<HeadNode *> &es)
+{
+    //get the listen event from the list
+    TaskEvent *watchevent = tm->watchEvent;
+    //traverse the es and search the event
+    int count = es.size();
+    int tmlistCount;
+    int i, j;
+    for (i = 0; i < count; i++)
+    {
+        if (strcmp(watchevent->str, es[i]->te->str) == 0)
+        {
+            //range list and find task manger
+            tmlistCount = es[i]->tmList.size();
+            for (j = 0; j < tmlistCount; j++)
+            {
+                if (strcmp(tm->name, es[i]->tmList[j]->name) == 0)
+                {
+                    //delete tmlist[j]
+                    es[i]->tmList.erase(es[i]->tmList.begin() + j);
+                }
+            }
+        }
+    }
+    return 0;
+    //TODO delete the associated event that the tm attached to
+    //add another element in event node to label how many tm will publish this event
 }
 
 //input: specific event message

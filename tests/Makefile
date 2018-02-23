@@ -2,7 +2,7 @@ CC := g++
 
 CFLAGS := -Wall -DDEBUG 
 
-all: test-taskmanager test-trigure
+all: test-taskmanager test-trigure test-event test-wn
 
 test-taskmanager:
 	$(CC) -rdynamic -o test-taskmanager ./test-taskmanager.cpp ../observer/taskmanager.cpp ../observer/observer.cpp ../lib/error/error.c
