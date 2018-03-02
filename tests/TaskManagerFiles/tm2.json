@@ -1,6 +1,6 @@
 {
   "name": "tm2",
-  "listenEvent": "T0_FINISH",
+  "subscribeEvent": "T0_FINISH",
   "publishEvent":"T2_FINISH",
   "filterFunc": "t1_filter.so",
   "actionFunc":"t1_action.so"

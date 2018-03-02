@@ -3,7 +3,7 @@
 #include "taskmanager.h"
 #include "observer.h"
 
-TaskManager *Task_create(const char *tmname, vector<HeadNode *> &es)
+TaskManager *Task_create(const char *tmname, const char *aggRule, vector<HeadNode *> &es)
 {
     //if exist<same name>, return the old one
 
@@ -17,6 +17,10 @@ TaskManager *Task_create(const char *tmname, vector<HeadNode *> &es)
     tm = (TaskManager *)malloc(sizeof(TaskManager));
 
     memcpy(tm->name, tmname, strlen(tmname) + 1);
+    if (aggRule != NULL)
+    {
+        memcpy(tm->aggRule, aggRule, strlen(aggRule) + 1);
+    }
     tm->observer = NULL;
     tm->subject = NULL;
     tm->publishEvent = NULL;
@@ -34,12 +38,12 @@ int Task_pushevent(TaskManager *tm, const char *event_str)
     return 0;
 }
 
-int Task_listen(vector<HeadNode *> &es, TaskManager *tm, const char *event_str)
+int Task_subscribe(vector<HeadNode *> &es, TaskManager *tm, const char *event_str)
 {
     TaskEvent *te = (TaskEvent *)malloc(sizeof(TaskEvent));
     memcpy(te->str, event_str, strlen(event_str) + 1);
     tm->watchEvent = te;
-    printf("taske manager %s will listen event:(%s)\n", tm->name, te->str);
+    printf("taske manager %s will subscribe event:(%s)\n", tm->name, te->str);
 
     //put the event into the event store
     registerEvent(tm, te, es);
@@ -59,9 +63,49 @@ int Task_registerAction(TaskManager *tm, notifyFunc notifyfun)
         //TODO use list to notify a new function?
         printf("observer exist\n");
     }
-    printf("%s register the function\n", tm->name);
+    printf("%s register the action function\n", tm->name);
     return 0;
 }
+
+//TODO register action and filter
+
+int Task_registerFilter(TaskManager *tm, filterFunc filterfunc)
+{
+
+    // ok to excute here notifyfun();
+    if (tm->observer != NULL)
+    {
+        tm->observer->filterfunc = filterfunc;
+    }
+    else
+    {
+        //TODO use list to notify a new function?
+        printf("observer not exist\n");
+    }
+    printf("%s register the filter function\n", tm->name);
+    return 0;
+}
+
+//TODO register regregation
+
+int Task_registerAggreFilter(TaskManager *tm, aggFilterFunc aggfilterfunc)
+{
+
+    // ok to excute here notifyfun();
+    if (tm->observer != NULL)
+    {
+        tm->observer->aggfilterfunc = aggfilterfunc;
+    }
+    else
+    {
+        //TODO use list to notify a new function?
+        printf("observer not exist\n");
+    }
+    printf("%s register the AggreFilter function\n", tm->name);
+    return 0;
+}
+
+//TODO creat a map , key is function name, value is the pointer to the function
 
 void notifyObserver()
 {
@@ -131,7 +175,6 @@ int registerEvent(TaskManager *tm, TaskEvent *te, vector<HeadNode *> &es)
     newhead->tmList = newtmList;
     es.push_back(newhead);
 
-    
     return 0;
 }
 
@@ -261,10 +304,124 @@ int callNotify(TaskManager *tm, vector<HeadNode *> &es, TaskEvent *te, Observer 
     if (obs->notifyfunc != NULL)
     {
         //TODO matain a map from the pointer to the function name
-        obs->notifyfunc();
+        //TODO the parameter should be loaded extra config file
+        //TODO add another parameter to label the name of the taskManager
+        obs->notifyfunc(2, 1);
     }
     //call the function of the taskManager and put finish event into the store
 
     notifyTmList(tm, es, te);
+    return 0;
+}
+
+//aggregation data this should provided by an api
+//range the input data and call the filter func, if data return 1, than aggregate, else break, using openmp
+//return the data after pushing operation
+
+int TaskFilterAndAggregation(vector<double> dataArray, vector<HeadNode *> &es)
+{
+
+    //range the registered TM
+    int count = es.size();
+    int tmlistCount;
+    int i, j, k;
+    int dataLen;
+    double tempv;
+    double redvalue;
+    int ifAggre, ifPush;
+    //TODO load the variable from the configure file
+    int constraints1 = 9;
+    int constraints2 = 200;
+    for (i = 0; i < count; i++)
+    {
+        //range list and find task manger
+        tmlistCount = es[i]->tmList.size();
+        for (j = 0; j < tmlistCount; j++)
+        {
+            TaskManager *tm = es[i]->tmList[j];
+
+            // for every TM in the es, get the filter function, get aggregation rules
+            // range the data
+            dataLen = dataArray.size();
+
+            // omp_set_num_threads(16);
+            redvalue = 0;
+            for (k = 0; k < dataLen; k++)
+            {
+
+                //filter and aggregation
+                //if contain the filter label, do filter and aggregation
+                //TODO pass this constraints from tne outside of the function
+
+                if (IfFilterAggregation(tm) == 1)
+                {
+                    ifAggre = TaskFilter(tm, dataArray[k], constraints1);
+
+                    if (ifAggre == 1)
+                    {
+                        redvalue = redvalue + dataArray[k];
+                    }
+                }
+            }
+            if (IfFilterAggregation(tm) == 1)
+            {
+                //use redvalue to tets the reduction filter
+                printf("aggregate value %f\n", redvalue);
+                ifPush = TaskReductionFilter(tm, redvalue, constraints2);
+                //printf("if push event %d\n", ifPush);
+                if (ifPush == 1)
+                {
+                    printf("filter func return ture, tm (%s) push events (%s)\n", tm->name,tm->watchEvent->str);
+                    callNotify(tm, es, tm->publishEvent, tm->observer);
+                }
+                //according to the result of the aggregation to determine if publish the event
+            }
+        }
+    }
+}
+
+int IfFilterAggregation(TaskManager *tm)
+{
+
+    if (tm->observer->aggfilterfunc != NULL)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+//filter data
+//input data value, call the filter function return if it is filtered out
+int TaskFilter(TaskManager *tm, double value, double constraint)
+{
+    if (tm->observer->filterfunc != NULL)
+    {
+        //TODO matain a map from the pointer to the function name
+        int retv = tm->observer->filterfunc(value, constraint);
+        //printf("ret value for filter func %d\n",retv);
+        return retv;
+    }
+    else
+    {
+        printf("failed to get the filter function\n");
+    }
+    return 0;
+}
+
+int TaskReductionFilter(TaskManager *tm, double value, double constraint)
+{
+    if (tm->observer->aggfilterfunc != NULL)
+    {
+        //TODO matain a map from the pointer to the function name
+        int retv = tm->observer->aggfilterfunc(value, constraint);
+        return retv;
+    }
+    else
+    {
+        printf("failed to get the action filter function\n");
+    }
     return 0;
 }

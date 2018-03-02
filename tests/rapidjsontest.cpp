@@ -2,18 +2,27 @@
 #include "../lib/rapidjson/include/rapidjson/writer.h"
 #include "../lib/rapidjson/include/rapidjson/stringbuffer.h"
 #include <iostream>
+#include "stdio.h"
 
 using namespace rapidjson;
 
-int main() {
+int main()
+{
     // 1. Parse a JSON string into DOM.
-    const char* json = "{\"project\":\"rapidjson\",\"stars\":10}";
+    const char *json = "{\"project\":\"rapidjson\",\"stars\":10}";
     Document d;
     d.Parse(json);
 
     // 2. Modify it by DOM.
-    Value& s = d["stars"];
+    Value &s = d["stars"];
     s.SetInt(s.GetInt() + 1);
+
+    //get empty value
+    bool ifContain=d.HasMember("test");
+    if(ifContain==false){
+        printf("not contain key: test\n");
+    }
+
 
     // 3. Stringify the DOM
     StringBuffer buffer;

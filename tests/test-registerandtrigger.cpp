@@ -49,21 +49,21 @@ int main()
 
     TaskManager *t4 = Task_create("t4");
 
-    //listen or pushlish what event
+    //subscribe or publish what event
     //In real case, there is filter function should be used to control the event registration
 
     //t1 will send the t1finish event to the event store after function finish
     Task_pushevent(t1, t1finish);
 
-    Task_listen(es, t2, t1finish);
+    Task_subscribe(es, t2, t1finish);
 
     Task_pushevent(t2, t2finish);
 
-    Task_listen(es, t3, t1finish);
+    Task_subscribe(es, t3, t1finish);
 
     Task_pushevent(t3, t3finish);
 
-    Task_listen(es, t4, t2finish);
+    Task_subscribe(es, t4, t2finish);
 
     Task_pushevent(t4, t4finish);
 

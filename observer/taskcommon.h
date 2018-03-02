@@ -11,7 +11,16 @@ typedef struct __taskEvent
 } TaskEvent;
 
 //typedef int (*Funca)(char, char);
-typedef void (*notifyFunc)();
+//typedef void (*ACT_FUNC)();
+//action func
+typedef int (*notifyFunc)(double, double);
+
+typedef int (*filterFunc)(double, double);
+
+typedef int (*aggFilterFunc)(double, double);
+
+//typedef int (*reductionFilterFunc)(double, double);
+
 
 /**
 	 * Defining a 'interface-a-like' for the observer
@@ -33,6 +42,10 @@ typedef struct __observer
 		 */
 	//void (*notifyfunc)(Observer*, int, void *);
 	notifyFunc notifyfunc;
+
+	filterFunc filterfunc;
+
+	aggFilterFunc aggfilterfunc;
 	/**
 		 * The notify implementation (the actual function that is going to
 		 * be triggered)
@@ -75,6 +88,8 @@ typedef struct __subject
 typedef struct __taskManager
 {
 	char name[20];
+	//aggregation rule
+	char aggRule[20];
 	Subject *subject;
 	Observer *observer;
 	//list to the event
@@ -86,6 +101,7 @@ typedef struct __taskManager
 	//publish events
 
 	TaskEvent *publishEvent;
+
 } TaskManager;
 
 typedef struct eventHeader

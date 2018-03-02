@@ -1,0 +1,9 @@
+{
+  "name": "tmsum",
+  "subscribeEvent": "tmsum_START",
+  "publishEvent":"tmsum_FINISH",
+  "filterFunc": "t1_filter.so",
+  "actionFunc":"t1_action.so",
+  "aggregationrule":"sum",
+  "aggregationFilterFunc":"t1_aggregate_filter.so"
+}
