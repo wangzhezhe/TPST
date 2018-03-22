@@ -1,30 +1,26 @@
 #ifndef taskcommon_h
 #define taskcommon_h
 
-#include <vector>
 #include "common.h"
+
+#include <vector>
+#include <map>
+#include <string>
+
+
 using namespace std;
 
-typedef struct __taskEvent
-{
-	char str[20];
-} TaskEvent;
 
-//typedef int (*Funca)(char, char);
-//typedef void (*ACT_FUNC)();
-//action func
-typedef int (*notifyFunc)(double, double);
+
+typedef int (*actionFunc)(vector<HeadNode *>, map<string, vector <float> >);
 
 typedef int (*filterFunc)(double, double);
 
 typedef int (*aggFilterFunc)(double, double);
 
-//typedef int (*reductionFilterFunc)(double, double);
-
-
 /**
 	 * Defining a 'interface-a-like' for the observer
-	 */
+**/
 
 typedef struct __observer
 {
@@ -41,7 +37,7 @@ typedef struct __observer
 		 * A method that any subject is able to trigger
 		 */
 	//void (*notifyfunc)(Observer*, int, void *);
-	notifyFunc notifyfunc;
+	actionFunc actionfunc;
 
 	filterFunc filterfunc;
 
@@ -85,29 +81,15 @@ typedef struct __subject
 	void (*notifyObservers)(struct __subject *);
 } Subject;
 
+
 typedef struct __taskManager
 {
-	char name[20];
-	//aggregation rule
-	char aggRule[20];
+	TaskManagerMeta * taskmeta;
 	Subject *subject;
 	Observer *observer;
-	//list to the event
-	//watch what events
-
-	//TODO modify this into list
-	TaskEvent *watchEvent;
-
-	//publish events
-
-	TaskEvent *publishEvent;
 
 } TaskManager;
 
-typedef struct eventHeader
-{
-	TaskEvent *te;
-	vector<TaskManager *> tmList;
-} HeadNode;
+
 
 #endif

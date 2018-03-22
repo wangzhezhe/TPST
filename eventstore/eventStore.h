@@ -2,7 +2,7 @@
 #define eventStore_h
 
 #include <vector>
-#include "../observer/taskcommon.h"
+#include "../observer/common.h"
 
 //event store
 vector<HeadNode *> initEventStore();

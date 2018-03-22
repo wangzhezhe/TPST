@@ -1,8 +1,6 @@
 #include "stdio.h"
 
-extern "C" {
-//TODO add time step
-int filter(double v, double constraint)
+extern "C" int filter(double v, double constraint)
 {
         //printf("******Filter func is excuted******\n");
         if (v > constraint)
@@ -14,5 +12,4 @@ int filter(double v, double constraint)
         {
                 return 0;
         }
-}
 }

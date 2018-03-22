@@ -1,0 +1,8 @@
+{
+  "name": "task0",
+  "subscribeEvent": "NULL",
+  "publishEvent":"T1_START",
+  "actionFunc":"t0_action.so"
+}
+
+

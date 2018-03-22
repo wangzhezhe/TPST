@@ -80,7 +80,7 @@ int ifjson(char *filename)
         int len = strlen(filename);
         char tempstr[10];
         strncpy(tempstr, filename + len - 4, 5);
-        printf("debug test tempstr %s\n", tempstr);
+        //printf("debug test tempstr %s\n", tempstr);
         if (strcmp(tempstr, "json") == 0)
         {
             return 1;

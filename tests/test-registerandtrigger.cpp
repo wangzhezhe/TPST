@@ -4,6 +4,14 @@
 #include "../observer/taskmanager.h"
 #include "../eventstore/eventStore.h"
 
+
+//use es (event store) as a global variable
+vector<HeadNode *> es;
+
+//this should be defined in the taskmanager.cpp
+map<string, vector<float> > storage;
+
+
 static void notify_F1()
 {
     printf("call f1\n");

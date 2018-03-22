@@ -12,7 +12,7 @@ using namespace std;
 	 * @param serial serial number
 	 * @return an instance of Observer
 	 */
-Observer *observerNew(void *tm, notifyFunc notifyfunc);
+Observer *observerNew(void* tm, actionFunc actionfunc);
 
 
 

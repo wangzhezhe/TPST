@@ -1,0 +1,8 @@
+{
+  "name": "task6",
+  "subscribeEvent": "T5_ALERT",
+  "publishEvent":"NULL",
+  "actionFunc":"t6_action.so"
+}
+
+

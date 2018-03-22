@@ -17,7 +17,7 @@ all: test-taskmanager test-trigure test-event test-wn
 #	$(CC) -rdynamic -o notify watchnotifytm.cpp ../lib/file/loaddata.c ../observer/taskmanager.cpp ../observer/observer.cpp ../lib/error/error.c ../eventstore/eventStore.cpp -ldl
 
 test-wndata:
-	$(CC) -rdynamic -lpthread -o notify watchnotifyArrayData.cpp ../lib/file/loaddata.c ../observer/taskmanager.cpp ../observer/observer.cpp ../lib/error/error.c ../eventstore/eventStore.cpp -ldl
+	$(CC) -rdynamic -lpthread -o notify watchnotifyArrayData.cpp ../lib/file/loaddata.c ../observer/taskmanager.cpp ../observer/observer.cpp ../lib/error/error.c ../eventstore/eventStore.cpp ../storage/memcache.cpp -ldl
 
 clean:
 	rm -f test-taskmanager test-trigure test-json

@@ -14,6 +14,7 @@
 #include "../lib/rapidjson/include/rapidjson/document.h"
 #include "../lib/rapidjson/include/rapidjson/writer.h"
 #include "../lib/rapidjson/include/rapidjson/stringbuffer.h"
+#include "../storage/memcache.h"
 
 #define MAX_EVENTS 1024                                /*Max. number of events to process at one go*/
 #define LEN_NAME 16                                    /*Assuming that the length of the filename won't exceed 16 bytes*/
@@ -28,9 +29,9 @@ enum EVENTTYPE
     modified,
     deleted
 };
-vector<double> varray;
 
 //be careful that return value should be the void* here
+/*
 void *createData(void *args)
 {
     int vecSize = 200;
@@ -57,12 +58,12 @@ void *createData(void *args)
         //than call the sleep operation
         //vector<int> *v = static_cast<vector<int> *>(args);
         vector<HeadNode *> *tmpes = static_cast<vector<HeadNode *> *>(args);
-        //if contain the sum label 
         TaskFilterAndAggregation(varray, *tmpes);
         //simulate every steps
         usleep(2000000);
     }
 }
+*/
 
 //g++ -o notify watchnotifytm.cpp ../lib/file/loaddata.c
 //this source code is only avliable if use create/delete the file on the same machine
@@ -80,9 +81,9 @@ int main(int argc, char **argv)
     Document d;
     /* Initialize Inotify*/
     fd = inotify_init();
-    void *funcHandleAction;
-    void *funcHandleFilter;
-    void *funcHandleAggreFilter;
+    //void *funcHandleAction;
+    //void *funcHandleFilter;
+    //void *funcHandleAggreFilter;
     if (fd < 0)
     {
         perror("Couldn't initialize inotify");
@@ -90,7 +91,11 @@ int main(int argc, char **argv)
 
     //init operation create event store
     //TODO add lock operation for underlying part of es
-    vector<HeadNode *> es = initEventStore();
+    es = initEventStore();
+
+    //storage simulator
+    //TODO change it into interface to support multiple storage end
+    map<int, vector<float> > memcache = initMemCache();
 
     //TODO scan the dir before watch to register all the .json files automatically
     /* add watch to starting directory */
@@ -108,8 +113,8 @@ int main(int argc, char **argv)
 
     //create another thread to create the test data for every time step
     //add lock for the underlaying datastructure
-    pthread_t id;
-    pthread_create(&id, NULL, createData, &es);
+    //pthread_t id;
+    //pthread_create(&id, NULL, createData, &es);
 
     /* do it forever*/
     while (1)
@@ -181,120 +186,14 @@ int main(int argc, char **argv)
                     char *jsonbuffer = NULL;
                     jsonbuffer = loadFile(taskPath);
                     //there will be some weird characters at the end of file leading to the parsing fail some times
-                    //printf("json buffer %s\n", jsonbuffer);
+                    printf("json buffer %s\n", jsonbuffer);
 
-                    d.Parse(jsonbuffer);
                     const char *taskName;
-                    const char *subscribeevent;
-                    const char *pushevent;
-                    const char *actionfuncPath;
-                    const char *filterfuncPath;
-                    const char *aggfuncPath;
-                    //get task name from json file direactly
-                    //taskName = d["name"].GetString();
+
                     taskName = getTaskNameFromEventName(event->name);
-                    subscribeevent = d["subscribeEvent"].GetString();
-                    pushevent = d["publishEvent"].GetString();
-                    actionfuncPath = d["actionFunc"].GetString();
-                    filterfuncPath = d["filterFunc"].GetString();
-                    //if the tm is new
 
-                    printf("get subscribeevent name %s\n", subscribeevent);
-                    printf("get pushevent name %s\n", pushevent);
-                    printf("create tm by %s\n", taskPath);
+                    TaskFileParsing(d, taskName, jsonbuffer,taskPath,projectPath,tmDir);
 
-                    //create task manager
-                    //TODO put this in an extra func
-                    bool ifContainAggre = d.HasMember("aggregationrule");
-                    bool ifContainAggreFunc = d.HasMember("aggregationFilterFunc");
-
-                    TaskManager *t = NULL;
-                    if (ifContainAggre == true && ifContainAggreFunc == true)
-                    {
-
-                        const char *aggreRule = d["aggregationrule"].GetString();
-
-                        t = Task_create(taskName, aggreRule, es);
-
-                        //load aggregationFunc and register
-                        const char *aggfuncPath = d["aggregationFilterFunc"].GetString();
-
-                        printf("get aggrule (%s) get aggfuncpath (%s)\n", aggreRule, aggfuncPath);
-                    }
-                    else
-                    {
-                        printf("task manager %s do not contain filter operation\n", taskName);
-                        t = Task_create(taskName, NULL, es);
-                    }
-
-                    //register relevent event and function
-
-                    Task_pushevent(t, pushevent);
-
-                    Task_subscribe(es, t, subscribeevent);
-
-                    printEventStore(es);
-
-                    //get the function name and compile it dynamically
-                    char filterPath[100];
-                    char actionPath[100];
-                    snprintf(filterPath, sizeof(filterPath), "%s/%s/%s", projectPath, tmDir, filterfuncPath);
-                    snprintf(actionPath, sizeof(actionPath), "%s/%s/%s", projectPath, tmDir, actionfuncPath);
-
-                    printf("get action path %s\n", actionPath);
-                    printf("get filter path %s\n", filterPath);
-
-                    //open dynamic link library
-
-                    funcHandleAction = dlopen(actionPath, RTLD_LAZY);
-                    funcHandleFilter = dlopen(filterPath, RTLD_LAZY);
-
-                    if (funcHandleAction == NULL && funcHandleFilter == NULL)
-                    {
-                        fprintf(stderr, "%s\n", dlerror());
-                        exit(EXIT_FAILURE);
-                    }
-                    dlerror();
-                    notifyFunc act_func = NULL;
-                    //TODO compile into .so file dynamically
-                    *(void **)(&act_func) = dlsym(funcHandleAction, "action");
-                    filterFunc fit_func = NULL;
-                    //TODO compile into .so file dynamically
-                    *(void **)(&fit_func) = dlsym(funcHandleFilter, "filter");
-                    //put the func into the tm
-                    Task_registerAction(t, act_func);
-                    Task_registerFilter(t, fit_func);
-
-                    if (ifContainAggre == true && ifContainAggreFunc == true)
-                    {
-                        aggFilterFunc agg_filter_func = NULL;
-                        //TODO compile into .so file dynamically
-                        aggfuncPath = d["aggregationFilterFunc"].GetString();
-                        char aggfilterPath[100];
-                        snprintf(aggfilterPath, sizeof(aggfilterPath), "%s/%s/%s", projectPath, tmDir, aggfuncPath);
-
-                        printf("get aggfilter path %s\n", aggfilterPath);
-                        funcHandleAggreFilter = dlopen(aggfilterPath, RTLD_LAZY);
-
-                        *(void **)(&agg_filter_func) = dlsym(funcHandleAggreFilter, "aggregatefilter");
-                        Task_registerAggreFilter(t, agg_filter_func);
-                    }
-
-                    char *error;
-                    if ((error = dlerror()) != NULL)
-                    {
-                        fprintf(stderr, "%s\n", error);
-                        exit(EXIT_FAILURE);
-                    }
-
-                    //TODO use filter function to controle the excution of first
-                    //task in the flow
-                    //if (strcmp(taskName, "tm0") == 0)
-                    //{
-                    //    callNotify(t, es, t->publishEvent, t->observer);
-                    //}
-
-                    //register the function
                 }
                 else if (eventType == deleted)
                 {

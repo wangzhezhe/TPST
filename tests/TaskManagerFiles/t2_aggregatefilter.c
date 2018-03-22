@@ -1,7 +1,6 @@
 #include "stdio.h"
 
-extern "C" {
-int aggregatefilter(double reductValue,double constraints)
+extern "C" int aggregatefilter(double reductValue,double constraints)
 {
         if(reductValue>constraints){
                 printf("aggregate value larger than constraints value publish event\n");
@@ -10,5 +9,4 @@ int aggregatefilter(double reductValue,double constraints)
                 return 0;
         }
 
-}
 }

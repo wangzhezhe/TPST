@@ -1,8 +1,6 @@
 #include "stdio.h"
 
-extern "C" 
-{
-int action(double v, double constraint)
+extern "C" int action(double v, double constraint)
 {
     printf("******Action func is excuted******\n");
     if (v > constraint)
@@ -14,5 +12,4 @@ int action(double v, double constraint)
     {
         return 0;
     }
-}
 }

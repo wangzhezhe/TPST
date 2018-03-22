@@ -4,7 +4,7 @@
 
 
 int main(){
-    char *filename="/home1/zw241/observerchain/tests/TaskManagerFiles/tm0.json";
+    char *filename="/home1/zw241/observerchain/tests/TaskManagerFiles/task2.json";
     FILE *f = fopen(filename, "rb");
     char *buffer = NULL;
     if (f)
@@ -16,6 +16,7 @@ int main(){
         if (buffer)
         {
             fread(buffer, 1, length, f);
+            printf("%s",buffer);
         }
         fclose(f);
     }

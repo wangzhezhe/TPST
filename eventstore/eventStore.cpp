@@ -1,8 +1,13 @@
 
 #include <vector>
-#include <string.h>
+#include <map>
+#include <string>
 #include "eventStore.h"
 using namespace std;
+
+
+
+
 
 //event Register
 //input tm and associated message
@@ -19,11 +24,11 @@ void printEventStore(vector<HeadNode *> &es)
   //printf("new count %d\n", newcount);
   for (i = 0; i < newcount; i++)
   {
-    printf("event name %s\n", es[i]->te->str);
+    printf("event name (%s)\n", es[i]->te->str);
     int tempc = es[i]->tmList.size();
     for (j = 0; j < tempc; j++)
     {
-      printf("tm name %s\n", es[i]->tmList[j]->name);
+      printf("associated tm name (%s)\n", es[i]->tmList[j]->name);
     }
   }
 }

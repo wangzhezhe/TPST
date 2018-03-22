@@ -1,0 +1,8 @@
+{
+  "name": "task3",
+  "subscribeEvent": "T2_AVG_SATISFY",
+  "publishEvent":"UPLOAD_DATA",
+  "actionFunc":"t3_action.so"
+}
+
+

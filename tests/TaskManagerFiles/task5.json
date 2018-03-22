@@ -1,0 +1,8 @@
+{
+  "name": "task5",
+  "subscribeEvent": "UPLOAD_DATA",
+  "publishEvent":"T5_ALERT",
+  "actionFunc":"t5_action.so"
+}
+
+

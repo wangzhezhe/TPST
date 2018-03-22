@@ -29,11 +29,11 @@ Observer* observerNew(void* impl, void (*notifyImpl)(void*, int, void*))
 }
 */
 
-Observer *observerNew(void* tm, notifyFunc notifyfunc)
+Observer *observerNew(void* tm, actionFunc actionfunc)
 {
 	Observer *obs = (Observer *)malloc(sizeof(Observer));
 	obs->tm = tm;
-	obs->notifyfunc = notifyfunc;
+	obs->actionfunc = actionfunc;
 	return obs;
 }
 

@@ -1,0 +1,11 @@
+{
+  "name": "task2",
+  "subscribeEvent": "T1_TIMESTEP_FINISH",
+  "publishEvent":"T2_AVG_SATISFY",
+  "filterFunc": "t2_filter.so",
+  "aggregationrule":"sum",
+  "aggregationFilterFunc":"t2_aggregate_filter.so"
+}
+
+
+
