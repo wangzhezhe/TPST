@@ -1,0 +1,564 @@
+
+%% bare_conf.tex
+%% V1.3
+%% 2007/01/11
+%% by Michael Shell
+%% See:
+%% http://www.michaelshell.org/
+%% for current contact information.
+%%
+%% This is a skeleton file demonstrating the use of IEEEtran.cls
+%% (requires IEEEtran.cls version 1.7 or later) with an IEEE conference paper.
+%%
+%% Support sites:
+%% http://www.michaelshell.org/tex/ieeetran/
+%% http://www.ctan.org/tex-archive/macros/latex/contrib/IEEEtran/
+%% and
+%% http://www.ieee.org/
+
+%%*************************************************************************
+%% Legal Notice:
+%% This code is offered as-is without any warranty either expressed or
+%% implied; without even the implied warranty of MERCHANTABILITY or
+%% FITNESS FOR A PARTICULAR PURPOSE! 
+%% User assumes all risk.
+%% In no event shall IEEE or any contributor to this code be liable for
+%% any damages or losses, including, but not limited to, incidental,
+%% consequential, or any other damages, resulting from the use or misuse
+%% of any information contained here.
+%%
+%% All comments are the opinions of their respective authors and are not
+%% necessarily endorsed by the IEEE.
+%%
+%% This work is distributed under the LaTeX Project Public License (LPPL)
+%% ( http://www.latex-project.org/ ) version 1.3, and may be freely used,
+%% distributed and modified. A copy of the LPPL, version 1.3, is included
+%% in the base LaTeX documentation of all distributions of LaTeX released
+%% 2003/12/01 or later.
+%% Retain all contribution notices and credits.
+%% ** Modified files should be clearly indicated as such, including  **
+%% ** renaming them and changing author support contact information. **
+%%
+%% File list of work: IEEEtran.cls, IEEEtran_HOWTO.pdf, bare_adv.tex,
+%%                    bare_conf.tex, bare_jrnl.tex, bare_jrnl_compsoc.tex
+%%*************************************************************************
+
+% *** Authors should verify (and, if needed, correct) their LaTeX system  ***
+% *** with the testflow diagnostic prior to trusting their LaTeX platform ***
+% *** with production work. IEEE's font choices can trigger bugs that do  ***
+% *** not appear when using other class files.                            ***
+% The testflow support page is at:
+% http://www.michaelshell.org/tex/testflow/
+
+
+
+% Note that the a4paper option is mainly intended so that authors in
+% countries using A4 can easily print to A4 and see how their papers will
+% look in print - the typesetting of the document will not typically be
+% affected with changes in paper size (but the bottom and side margins will).
+% Use the testflow package mentioned above to verify correct handling of
+% both paper sizes by the user's LaTeX system.
+%
+% Also note that the "draftcls" or "draftclsnofoot", not "draft", option
+% should be used if it is desired that the figures are to be displayed in
+% draft mode.
+%
+\documentclass[10pt, conference, compsocconf]{IEEEtran}
+% Add the compsocconf option for Computer Society conferences.
+%
+% If IEEEtran.cls has not been installed into the LaTeX system files,
+% manually specify the path to it like:
+% \documentclass[conference]{../sty/IEEEtran}
+
+% Some very useful LaTeX packages include:
+% (uncomment the ones you want to load)
+
+
+% *** MISC UTILITY PACKAGES ***
+%
+%\usepackage{ifpdf}
+% Heiko Oberdiek's ifpdf.sty is very useful if you need conditional
+% compilation based on whether the output is pdf or dvi.
+% usage:
+% \ifpdf
+%   % pdf code
+% \else
+%   % dvi code
+% \fi
+% The latest version of ifpdf.sty can be obtained from:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/oberdiek/
+% Also, note that IEEEtran.cls V1.7 and later provides a builtin
+% \ifCLASSINFOpdf conditional that works the same way.
+% When switching from latex to pdflatex and vice-versa, the compiler may
+% have to be run twice to clear warning/error messages.
+
+
+
+
+
+
+% *** CITATION PACKAGES ***
+%
+%\usepackage{cite}
+% cite.sty was written by Donald Arseneau
+% V1.6 and later of IEEEtran pre-defines the format of the cite.sty package
+% \cite{} output to follow that of IEEE. Loading the cite package will
+% result in citation numbers being automatically sorted and properly
+% "compressed/ranged". e.g., [1], [9], [2], [7], [5], [6] without using
+% cite.sty will become [1], [2], [5]--[7], [9] using cite.sty. cite.sty's
+% \cite will automatically add leading space, if needed. Use cite.sty's
+% noadjust option (cite.sty V3.8 and later) if you want to turn this off.
+% cite.sty is already installed on most LaTeX systems. Be sure and use
+% version 4.0 (2003-05-27) and later if using hyperref.sty. cite.sty does
+% not currently provide for hyperlinked citations.
+% The latest version can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/cite/
+% The documentation is contained in the cite.sty file itself.
+
+
+
+
+
+
+% *** GRAPHICS RELATED PACKAGES ***
+%
+\ifCLASSINFOpdf
+  % \usepackage[pdftex]{graphicx}
+  % declare the path(s) where your graphic files are
+  % \graphicspath{{../pdf/}{../jpeg/}}
+  % and their extensions so you won't have to specify these with
+  % every instance of \includegraphics
+  % \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
+\else
+  % or other class option (dvipsone, dvipdf, if not using dvips). graphicx
+  % will default to the driver specified in the system graphics.cfg if no
+  % driver is specified.
+  % \usepackage[dvips]{graphicx}
+  % declare the path(s) where your graphic files are
+  % \graphicspath{{../eps/}}
+  % and their extensions so you won't have to specify these with
+  % every instance of \includegraphics
+  % \DeclareGraphicsExtensions{.eps}
+\fi
+% graphicx was written by David Carlisle and Sebastian Rahtz. It is
+% required if you want graphics, photos, etc. graphicx.sty is already
+% installed on most LaTeX systems. The latest version and documentation can
+% be obtained at: 
+% http://www.ctan.org/tex-archive/macros/latex/required/graphics/
+% Another good source of documentation is "Using Imported Graphics in
+% LaTeX2e" by Keith Reckdahl which can be found as epslatex.ps or
+% epslatex.pdf at: http://www.ctan.org/tex-archive/info/
+%
+% latex, and pdflatex in dvi mode, support graphics in encapsulated
+% postscript (.eps) format. pdflatex in pdf mode supports graphics
+% in .pdf, .jpeg, .png and .mps (metapost) formats. Users should ensure
+% that all non-photo figures use a vector format (.eps, .pdf, .mps) and
+% not a bitmapped formats (.jpeg, .png). IEEE frowns on bitmapped formats
+% which can result in "jaggedy"/blurry rendering of lines and letters as
+% well as large increases in file sizes.
+%
+% You can find documentation about the pdfTeX application at:
+% http://www.tug.org/applications/pdftex
+
+
+
+
+
+% *** MATH PACKAGES ***
+%
+%\usepackage[cmex10]{amsmath}
+% A popular package from the American Mathematical Society that provides
+% many useful and powerful commands for dealing with mathematics. If using
+% it, be sure to load this package with the cmex10 option to ensure that
+% only type 1 fonts will utilized at all point sizes. Without this option,
+% it is possible that some math symbols, particularly those within
+% footnotes, will be rendered in bitmap form which will result in a
+% document that can not be IEEE Xplore compliant!
+%
+% Also, note that the amsmath package sets \interdisplaylinepenalty to 10000
+% thus preventing page breaks from occurring within multiline equations. Use:
+%\interdisplaylinepenalty=2500
+% after loading amsmath to restore such page breaks as IEEEtran.cls normally
+% does. amsmath.sty is already installed on most LaTeX systems. The latest
+% version and documentation can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/required/amslatex/math/
+
+
+
+
+
+% *** SPECIALIZED LIST PACKAGES ***
+%
+%\usepackage{algorithmic}
+% algorithmic.sty was written by Peter Williams and Rogerio Brito.
+% This package provides an algorithmic environment fo describing algorithms.
+% You can use the algorithmic environment in-text or within a figure
+% environment to provide for a floating algorithm. Do NOT use the algorithm
+% floating environment provided by algorithm.sty (by the same authors) or
+% algorithm2e.sty (by Christophe Fiorio) as IEEE does not use dedicated
+% algorithm float types and packages that provide these will not provide
+% correct IEEE style captions. The latest version and documentation of
+% algorithmic.sty can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/algorithms/
+% There is also a support site at:
+% http://algorithms.berlios.de/index.html
+% Also of interest may be the (relatively newer and more customizable)
+% algorithmicx.sty package by Szasz Janos:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/algorithmicx/
+
+
+
+
+% *** ALIGNMENT PACKAGES ***
+%
+%\usepackage{array}
+% Frank Mittelbach's and David Carlisle's array.sty patches and improves
+% the standard LaTeX2e array and tabular environments to provide better
+% appearance and additional user controls. As the default LaTeX2e table
+% generation code is lacking to the point of almost being broken with
+% respect to the quality of the end results, all users are strongly
+% advised to use an enhanced (at the very least that provided by array.sty)
+% set of table tools. array.sty is already installed on most systems. The
+% latest version and documentation can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/required/tools/
+
+
+%\usepackage{mdwmath}
+%\usepackage{mdwtab}
+% Also highly recommended is Mark Wooding's extremely powerful MDW tools,
+% especially mdwmath.sty and mdwtab.sty which are used to format equations
+% and tables, respectively. The MDWtools set is already installed on most
+% LaTeX systems. The lastest version and documentation is available at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/mdwtools/
+
+
+% IEEEtran contains the IEEEeqnarray family of commands that can be used to
+% generate multiline equations as well as matrices, tables, etc., of high
+% quality.
+
+
+%\usepackage{eqparbox}
+% Also of notable interest is Scott Pakin's eqparbox package for creating
+% (automatically sized) equal width boxes - aka "natural width parboxes".
+% Available at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/eqparbox/
+
+
+
+
+
+% *** SUBFIGURE PACKAGES ***
+%\usepackage[tight,footnotesize]{subfigure}
+% subfigure.sty was written by Steven Douglas Cochran. This package makes it
+% easy to put subfigures in your figures. e.g., "Figure 1a and 1b". For IEEE
+% work, it is a good idea to load it with the tight package option to reduce
+% the amount of white space around the subfigures. subfigure.sty is already
+% installed on most LaTeX systems. The latest version and documentation can
+% be obtained at:
+% http://www.ctan.org/tex-archive/obsolete/macros/latex/contrib/subfigure/
+% subfigure.sty has been superceeded by subfig.sty.
+
+
+
+%\usepackage[caption=false]{caption}
+%\usepackage[font=footnotesize]{subfig}
+% subfig.sty, also written by Steven Douglas Cochran, is the modern
+% replacement for subfigure.sty. However, subfig.sty requires and
+% automatically loads Axel Sommerfeldt's caption.sty which will override
+% IEEEtran.cls handling of captions and this will result in nonIEEE style
+% figure/table captions. To prevent this problem, be sure and preload
+% caption.sty with its "caption=false" package option. This is will preserve
+% IEEEtran.cls handing of captions. Version 1.3 (2005/06/28) and later 
+% (recommended due to many improvements over 1.2) of subfig.sty supports
+% the caption=false option directly:
+%\usepackage[caption=false,font=footnotesize]{subfig}
+%
+% The latest version and documentation can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/subfig/
+% The latest version and documentation of caption.sty can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/caption/
+
+
+
+
+% *** FLOAT PACKAGES ***
+%
+%\usepackage{fixltx2e}
+% fixltx2e, the successor to the earlier fix2col.sty, was written by
+% Frank Mittelbach and David Carlisle. This package corrects a few problems
+% in the LaTeX2e kernel, the most notable of which is that in current
+% LaTeX2e releases, the ordering of single and double column floats is not
+% guaranteed to be preserved. Thus, an unpatched LaTeX2e can allow a
+% single column figure to be placed prior to an earlier double column
+% figure. The latest version and documentation can be found at:
+% http://www.ctan.org/tex-archive/macros/latex/base/
+
+
+
+%\usepackage{stfloats}
+% stfloats.sty was written by Sigitas Tolusis. This package gives LaTeX2e
+% the ability to do double column floats at the bottom of the page as well
+% as the top. (e.g., "\begin{figure*}[!b]" is not normally possible in
+% LaTeX2e). It also provides a command:
+%\fnbelowfloat
+% to enable the placement of footnotes below bottom floats (the standard
+% LaTeX2e kernel puts them above bottom floats). This is an invasive package
+% which rewrites many portions of the LaTeX2e float routines. It may not work
+% with other packages that modify the LaTeX2e float routines. The latest
+% version and documentation can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/sttools/
+% Documentation is contained in the stfloats.sty comments as well as in the
+% presfull.pdf file. Do not use the stfloats baselinefloat ability as IEEE
+% does not allow \baselineskip to stretch. Authors submitting work to the
+% IEEE should note that IEEE rarely uses double column equations and
+% that authors should try to avoid such use. Do not be tempted to use the
+% cuted.sty or midfloat.sty packages (also by Sigitas Tolusis) as IEEE does
+% not format its papers in such ways.
+
+
+
+
+
+% *** PDF, URL AND HYPERLINK PACKAGES ***
+%
+%\usepackage{url}
+% url.sty was written by Donald Arseneau. It provides better support for
+% handling and breaking URLs. url.sty is already installed on most LaTeX
+% systems. The latest version can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/misc/
+% Read the url.sty source comments for usage information. Basically,
+% \url{my_url_here}.
+
+
+
+
+
+% *** Do not adjust lengths that control margins, column widths, etc. ***
+% *** Do not use packages that alter fonts (such as pslatex).         ***
+% There should be no need to do such things with IEEEtran.cls V1.6 and later.
+% (Unless specifically asked to do so by the journal or conference you plan
+% to submit to, of course. )
+
+% correct bad hyphenation here
+\hyphenation{op-tical net-works semi-conduc-tor}
+
+
+\begin{document}
+%
+% paper title
+% can use linebreaks \\ within to get better formatting as desired
+\title{A Dynamic Event Driven in-situ Framework for Customizing Scientific Workflow}
+
+
+% author names and affiliations
+% use a multiple column layout for up to two different
+% affiliations
+
+\author{\IEEEauthorblockN{Authors Name/s per 1st Affiliation (Author)}
+\IEEEauthorblockA{line 1 (of Affiliation): dept. name of organization\\
+line 2: name of organization, acronyms acceptable\\
+line 3: City, Country\\
+line 4: Email: name@xyz.com}
+\and
+\IEEEauthorblockN{Authors Name/s per 2nd Affiliation (Author)}
+\IEEEauthorblockA{line 1 (of Affiliation): dept. name of organization\\
+line 2: name of organization, acronyms acceptable\\
+line 3: City, Country\\
+line 4: Email: name@xyz.com}
+}
+
+% conference papers do not typically use \thanks and this command
+% is locked out in conference mode. If really needed, such as for
+% the acknowledgment of grants, issue a \IEEEoverridecommandlockouts
+% after \documentclass
+
+% for over three affiliations, or if they all won't fit within the width
+% of the page, use this alternative format:
+% 
+%\author{\IEEEauthorblockN{Michael Shell\IEEEauthorrefmark{1},
+%Homer Simpson\IEEEauthorrefmark{2},
+%James Kirk\IEEEauthorrefmark{3}, 
+%Montgomery Scott\IEEEauthorrefmark{3} and
+%Eldon Tyrell\IEEEauthorrefmark{4}}
+%\IEEEauthorblockA{\IEEEauthorrefmark{1}School of Electrical and Computer Engineering\\
+%Georgia Institute of Technology,
+%Atlanta, Georgia 30332--0250\\ Email: see http://www.michaelshell.org/contact.html}
+%\IEEEauthorblockA{\IEEEauthorrefmark{2}Twentieth Century Fox, Springfield, USA\\
+%Email: homer@thesimpsons.com}
+%\IEEEauthorblockA{\IEEEauthorrefmark{3}Starfleet Academy, San Francisco, California 96678-2391\\
+%Telephone: (800) 555--1212, Fax: (888) 555--1212}
+%\IEEEauthorblockA{\IEEEauthorrefmark{4}Tyrell Inc., 123 Replicant Street, Los Angeles, California 90210--4321}}
+
+
+
+
+% use for special paper notices
+%\IEEEspecialpapernotice{(Invited Paper)}
+
+
+
+
+% make the title area
+\maketitle
+
+
+\begin{abstract}
+The abstract goes here. DO NOT USE SPECIAL CHARACTERS, SYMBOLS, OR MATH IN YOUR TITLE OR ABSTRACT.
+
+\end{abstract}
+
+\begin{IEEEkeywords}
+component; formatting; style; styling;
+
+\end{IEEEkeywords}
+
+
+% For peer review papers, you can put extra information on the cover
+% page as needed:
+% \ifCLASSOPTIONpeerreview
+% \begin{center} \bfseries EDICS Category: 3-BBND \end{center}
+% \fi
+%
+% For peerreview papers, this IEEEtran command inserts a page break and
+% creates the second title. It will be ignored for other modes.
+\IEEEpeerreviewmaketitle
+
+
+
+\section{Introduction}
+
+[scientific applications and it's workflow]
+
+
+Workflow is a broad and general concept to compose tasks for different area, the scientific workflow tools aims to support the execution of scientific applications. scientific workflow is constructed according to the characteristics of those applications. Scientific applications mainly includes tasks such as scientific simulations, analysis and visualization etc, one character is the large data exchange between those applications. In-situ workflow could be composed by exchanging those intermediate data by memory/storage hierarchy and network of a high-performace computig (HPC) \cite{deelman2018future}. There are different dimentions to classify the workflow: 
+
+
+[the classification of scientific workflows, different dimension for classification, general description about the background of the question we want to solve]
+
+According to the technical stack of the workflow software, we could divide it into workflow management system (WMS) into workflow expression model and workflow execution engine.
+
+Workflow expression model: user need a flexible abstraction and model to describe the workflow and provide the hint information to define every tasks in the workflow and manage the control flow of the workflow execution. Those expression model need formulate what tasks to run, how to run the tasks and when to run the tasks. DAG is a high level abstraction to express this model. Every node in the DAG represent the task, and every edge represent the dependency and execution sequence between these tasks in general, different workflow management tool provide more specific description including DSL programing language ,GUI, or configuration files to define the workflow base on DAG graph.
+
+Workflow execution engine: workflow exist in abstraction level before execution. workflow engine need to map this model into the physical resources. Normally, there is another software layer between the workflow engine and the physical resources，This software layer is in charge of assigning resource allocation and providing suitable runtime or middleware to support the tasks. The workflow execution engine aims to call the API provided by resource management tool to satisfy the requirements of from expression model. And the recourse management tool will in charge of the resource allocation and scheduler.
+
+According to the communicator between tasks, the workflow could be divided into integrated workflow and connected workflow.\cite{dreher2017situ}. Integrated workflow run all tasks in one MPI program and Connected workflow coordinate tasks separated into different programs not sharing common communicator. One advantage for connected workflow is monitoring and customizing the workflow in dynamic way based one the property of decoupling. The design of task coupling and data movement between task is important area for workflow to compose those tasks. The key factor behind this is the scalable and robust control for the data flow and the portable migration of heterogeneous data models across tasks\cite{deelman2018future}, But current workflow tool such as Swift(integrated workflow) or Decaf(connected workflow) can describe the predefined data dependency between tasks and lack the mechanism to modify the depedency in runnign time. Argo GlobalOS \cite{perarnau2015distributed}\cite{dreher2017situ} provide a in-situ infrastructure to register callbacks on resource event aims to support dynamicity of workflow. The workflow could react according to different events created in the running time of the tasks.But they only provide the proposal without implementation details for this time. We discuss the challenge behind this dynamicity property and provide a solution to leverage this ability in scientific workflow.
+
+Edge of DAG between tasks in workflow abstraction represent the dependency between task, According to the method to establish the dependency, the workflow could be divided in control-driven workflows and data-driven workflows\cite{shields2007control}. Data driven is constructed based on the data dependency between two tasks, namely the output of first task is the input for second task. Compare with the control-driven flow (Task A must run after Task B), the data driven flow provide a view to describe the task dependency in much finer granularity way.
+
+[challenge of scientifc workflow for data driven dependency]
+
+The construction of the dependency could be divided into three steps:
+
+1.Define a channel which is used to send data between two tasks, there could be different backend for channel implementation such as the distribute memroy, disk or rpc, but they should follow the same high level behaviours.
+
+2.Associate data with channel, the producer of the data should define what data should be sent into the channel and when the data should be sent into channel.
+
+3.Start to transfer the data, the data sending behavior should be defined by the user and we should define a mechanism to let user decide when the data start to transfer. The info to help the user make decision come from two part, the first is the domain knowledge of user such as the threshold for specific variable and the second is the data created by the simulation.
+
+Some project have already provide the solution for those dependency construction such as Decaf \cite{dreher2017decaf} and Argo\cite{perarnau2015distributed}. Decaf could help use create communication channel though MPI or CCI, but the callback function should be defined before workflow running. We leverage the dynamicity of the connected workflow based on the pub-sub architecture and let user to define and switch when the data start to be transfer in communication channel, for example, we data in communication channel satisfied some condition, the data could be transferred and accepted by data consumer. One advantage is that this mechanism decrease the burden to define all kinds of callback function in source code of running application and user could modify the dependency condition of the workflow during its running time with minimum intervention of the application source code.
+
+[our solution and main contribution]
+
+There are several for communication between pub-sub system based on space, time synchronization. We leverage these advantages by using it to express data dependency between workflow tasks. In this paper, we mainly make the following contributions:(planned)
+
+1.Provide the expression model to let user define how to create data dependency and when start data transferring.
+
+2.Provide the mechanism to let user control the transferring of data dependency, the user-defined operation could be modified without stopping the workflow.
+
+3.Validate the effectiveness of workflow tools in different use scenarios.
+
+
+
+
+The rest paper is organized as follows, Section \uppercase\expandafter{\romannumeral2} introduce the background and the motivations for event-driven workflow, Section \uppercase\expandafter{\romannumeral3} introduce the design thoughts of the framework. Section \uppercase\expandafter{\romannumeral4} provide the details for implementation. Section \uppercase\expandafter{\romannumeral5} presents the experiments to show the performance of the framework. Section \uppercase\expandafter{\romannumeral6} introduce the conclusion and the future work of the paper.
+
+
+
+
+
+\section{Background}
+background contents
+
+\section{System Archetecture}
+
+\section{Implementation}
+The design and implementation details are presented in this section.
+\subsection{Dynamic Task Manager of Event Workflow}
+The typical event driven mechanism works based on the observe pattern, the subject component will maintain a list of observer component, if the state of the subject component changed, the notify function will send to the associated observer components. We define and optimize our task manage based on this observe pattern, specifically, every task manager could be the subject and object component at the same time, different task could compose a workflow chain and even be organized into more complex workflow. Every task manager could be create/updated/deleted dynamically during the process of the system running. User could create/update/deleted the description file of the task manager and the instance of the task manager will be changed correspondingly.
+
+
+Three abstraction: TaskManager, Communicator, Operator.
+
+\subsection{Event messages monitoring}
+\subsection{Event actions aggregation and matching}
+\subsection{Event message generating}
+
+\section{Experiment and Evaluation}
+
+\subsection{Evaluate design at Scale}
+Subsection text here.
+
+\subsection{Evaluate canonical work flow pattern, comparing with traditional work}
+Subsection text here.
+
+\subsection{Evaluate real world application}
+Subsection text here.
+
+
+\section{Related Work}
+
+\textbf{Pub-Sub-Notify model in HPC application:}
+The event based architecture has advantages in decouple for the aspects of time, space and synchronization\cite{eugster2003many}. Those advantages are reflected in cloud computing area and new service type such as FaaS (Function as a Service)\cite{fox2017status}. There are also all kinds of implementation in research and industry using event message broker based on those pub-sub-notify architecture\cite{hivemq,jin2012scalable}. However, these works did not fully use the properties of event driven architecture in terms of dynamical event matching and using event message to connect and trigger tasks in workflow dynamically. 
+
+
+\textbf{Workflow Execution Framework for HPC application:}
+There are two properties for the applications in dynamic workflow: the type of data intensive and the dependency between the multi-steps in workflow. There are all kinds of workflow manage tools and programming models aiming to simplify the abstraction of workflow during programming, such as Swift\cite{wilde2011swift} and Decaf \cite{dreher2017decaf} . For these types of systems and programming models, the developer should grasp the execution topology of the workflow in advance and excute the workflow by submitting the description file of task execution topology to the workflow engine. Even though those methods could cover lots of use contexts, but one drawback is the lack of data dynamics. One similar work Meteor\cite{jiang2008meteor} providing a content-based event driven decouple infrastructure based on p2p network which shows the flexibility for the dynamic programming event matching and client actions triggering. 
+
+\textbf{Workflow Control Pattern:}
+The Canonical workflow pattens are summarized in different contexts\cite{russell2006workflow} , for the HPC applications, the complex workflow could be constructed on several major patterns\cite{bharathi2008characterization}. The content-based event driven architecture could support those pattern and make some of them more efficient and dynamic in execution(supplement further)
+
+\textbf{Runtime of Workflow Execution in HPC:}
+There are all kinds of runtime frameworks including Charm++, Legion, OCR, Uintah can help researcher to express the application into AMT(asynchronised many task) model. The comparison including the prons and cons are also discussed in quantity.\cite{wilke2015asynchronousa,wilke2015asynchronousb},The applications and workflow can be programmed in sequential way and executed asynchronised by the scheduler provided by those runtime system, several parallel programming model even programming languages are further explored based on those runtime tools and AMT model.\cite{pebay2016towards,acun2014parallel,insituvisual}. Some works \cite{sun2016staging} are focusing on how to optimize the scheduler strategies to improve the running efficiency of in-situ workflow(supplement further), 
+
+
+\section{Conclusion and Future Work}
+
+
+% use section* for acknowledgement
+\section*{Acknowledgment}
+
+
+The authors would like to thank...
+more thanks here
+
+
+% trigger a \newpage just before the given reference
+% number - used to balance the columns on the last page
+% adjust value as needed - may need to be readjusted if
+% the document is modified later
+%\IEEEtriggeratref{8}
+% The "triggered" command can be changed if desired:
+%\IEEEtriggercmd{\enlargethispage{-5in}}
+
+% references section
+
+% can use a bibliography generated by BibTeX as a .bbl file
+% BibTeX documentation can be easily obtained at:
+% http://www.ctan.org/tex-archive/biblio/bibtex/contrib/doc/
+% The IEEEtran BibTeX style support page is at:
+% http://www.michaelshell.org/tex/ieeetran/bibtex/
+%\bibliographystyle{IEEEtran}
+% argument is your BibTeX string definitions and bibliography database(s)
+%\bibliography{IEEEabrv,../bib/paper}
+%
+% <OR> manually copy in the resultant .bbl file
+% set second argument of \begin to the number of references
+% (used to reserve space for the reference number labels box)
+
+\bibliographystyle{plain}
+\bibliography{reference}
+
+% that's all folks
+\end{document}
+
+
