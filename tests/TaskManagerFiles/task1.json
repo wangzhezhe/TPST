@@ -1,7 +1,7 @@
 {
   "name": "task1",
   "subscribeEvent": "T1_START",
-  "publishEvent":"T1_TIMESTEP_FINISH",
+  "publishEvent":"T1_CREATEDATA",
   "actionFunc":"t1_action.so"
 }
 

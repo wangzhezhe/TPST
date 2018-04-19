@@ -1,8 +1,8 @@
-CC := g++
 
-CFLAGS := -Wall -DDEBUG 
-
-all: test-taskmanager test-trigure test-event test-wn
+CC=g++
+CPPFLAGS=
+TARGETS = eventNotify
+all: $(TARGETS)
 
 #test-taskmanager:
 #	$(CC) -rdynamic -o test-taskmanager ./test-taskmanager.cpp ../observer/taskmanager.cpp ../observer/observer.cpp ../lib/error/error.c
@@ -16,8 +16,17 @@ all: test-taskmanager test-trigure test-event test-wn
 #test-wn:
 #	$(CC) -rdynamic -o notify watchnotifytm.cpp ../lib/file/loaddata.c ../observer/taskmanager.cpp ../observer/observer.cpp ../lib/error/error.c ../eventstore/eventStore.cpp -ldl
 
-test-wndata:
-	$(CC) -rdynamic -lpthread -o notify watchnotifyArrayData.cpp ../lib/file/loaddata.c ../observer/taskmanager.cpp ../observer/observer.cpp ../lib/error/error.c ../eventstore/eventStore.cpp ../storage/memcache.cpp -ldl
+eventmanager.o:
+	$(CC) -c $(CPPFLAGS) ../src/observer/eventmanager.cpp -o eventmanager.o
+loaddata.o: 
+	$(CC) -c $(CPPFLAGS) ../src/utils/file/loaddata.c -o loaddata.o
+	
+eventNotify.o: eventNotify.cpp
+	$(CC) -c $(CPPFLAGS) ./eventNotify.cpp
+
+eventNotify: eventNotify.o loaddata.o eventmanager.o
+	$(CC) $(CPPFLAGS) ./eventNotify.o ./loaddata.o ./eventmanager.o -lpthread -o eventNotify 
 
 clean:
-	rm -f test-taskmanager test-trigure test-json
+	rm *.o
+	rm eventNotify

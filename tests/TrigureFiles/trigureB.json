@@ -1,0 +1,8 @@
+{
+    "type": "EVENT",
+    "event": "TB_FINISH",
+    "driver": "slurm",
+    "actionList": {
+       "actiona": "./triguresbatchjobc"
+        }
+}

@@ -33,8 +33,7 @@ map<string, TaskManager *> taskManagerGlobal;
 vector<HeadNode *> es;
 
 //this should be defined in the taskmanager.cpp
-map<string, vector<float> > storage;
-
+map<string, vector<float>> storage;
 
 void *startFirstAction(void *args)
 {
@@ -53,7 +52,6 @@ void *startFirstAction(void *args)
 
 TaskManager *Task_create(const char *tmname, const char *aggRule, const char *subevent, const char *pubevent, vector<HeadNode *> &es, TaskType taskType)
 {
-
 
     //if exist<same name>, return the old one
     printf("test taskType in create %d\n", taskType);
@@ -97,7 +95,9 @@ TaskManager *Task_create(const char *tmname, const char *aggRule, const char *su
     return tm;
 }
 
-void TaskFileParsing(Document &d, const char *taskName, char *jsonbuffer,char*taskPath,char*projectPath,char*tmDir)
+
+
+void TaskFileParsing(Document &d, const char *taskName, char *jsonbuffer, char *taskPath, char *projectPath, char *tmDir)
 {
     const char *subscribeevent;
     const char *pushevent;
