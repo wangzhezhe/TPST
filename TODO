@@ -1,5 +1,4 @@
-grpc split all the different components
-
-subscribe and pulish operation should be an array
-
-show a basic demo
+[ok]show a basic demo
+[bugs]
+event1 register e1 e2 than start, if modify trigure, and add e3, the obvious client is still listening to the redisclient
+if there are event published, the command will be started moutiple times

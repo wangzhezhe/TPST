@@ -6,7 +6,8 @@
 #include "pthread.h"
 
 #include "eventmanager.h"
-
+#include "../redisclient/redisclient.h"
+#include "../runtime/slurm.h"
 /*
 {
     "type": "EVENT",
@@ -19,20 +20,41 @@
 }
 */
 
-void* eventSubscribe(void *arguments){
+
+void *eventSubscribe(void *arguments)
+{
     //only could be transfered by this way if original pointed is initiallises by malloc instead on new
     EventTriggure *etrigure = (EventTriggure *)arguments;
     printf("start new thread\n");
-    printf("event len %d\n",etrigure->eventLen);
+    printf("event len %d\n", etrigure->eventLen);
+    char subscribeList[500];
+
+    for (int i = 0; i < etrigure->eventLen; i++)
+    {
+        sprintf(subscribeList, "%s %s", subscribeList, etrigure->eventList[i]);
+    }
 
     //send subscribe to pubsub backend
+    redisContext *redisc = redisInit();
+    if (redisc == NULL)
+    {
+        printf("failed to start connection to redis backend\n");
+        return NULL;
+    }
+    
+    //register the trigure function when recieve the respond from subscribe api
+    runtimeAction *ra=(runtimeAction *)malloc(sizeof(runtimeAction));
+    ra->actionLen=etrigure->actionLen;
+    for(int i=0;i<ra->actionLen;i++){
+        strcpy(ra->actionList[i],etrigure->actionList[i]);
+    }
+   
+    redisSubscribe(ra, redisc, subscribeList,(runtimeFunc)slurmTaskStart);
+
+    //TODO finish this function when all the events have been unsubscribed
 
 
-
-
-    //if there are return value, start to triguring relevant actions
-
-
+    
     return NULL;
 }
 
@@ -46,7 +68,7 @@ void jsonParsing(Document &d, char *jsonbuffer)
 
         //register trigure and send subscribe call to pub-sub backend
 
-        EventTriggure *trigure = (EventTriggure *)malloc (sizeof(EventTriggure));
+        EventTriggure *trigure = (EventTriggure *)malloc(sizeof(EventTriggure));
         const Value &eventList = d["eventList"];
         SizeType i;
         for (i = 0; i < eventList.Size(); i++)
@@ -65,7 +87,7 @@ void jsonParsing(Document &d, char *jsonbuffer)
             printf("actionList[%d] = %s\n", i, tempstr);
             strcpy(trigure->actionList[i], tempstr);
         }
-        trigure->actionLen = ( unsigned int)i;
+        trigure->actionLen = (unsigned int)i;
 
         const char *driver = d["driver"].GetString();
         printf("driver:%s\n", driver);

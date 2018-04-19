@@ -3,6 +3,7 @@
 #include <string.h>
 #include <pthread.h>
 #include "redisclient.h"
+#include "../runtime/slurm.h"
 
 void publish()
 {
@@ -19,10 +20,13 @@ int main(int argc, char **argv)
 
     char *subEvent = "subEventa subEventb";
     
-    pthread_t id;
-    pthread_create(&id, NULL, publish, NULL);
+    //pthread_t id;
+    //pthread_create(&id, NULL, publish, NULL);
     //blocked here
-    redisSubscribe(c, subEvent);
+    runtimeAction *ra=malloc(sizeof(runtimeAction));
+    ra->actionLen=1;
+    strcpy(ra->actionList[0],"abcd");
+    redisSubscribe(ra, c, subEvent,(runtimeFunc)slurmTaskStart);
 
     return 0;
 }

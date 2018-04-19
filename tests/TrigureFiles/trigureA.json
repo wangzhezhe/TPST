@@ -1,9 +1,9 @@
 {
     "type": "EVENT",
-    "eventList": ["T1_FINISH"],
+    "eventList": ["T1_FINISH","T0_FINISH"],
     "driver": "slurm",
     "actionList": [
-       "./triguresbatchjoba",
-       "./triguresbatchjobb"
+       "./runtimeScripts/triguresbatchjoba",
+       "./runtimeScripts/triguresbatchjobb"
     ]
 }

@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <hiredis.h>
+#include "redisclient.h"
 
 #define COMMANDLEN 100
 
@@ -35,23 +36,37 @@ redisContext *redisInit()
     return c;
 }
 
-void redisSubscribe(redisContext *c, char *subscribeEventStrList)
+void redisSubscribe(runtimeAction *ra,redisContext *c, char *subscribeEventStrList, runtimeFunc runtimefunc)
 {
 
     // subcribe command
+    if(ra==NULL){
+        printf("runtime action should not be NULL\n");
+        return;
+    }
     char command[COMMANDLEN];
     sprintf(command, "SUBSCRIBE %s", subscribeEventStrList);
-    printf("command:%s\n",command);
-    redisReply *reply = redisCommand(c, command);
-    int j;
-    while (redisGetReply(c, &reply) == REDIS_OK)
+    printf("command:(%s)\n",command);
+    redisReply *reply = (redisReply *)redisCommand(c, command);
+    int i,j;
+    while (redisGetReply(c, (void**)&reply) == REDIS_OK)
     {
-        printf("get the subscribe return value (%s) element %d \n", reply->str, reply->elements);
         if (reply->type == REDIS_REPLY_ARRAY)
         {
+            if(strcmp(reply->element[0]->str,"subscribe")==0){
+                freeReplyObject(reply);
+                continue;
+            }
             for (j = 0; j < reply->elements; j++)
             {
                 printf("%u) %s\n", j, reply->element[j]->str);
+                //call runtime func to start the command
+                //TODO start by openMP
+
+            }
+            //Execute runtime function
+            for(i=0;i<ra->actionLen;i++){
+                runtimefunc(ra->actionList[i]);
             }
         }
         freeReplyObject(reply);
@@ -59,7 +74,7 @@ void redisSubscribe(redisContext *c, char *subscribeEventStrList)
     /* Disconnects and frees the context */
     redisFree(c);
 
-    return 0;
+    return;
 }
 
 void redisPublish(redisContext *c, char *publishEventStrList, char *publishMessages)
@@ -69,11 +84,12 @@ void redisPublish(redisContext *c, char *publishEventStrList, char *publishMessa
     char command[COMMANDLEN];
     sprintf(command, "PUBLISH %s %s", publishEventStrList, publishMessages);
     printf("command:%s\n",command);
-    redisReply *reply = redisCommand(c, command);
+    
+    redisReply *reply = (redisReply *)redisCommand(c, command);
     int j;
-    while (redisGetReply(c, &reply) == REDIS_OK)
+    while (redisGetReply(c, (void**)&reply) == REDIS_OK)
     {
-        printf("get the publish return value (%s) element %d \n", reply->str, reply->elements);
+        printf("get the publish return value (%s) element %d \n", reply->str, (int)reply->elements);
         if (reply->type == REDIS_REPLY_ARRAY)
         {
             for (j = 0; j < reply->elements; j++)
@@ -86,5 +102,5 @@ void redisPublish(redisContext *c, char *publishEventStrList, char *publishMessa
     /* Disconnects and frees the context */
     redisFree(c);
 
-    return 0;
+    return;
 }
