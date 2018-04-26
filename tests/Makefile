@@ -1,6 +1,6 @@
 
 CC=g++
-CPPFLAGS=-I../deps/hiredis/
+CPPFLAGS=-I../deps/hiredis/ -DTIME
 TARGETS = eventNotify
 all: $(TARGETS)
 
@@ -23,7 +23,7 @@ eventmanager.o:
 	$(CC) -c $(CPPFLAGS) ../src/observer/eventmanager.cpp -o eventmanager.o
 
 loaddata.o: 
-	$(CC) -c $(CPPFLAGS) ../src/utils/file/loaddata.c -o loaddata.o
+	$(CC) -c $(CPPFLAGS) ../src/utils/file/loaddata.cpp -o loaddata.o
 	
 slurm.o:
 	$(CC) -c $(CPPFLAGS) ../src/runtime/slurm.c -o slurm.o
@@ -33,6 +33,7 @@ eventNotify.o: eventNotify.cpp
 
 eventNotify: eventNotify.o loaddata.o eventmanager.o redisclient.o slurm.o
 	$(CC) $(CPPFLAGS) ./redisclient.o ./eventNotify.o ./loaddata.o ./eventmanager.o ./slurm.o ../deps/hiredis/*.o -lpthread -o eventNotify 
+
 
 clean:
 	rm *.o

@@ -5,9 +5,13 @@
 #include "sys/inotify.h"
 #include "limits.h"
 #include "unistd.h"
+#include "time.h"
+
 #include <dlfcn.h>
 #include <vector>
 #include <pthread.h>
+#include <vector>
+#include <string>
 
 //#include "../observer/taskmanager.h"
 //#include "../eventstore/eventStore.h"
@@ -26,6 +30,7 @@
 #define BUF_LEN (MAX_EVENTS * (EVENT_SIZE + LEN_NAME)) /*buffer to store the data of events*/
 
 using namespace rapidjson;
+using namespace std;
 
 enum EVENTTYPE
 {
@@ -34,7 +39,42 @@ enum EVENTTYPE
     deleted
 };
 
+char projectPath[50] = "/home1/zw241/observerchain/tests";
+//char tmDir[50] = "TaskManagerFiles";
+char tmDir[50] = "TrigureFiles";
 
+
+//go through the Trigurefile folder and register the .json file with type=trigure into the system
+void gothroughFolderRegister(Document &d,const char* dir){
+    vector<string> fileList;
+    fileList=scanFolder(dir);
+    
+    int count = fileList.size();
+    char taskPath[100];
+    for (int i = 0; i < count;i++)
+    {
+        memset(taskPath, sizeof(taskPath), 0);
+        printf("parse file:%s\n", fileList[i].data());
+        snprintf(taskPath, sizeof taskPath, "%s/%s/%s", projectPath, tmDir, fileList[i].data());
+        char *jsonbuffer = NULL;
+        jsonbuffer = loadFile(taskPath);
+        //printf("taskPath %s\n",taskPath);
+        //printf("json buffer %s\n",jsonbuffer);
+        int iftrigger=jsonIfTrigger(d,jsonbuffer);
+        if(iftrigger==1){
+            //do the register operation
+            printf("register the file:(%s)\n",fileList[i].data());
+            //subscribe the specific file
+            jsonParsingTrigger(d,jsonbuffer);
+        }
+    }
+    return;
+}
+
+void*tempStartOperator(void *arg){
+    system("/home1/zw241/observerchain/src/operator/operator");
+    return NULL;
+}
 
 //g++ -o notify watchnotifytm.cpp ../lib/file/loaddata.c
 //this source code is only avliable if use create/delete the file on the same machine
@@ -44,11 +84,26 @@ int main(int argc, char **argv)
     int length, i = 0, wd;
     int fd;
     char buffer[BUF_LEN];
-    char projectPath[50] = "/home1/zw241/observerchain/tests";
-    //char tmDir[50] = "TaskManagerFiles";
-    char tmDir[50] = "TrigureFiles";
+
     Document d;
     EVENTTYPE eventType;
+
+    if(argc!=2){
+        printf("<binary> <watchpath>\n");
+        return 0;
+    }
+    
+    gothroughFolderRegister(d,argv[1]);
+
+#ifdef TIME
+    //send publish api and record time 
+    struct timespec start;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    printf("start sec:(%ld), start nsec:(%ld)\n",start.tv_sec,start.tv_nsec);
+    pthread_t id;
+    pthread_create(&id, NULL, tempStartOperator, NULL);
+#endif
+
     // TODO If put the Document d in the while loop/
     // it will crash when load the data for second time???
 
@@ -147,10 +202,8 @@ int main(int argc, char **argv)
                         jsonbuffer = loadFile(taskPath);
                         //there will be some weird characters at the end of file leading to the parsing fail some times
                         printf("json buffer\n%s\n", jsonbuffer);
-
-     
-                         jsonParsing(d,jsonbuffer);
-                        //jsonParsing(jsonbuffer);
+                        jsonParsingTrigger(d,jsonbuffer);
+                        //jsonParsingTrigger(jsonbuffer);
                     }
                     else if (eventType == deleted)
                     {

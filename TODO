@@ -1,4 +1,10 @@
 [ok]show a basic demo
+
+
+[experiments]
+
+1> finish registering .json file automatically and then calculate the time by defining extra compile parameter to control this
+
 [bugs]
 event1 register e1 e2 than start, if modify trigure, and add e3, the obvious client is still listening to the redisclient
 if there are event published, the command will be started moutiple times

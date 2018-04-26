@@ -8,6 +8,7 @@
 #include "eventmanager.h"
 #include "../redisclient/redisclient.h"
 #include "../runtime/slurm.h"
+
 /*
 {
     "type": "EVENT",
@@ -20,13 +21,22 @@
 }
 */
 
+enum FILETYPE
+{
+    TRIGGER,
+    OPERATOR
+};
+
 
 void *eventSubscribe(void *arguments)
 {
     //only could be transfered by this way if original pointed is initiallises by malloc instead on new
     EventTriggure *etrigure = (EventTriggure *)arguments;
+#ifdef DEBUG
     printf("start new thread\n");
     printf("event len %d\n", etrigure->eventLen);
+#endif
+    
     char subscribeList[500];
 
     for (int i = 0; i < etrigure->eventLen; i++)
@@ -53,19 +63,33 @@ void *eventSubscribe(void *arguments)
 
     //TODO finish this function when all the events have been unsubscribed
 
-
-    
     return NULL;
 }
 
-void jsonParsing(Document &d, char *jsonbuffer)
-{
+int jsonIfTrigger(Document &d, char *jsonbuffer){
     d.Parse(jsonbuffer);
     const char *type = d["type"].GetString();
-    if (strcmp(type, "EVENT") == 0)
+    if (strcmp(type, "TRIGGER") == 0)
     {
-        printf("process event trigure\n");
+        return 1;
+    }else{
+        return 0;
+    }
+    
+}
 
+void jsonParsingTrigger(Document &d, char *jsonbuffer)
+{
+#ifdef DEBUG
+    printf("debug json buffer%s\n",jsonbuffer);
+#endif
+    d.Parse(jsonbuffer);
+    const char *type = d["type"].GetString();
+    if (strcmp(type, "TRIGGER") == 0)
+    {
+#ifdef DEBUG
+        printf("process event trigure\n");
+#endif
         //register trigure and send subscribe call to pub-sub backend
 
         EventTriggure *trigure = (EventTriggure *)malloc(sizeof(EventTriggure));
@@ -74,7 +98,9 @@ void jsonParsing(Document &d, char *jsonbuffer)
         for (i = 0; i < eventList.Size(); i++)
         {
             const char *tempstr = eventList[i].GetString();
+#ifdef DEBUG
             printf("eventList[%d] = %s\n", i, tempstr);
+#endif
             strcpy(trigure->eventList[i], tempstr);
         }
         trigure->eventLen = (unsigned int)i;
@@ -84,13 +110,17 @@ void jsonParsing(Document &d, char *jsonbuffer)
         for (i = 0; i < actionList.Size(); i++)
         {
             const char *tempstr = actionList[i].GetString();
+#ifdef DEBUG
             printf("actionList[%d] = %s\n", i, tempstr);
+#endif
             strcpy(trigure->actionList[i], tempstr);
         }
         trigure->actionLen = (unsigned int)i;
 
         const char *driver = d["driver"].GetString();
+#ifdef DEBUG
         printf("driver:%s\n", driver);
+#endif
         strcpy(trigure->driver, driver);
 
         //start a new thread to send the request to pub-sub backend
@@ -100,7 +130,9 @@ void jsonParsing(Document &d, char *jsonbuffer)
         pthread_t tid;
         if (pthread_create(&tid, NULL, &eventSubscribe, (void *)trigure) != 0)
         {
+#ifdef DEBUG
             printf("fail to create pthread wirh id %d\n", (int)tid);
+#endif
             return;
         }
     }
