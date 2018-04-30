@@ -1,0 +1,19 @@
+parse file:operator.json
+parse file:trigureA.json
+register the file:(trigureA.json)
+parse file:trigureB.json
+register the file:(trigureB.json)
+start sec:(1391193), start nsec:(662460052)
+Watching:: ./TrigureFiles/
+do some monitoring operation
+when interesting things happen, for example, some conditions are satisfied, publish events
+command:PUBLISH T1_FINISH empty
+get the publish return value (2)
+finish sec:(1391193),finish nsec:(668507023)
+finish sec:(1391193),finish nsec:(668525640)
+Submitted batch job 1781
+finish sec:(1391193),finish nsec:(688948174)
+Submitted batch job 1782
+finish sec:(1391193),finish nsec:(689764969)
+Submitted batch job 1783
+Submitted batch job 1784

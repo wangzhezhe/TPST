@@ -1,6 +1,6 @@
 
 CC=g++
-CPPFLAGS=-I../deps/hiredis/ -DTIME
+CPPFLAGS= -std=c++11 -I../deps/  -I../deps/hiredis/ -DTIME -DDEBUG
 TARGETS = eventNotify
 all: $(TARGETS)
 
@@ -15,6 +15,7 @@ all: $(TARGETS)
 
 #test-wn:
 #	$(CC) -rdynamic -o notify watchnotifytm.cpp ../lib/file/loaddata.c ../observer/taskmanager.cpp ../observer/observer.cpp ../lib/error/error.c ../eventstore/eventStore.cpp -ldl
+
 
 redisclient.o:
 	$(CC) -c $(CPPFLAGS) ../src/redisclient/redisclient.c -o redisclient.o

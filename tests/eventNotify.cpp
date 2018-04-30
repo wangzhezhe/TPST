@@ -53,8 +53,11 @@ void gothroughFolderRegister(Document &d,const char* dir){
     char taskPath[100];
     for (int i = 0; i < count;i++)
     {
+        // if it is not json file
+        if(strstr(fileList[i].data(),".json")==NULL){
+            continue;
+        }
         memset(taskPath, sizeof(taskPath), 0);
-        printf("parse file:%s\n", fileList[i].data());
         snprintf(taskPath, sizeof taskPath, "%s/%s/%s", projectPath, tmDir, fileList[i].data());
         char *jsonbuffer = NULL;
         jsonbuffer = loadFile(taskPath);
@@ -62,8 +65,10 @@ void gothroughFolderRegister(Document &d,const char* dir){
         //printf("json buffer %s\n",jsonbuffer);
         int iftrigger=jsonIfTrigger(d,jsonbuffer);
         if(iftrigger==1){
+#ifdef DEBUG
             //do the register operation
             printf("register the file:(%s)\n",fileList[i].data());
+#endif
             //subscribe the specific file
             jsonParsingTrigger(d,jsonbuffer);
         }
