@@ -36,7 +36,8 @@ PROTOS_PATH = ../proto
 
 vpath %.proto $(PROTOS_PATH)
 
-all: workflowserver
+all: workflowserver 
+
 
 workflowserver: workflowserver.pb.o workflowserver.grpc.pb.o workflowserver.o
 	$(CXX) $^ $(LDFLAGS) -o $@

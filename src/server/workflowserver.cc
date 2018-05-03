@@ -21,7 +21,8 @@
 #include <string>
 
 #include <grpc++/grpc++.h>
-
+#include "pubsub.h"
+#include "unistd.h"
 
 #ifdef BAZEL_BUILD
 #else
@@ -38,36 +39,46 @@ using workflowserver::HelloRequest;
 using workflowserver::PubSubReply;
 using workflowserver::PubSubRequest;
 
-
+using namespace std;
 
 // Logic and data behind the server's behavior.
 class GreeterServiceImpl final : public Greeter::Service
 {
-  Status SayHello(ServerContext *context, const HelloRequest *request,HelloReply *reply) override
+  //for test using
+  Status SayHello(ServerContext *context, const HelloRequest *request, HelloReply *reply) override
   {
     std::string prefix("Hello:");
     reply->set_message(prefix + request->name());
     return Status::OK;
   }
 
-  Status Subscribe(ServerContext *context, const PubSubRequest *request,PubSubReply *reply) 
+  Status Subscribe(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
   {
     //call redis backend to subscribe the message
     std::string prefix("subscribe:");
     //every elemnt could be accessed by specific function
-    reply->set_returnmessage(prefix + request->pubsubmessage());
+    //reply->set_returnmessage(prefix + request->pubsubmessage());
 
-    printf("call redis subscribe");
+    printf("call subscribe func, waiting to be notified\n");
+
+
+    //naive implementation
+    //use while loop to check a variable if satisfied value is true 
+    //satisfied value is controled by publish function
+
+    //get reply
     
-    char*subsTest ="test";
-    redisContext *c = resitInit();
-    redisSubscribe(c, subsTest);
+    sleep(5);
+    //generate uid on server end
+    
+    //send message subscribe function
 
+    //delete the clientid in the global map
 
     return Status::OK;
   }
 
-  Status Publish(ServerContext *context, const PubSubRequest *request,PubSubReply *reply) 
+  Status Publish(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
   {
     //call redis backend to publish the message
     std::string prefix("publish:");
@@ -98,7 +109,8 @@ void RunServer()
 
 int main(int argc, char **argv)
 {
+
   RunServer();
-  
+
   return 0;
 }

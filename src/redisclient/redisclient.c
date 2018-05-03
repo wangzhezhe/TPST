@@ -37,7 +37,8 @@ redisContext *redisInit()
 
 void redisSubscribe(runtimeAction *ra, redisContext *c, char *subscribeEventStrList, runtimeFunc runtimefunc)
 {
-
+    //If delete this , their is no ouput when redirect, don't know why
+    //printf("redis sub0\n");
     // subcribe command
     if (ra == NULL)
     {
@@ -46,11 +47,9 @@ void redisSubscribe(runtimeAction *ra, redisContext *c, char *subscribeEventStrL
     }
     char command[COMMANDLEN];
     sprintf(command, "SUBSCRIBE %s", subscribeEventStrList);
-#ifdef DEBUG
-    printf("command:(%s)\n", command);
-#endif
     redisReply *reply = (redisReply *)redisCommand(c, command);
     int i, j;
+    //printf("redis sub1\n");
     while (redisGetReply(c, (void **)&reply) == REDIS_OK)
     {
         if (reply->type == REDIS_REPLY_ARRAY)
@@ -60,18 +59,11 @@ void redisSubscribe(runtimeAction *ra, redisContext *c, char *subscribeEventStrL
                 freeReplyObject(reply);
                 continue;
             }
-            for (j = 0; j < reply->elements; j++)
-            {
 
-#ifdef DEBUG
-                printf("%u) %s\n", j, reply->element[j]->str);
-                //call runtime func to start the command
-                //TODO start by openMP
-#endif
-            }
             //Execute runtime function
             for (i = 0; i < ra->actionLen; i++)
             {
+                //printf("test debug0\n");
                 runtimefunc(ra->actionList[i]);
             }
         }

@@ -58,7 +58,6 @@ void *eventSubscribe(void *arguments)
     for(int i=0;i<ra->actionLen;i++){
         strcpy(ra->actionList[i],etrigure->actionList[i]);
     }
-   
     redisSubscribe(ra, redisc, subscribeList,(runtimeFunc)slurmTaskStart);
 
     //TODO finish this function when all the events have been unsubscribed
@@ -80,9 +79,9 @@ int jsonIfTrigger(Document &d, char *jsonbuffer){
 
 void jsonParsingTrigger(Document &d, char *jsonbuffer)
 {
-#ifdef DEBUG
-    printf("debug json buffer%s\n",jsonbuffer);
-#endif
+//#ifdef DEBUG
+//    printf("debug json buffer%s\n",jsonbuffer);
+//#endif
     d.Parse(jsonbuffer);
     const char *type = d["type"].GetString();
     if (strcmp(type, "TRIGGER") == 0)
