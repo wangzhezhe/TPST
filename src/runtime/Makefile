@@ -17,6 +17,6 @@ test: test.o slurm.o log.o
 	$(CC) $(CPPFLAGS) ./test.o ./slurm.o  -o test
 
 clean:
-	rm test.o
+	rm test.o slurm.o
 	rm test 
 	
