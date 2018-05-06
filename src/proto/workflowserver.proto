@@ -38,7 +38,7 @@ message HelloReply {
 
 message PubSubRequest {
   //string array
-  string pubsubmessage = 1;
+  repeated string pubsubmessage = 1;
 }
 
 message PubSubReply {

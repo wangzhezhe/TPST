@@ -1,24 +1,6 @@
-
-
 #include <string>
 #include <vector>
 #include "pubsub.h"
-
-void addNewClient(string clientid)
-{
-    pubsubWrapper *psw = new (pubsubWrapper);
-    psw->clientid = clientid;
-    psw->reply = NULL;
-    clientidtoWrapper[clientid] = psw;
-}
-
-void addNewEvent(string str, int num)
-{
-    pubsubEvent *pse = new (pubsubEvent);
-    pse->event = str;
-    pse->trigureNum = num;
-    strtoEvent[str] = pse;
-}
 
 void testclear()
 {
@@ -95,6 +77,8 @@ void testMultisubOnePush()
     pubsubPublish(eventList);
     output();
 }
+
+
 
 int main()
 {

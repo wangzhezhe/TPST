@@ -22,11 +22,11 @@ CXXFLAGS += -std=c++11
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += -L/usr/local/lib `pkg-config --libs protobuf grpc++ grpc`\
            -lgrpc++_reflection\
-           -ldl
+           -ldl -lpthread
 else
 LDFLAGS += -L/usr/local/lib `pkg-config --libs protobuf grpc++ grpc`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
-           -ldl
+           -ldl -lpthread
 endif
 PROTOC = protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
@@ -36,9 +36,11 @@ PROTOS_PATH = ../proto
 
 vpath %.proto $(PROTOS_PATH)
 
-all: publishclient
+all: testpublishclient
 
-publishclient: workflowserver.pb.o workflowserver.grpc.pb.o publishclient.o
+
+
+testpublishclient: workflowserver.pb.o workflowserver.grpc.pb.o testpublishclient.o pubsubclient.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc
@@ -50,7 +52,7 @@ publishclient: workflowserver.pb.o workflowserver.grpc.pb.o publishclient.o
 	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=. $<
 
 clean:
-	rm -f *.o *.pb.cc *.pb.h publishclient
+	rm -f *.o *.pb.cc *.pb.h testpublishclient
 
 
 # The following is to test your system and ensure a smoother experience.

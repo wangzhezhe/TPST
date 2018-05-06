@@ -21,8 +21,11 @@
 #include <string>
 
 #include <grpc++/grpc++.h>
+#include <uuid/uuid.h>
+
 #include "pubsub.h"
 #include "unistd.h"
+#include <mutex>
 
 #ifdef BAZEL_BUILD
 #else
@@ -54,37 +57,92 @@ class GreeterServiceImpl final : public Greeter::Service
 
   Status Subscribe(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
   {
-    //call redis backend to subscribe the message
-    std::string prefix("subscribe:");
+
+    //create the uuid
+
+    uuid_t uuid;
+    char str[50];
+
+    uuid_generate(uuid);
+    uuid_unparse(uuid, str);
+
+    string clientId(str);
+
+    pubsubWrapper *psw = new (pubsubWrapper);
+    psw->iftrigure = false;
+    //put clientId into global map TODO add lock
+    clientidtoWrapperMtx.lock();
+    clientidtoWrapper[clientId] = psw;
+    clientidtoWrapperMtx.unlock();
+
     //every elemnt could be accessed by specific function
     //reply->set_returnmessage(prefix + request->pubsubmessage());
 
-    printf("call subscribe func, waiting to be notified\n");
+    //parse the request events
+    int size=request->pubsubmessage_size();
+    printf("server get (%d) subscribed events\n",size);
+    int i=0;
+    vector<string> eventList;
+    string eventStr;
+    for(i=0;i<size;i++){
+      eventStr=request->pubsubmessage(i);
+      printf("get events (%s)\n",eventStr.data());
+      eventList.push_back(eventStr);
+      //todo parse trigure number
+      int trinum=1;
+      addNewEvent(eventStr,trinum);
+    }
 
+    pubsubSubscribe(eventList, clientId);
+
+    printf("clientid (%s) call subscribe func, waiting to be notified\n",clientId.data());
+
+    //request should be a event list
+
+    //put event list into vector and call subscribe function
 
     //naive implementation
-    //use while loop to check a variable if satisfied value is true 
+    //use while loop to check a variable if satisfied value is true
     //satisfied value is controled by publish function
 
     //get reply
-    
-    sleep(5);
+
+    while (1)
+    {
+      if (clientidtoWrapper[clientId]->iftrigure == true)
+      {
+        break;
+      }
+    }
     //generate uid on server end
-    
+
     //send message subscribe function
 
     //delete the clientid in the global map
-
+    reply->set_returnmessage("TRIGGERED");
     return Status::OK;
   }
 
   Status Publish(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
   {
-    //call redis backend to publish the message
-    std::string prefix("publish:");
-    reply->set_returnmessage(prefix + request->pubsubmessage());
-    return Status::OK;
+
+     //parse the request events
+    int size=request->pubsubmessage_size();
+    printf("server get (%d) published events\n",size);
+    int i=0;
+    vector<string> eventList;
+    string eventStr;
+    for(i=0;i<size;i++){
+      eventStr=request->pubsubmessage(i);
+      printf("server publish event (%s)\n",eventStr.data());  
+      eventList.push_back(eventStr);
+    }
+      //publish
+      pubsubPublish(eventList);
+      reply->set_returnmessage("OK");
+      return Status::OK;
   }
+
 };
 
 void RunServer()
@@ -111,6 +169,5 @@ int main(int argc, char **argv)
 {
 
   RunServer();
-
   return 0;
 }

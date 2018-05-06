@@ -19,10 +19,15 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
+
+#include <unistd.h>
+#include <pthread.h>
 
 #include <grpc++/grpc++.h>
 
 #include "workflowserver.grpc.pb.h"
+#include "pubsubclient.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -32,6 +37,9 @@ using workflowserver::HelloReply;
 using workflowserver::HelloRequest;
 using workflowserver::PubSubReply;
 using workflowserver::PubSubRequest;
+using namespace std;
+
+/*
 class GreeterClient
 {
   public:
@@ -40,7 +48,7 @@ class GreeterClient
 
     // Assembles the client's payload, sends it and presents the response back
     // from the server.
-    std::string SayHello(const std::string &user)
+    string SayHello(const string &user)
     {
         // Data we are sending to the server.
         HelloRequest request;
@@ -63,21 +71,25 @@ class GreeterClient
         }
         else
         {
-            std::cout << status.error_code() << ": " << status.error_message()
-                      << std::endl;
+            cout << status.error_code() << ": " << status.error_message()
+                 << endl;
             return "RPC failed";
         }
     }
-    
-    
-    std::string Subscribe(const std::string &substr)
+
+    string Subscribe(vector<string> eventList)
     {
-        // Data we are sending to the server.
-        PubSubRequest request;
-        request.set_pubsubmessage(substr);
 
         // Container for the data we expect from the server.
+        PubSubRequest request;
         PubSubReply reply;
+        int size = eventList.size();
+        int i = 0;
+        for (i = 0; i < size; i++)
+        {
+            //attention the use here, the request could be transfered into a specific type with specific function
+            request.add_pubsubmessage(eventList[i]);
+        }
 
         // Context for the client. It could be used to convey extra information to
         // the server and/or tweak certain RPC behaviors.
@@ -93,20 +105,24 @@ class GreeterClient
         }
         else
         {
-            std::cout << status.error_code() << ": " << status.error_message()
-                      << std::endl;
+            cout << status.error_code() << ": " << status.error_message()
+                 << endl;
             return "RPC failed";
         }
     }
 
-    std::string Publish(const std::string &pubstr)
+    string Publish(vector<string> eventList)
     {
-        // Data we are sending to the server.
-        PubSubRequest request;
-        request.set_pubsubmessage(pubstr);
-
         // Container for the data we expect from the server.
+        PubSubRequest request;
         PubSubReply reply;
+        int size = eventList.size();
+        int i = 0;
+        for (i = 0; i < size; i++)
+        {
+            //attention the use here, the request could be transfered into a specific type with specific function
+            request.add_pubsubmessage(eventList[i]);
+        }
 
         // Context for the client. It could be used to convey extra information to
         // the server and/or tweak certain RPC behaviors.
@@ -122,15 +138,28 @@ class GreeterClient
         }
         else
         {
-            std::cout << status.error_code() << ": " << status.error_message()
-                      << std::endl;
+            cout << status.error_code() << ": " << status.error_message()
+                 << endl;
             return "RPC failed";
         }
     }
 
   private:
-    std::unique_ptr<Greeter::Stub> stub_;
+    unique_ptr<Greeter::Stub> stub_;
 };
+
+*/
+
+void *PublishOperation(void *ptr)
+{
+    sleep(5);
+    printf("new thread push event\n");
+    vector<string> publisheventList;
+    publisheventList.push_back("event1");
+
+    string reply = greeter.Publish(publisheventList);
+    cout << "Publish return value: " << reply << endl;
+}
 
 int main(int argc, char **argv)
 {
@@ -138,20 +167,32 @@ int main(int argc, char **argv)
     // are created. This channel models a connection to an endpoint (in this case,
     // localhost at port 50051). We indicate that the channel isn't authenticated
     // (use of InsecureChannelCredentials()).
-    GreeterClient greeter(grpc::CreateChannel(
-        "0.0.0.0:50051", grpc::InsecureChannelCredentials()));
- 
-    std::string user("world");
-    std::string reply = greeter.SayHello(user);
-    std::cout << "Greeter received: " << reply << std::endl;
-   
-    std::string substr("subscribe message");
-    reply = greeter.Subscribe(substr);
-    std::cout << "Subscribe return value: " << reply << std::endl;
-    
-    std::string pubstr("publish message");
-    reply = greeter.Publish(pubstr);
-    std::cout << "Publish return value: " << reply << std::endl;
+
+    string user("world");
+    string reply = greeter.SayHello(user);
+    cout << "Greeter received: " << reply << endl;
+
+    pthread_t id;
+    pthread_create(&id, NULL, PublishOperation, NULL);
+
+    vector<string> subeventList;
+    subeventList.push_back("event1");
+    //eventList.push_back("event2");
+
+    /*
+    RepeatedPtrField<string> tpf;
+    eventList.insert("event1");
+    int size=eventList.size();
+    int i=0;
+    for(i=0;i<size;i++){
+        tpf->set_pubsubmessage(i,eventList[i]);
+    }
+    */
+
+    reply = greeter.Subscribe(subeventList);
+    cout << "Subscribe return value: " << reply << endl;
+
+    //start a new thread to do the push operation
 
     return 0;
 }

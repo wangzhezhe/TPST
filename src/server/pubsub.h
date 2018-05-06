@@ -28,14 +28,20 @@ typedef struct pubsubEvent{
 }pubsubEvent;
 
 typedef struct pubsubWrapper{
-    string clientid;
+    //string clientid;
     //int trigureNum; this value should be maintained in innermap of clienttoSub
-    PubSubReply *reply;
+    //PubSubReply *reply;
+    bool iftrigure;
 }pubsubWrapper;
+
+
 
 extern map<string, pubsubEvent *> strtoEvent;
 
 //client id to pubsubWrapper(value is real element with memory) from clientid to clientStructure
+
+extern mutex clientidtoWrapperMtx;
+
 extern map<string, pubsubWrapper *> clientidtoWrapper;
 
 // to pubsubWrapperid (value is pointer) from subeventstring to set of clientid
@@ -48,6 +54,10 @@ extern map<string, map<string, int>> clienttoSub;
 void pubsubSubscribe(vector<string> eventList, string clientId);
 
 void pubsubPublish(vector<string> eventList);
+
+void addNewClient(string clientid);
+
+void addNewEvent(string str, int num);
 
 void output();
 

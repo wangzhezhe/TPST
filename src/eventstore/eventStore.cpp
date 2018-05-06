@@ -5,10 +5,6 @@
 #include "eventStore.h"
 using namespace std;
 
-
-
-
-
 //event Register
 //input tm and associated message
 vector<HeadNode *> initEventStore()

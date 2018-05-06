@@ -26,7 +26,7 @@ LDFLAGS += -L/usr/local/lib `pkg-config --libs protobuf grpc++ grpc`\
 else
 LDFLAGS += -L/usr/local/lib `pkg-config --libs protobuf grpc++ grpc`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
-           -ldl
+           -ldl -luuid 
 endif
 PROTOC = protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
@@ -38,8 +38,10 @@ vpath %.proto $(PROTOS_PATH)
 
 all: workflowserver 
 
+pubsub.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o pubsub.o pubsub.cc
 
-workflowserver: workflowserver.pb.o workflowserver.grpc.pb.o workflowserver.o
+workflowserver: workflowserver.pb.o workflowserver.grpc.pb.o workflowserver.o pubsub.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc

@@ -1,8 +1,6 @@
 #ifndef common_h
 #define common_h
 
-
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <vector>

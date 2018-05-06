@@ -7,6 +7,7 @@
 map<string, pubsubEvent *> strtoEvent;
 
 //client id to pubsubWrapper(value is real element with memory) from clientid to clientStructure
+mutex clientidtoWrapperMtx;
 map<string, pubsubWrapper *> clientidtoWrapper;
 
 // to pubsubWrapperid (value is pointer) from subeventstring to set of clientid
@@ -18,6 +19,25 @@ map<string, map<string, int>> clienttoSub;
 
 //strtoEvent and clientidtoWrapper have been established before this function
 using namespace std;
+
+
+void addNewClient(string clientid)
+{
+    pubsubWrapper *psw = new (pubsubWrapper);
+    psw->iftrigure = false;
+    clientidtoWrapper[clientid] = psw;
+}
+
+void addNewEvent(string str, int num)
+{
+    pubsubEvent *pse = new (pubsubEvent);
+    pse->event = str;
+    pse->trigureNum = num;
+    strtoEvent[str] = pse;
+}
+
+
+
 void pubsubSubscribe(vector<string> eventList, string clientId)
 {
 
@@ -186,6 +206,10 @@ void pubsubPublish(vector<string> eventList)
                             {
                                 printf("trigure/notify curr id (%s)\n", clientid.data());
 
+                                //modify the global satisfied label to true
+                                clientidtoWrapperMtx.lock();
+                                clientidtoWrapper[clientid]->iftrigure = true;
+                                clientidtoWrapperMtx.unlock();
                                 //the value should be zero after trigguring operation
                                 for (itsetsub = psemap.begin(); itsetsub != psemap.end(); ++itsetsub)
                                 {
