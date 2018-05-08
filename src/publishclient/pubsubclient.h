@@ -25,23 +25,31 @@ using namespace std;
 
 class GreeterClient
 {
-  public:
-    GreeterClient(std::shared_ptr<Channel> channel)
-        : stub_(Greeter::NewStub(channel)) {}
 
-    // Assembles the client's payload, sends it and presents the response back
-    // from the server.
-    string SayHello(const string &user);
+private: GreeterClient(std::shared_ptr<Channel> channel)
+      : stub_(Greeter::NewStub(channel)) {}
 
-    string Subscribe(vector<string> eventList);
+private:
+  unique_ptr<Greeter::Stub> stub_;
 
-    string Publish(vector<string> eventList);
 
-  private:
-    unique_ptr<Greeter::Stub> stub_;
+
+public:
+  static GreeterClient *getClient();
+
+  //GreeterClient(std::shared_ptr<Channel> channel)
+  //    : stub_(Greeter::NewStub(channel)) {}
+
+  string SayHello(const string &user);
+
+  string Subscribe(vector<string> eventList);
+
+  string Publish(vector<string> eventList);
 };
 
 //define as singleton global variable
-extern GreeterClient greeter;
+//extern GreeterClient greeter;
+
+//GreeterClient& intiSocketAddr();
 
 #endif

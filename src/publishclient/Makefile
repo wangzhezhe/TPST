@@ -38,9 +38,10 @@ vpath %.proto $(PROTOS_PATH)
 
 all: testpublishclient
 
+getip.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o getip.o ../utils/getip/getip.cpp
 
-
-testpublishclient: workflowserver.pb.o workflowserver.grpc.pb.o testpublishclient.o pubsubclient.o
+testpublishclient: workflowserver.pb.o workflowserver.grpc.pb.o testpublishclient.o pubsubclient.o getip.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc

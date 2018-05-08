@@ -94,7 +94,7 @@ void redisPublish(redisContext *c, char *publishEventStrList, char *publishMessa
     redisReply *reply = (redisReply *)redisCommand(c, command);
     int j;
 #ifdef DEBUG
-    printf("get the publish return value (%d)\n", reply->integer);
+    printf("get the publish return value (%ld)\n", reply->integer);
 #endif
     freeReplyObject(reply);    
     /* Disconnects and frees the context */

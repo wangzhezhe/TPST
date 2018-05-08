@@ -6,7 +6,7 @@
 #include "pthread.h"
 
 #include "eventmanager.h"
-#include "../redisclient/redisclient.h"
+//#include "../redisclient/redisclient.h"
 #include "../runtime/slurm.h"
 #include "../publishclient/pubsubclient.h"
 
@@ -31,32 +31,41 @@ enum FILETYPE
 void *eventSubscribe(void *arguments)
 {
     //only could be transfered by this way if original pointed is initiallises by malloc instead on new
-    EventTriggure *etrigure = (EventTriggure *)arguments;
+    EventTriggure *etrigger = (EventTriggure *)arguments;
 #ifdef DEBUG
     printf("start new thread\n");
-    printf("event len %d\n", etrigure->eventLen);
+    printf("event len %d\n", etrigger->eventLen);
 #endif
 
-    reply = greeter.Subscribe(etrigure->eventList);
-    cout << "Subscribe return value: " << reply << endl;
+    //GreeterClient greeter=intiSocketAddr();
+    GreeterClient *greeter = GreeterClient::getClient();
+    if (greeter == NULL)
+    {
+        printf("failed to get initialised greeter\n");
+        return NULL;
+    }
     
+    string reply = greeter->Subscribe(etrigger->eventList);
+    cout << "Subscribe return value: " << reply << endl;
+
     //TODO
     //when trigureed, call the runtime function
     //(runtimeFunc)slurmTaskStart(path)
 
-     int i=0;
-     int actionSize=etrigure->actionList.size();
-     for(i=0;i<actionSize;i++){
-         slurmTaskStart(etrigure->actionList[i].data());
-     }
+    int i = 0;
+    int actionSize = etrigger->actionList.size();
+    for (i = 0; i < actionSize; i++)
+    {
+        slurmTaskStart(etrigger->actionList[i].data());
+    }
 
     //send rpc request to back end
 
-/*
+    /*
     //char subscribeList[500];
-    for (int i = 0; i < etrigure->eventLen; i++)
+    for (int i = 0; i < etrigger->eventLen; i++)
     {
-        sprintf(subscribeList, "%s %s", subscribeList, etrigure->eventList[i]);
+        sprintf(subscribeList, "%s %s", subscribeList, etrigger->eventList[i]);
     }
 
     //send subscribe to pubsub backend
@@ -67,12 +76,12 @@ void *eventSubscribe(void *arguments)
         return NULL;
     }
 
-    //register the trigure function when recieve the respond from subscribe api
+    //register the triggered function when recieve the respond from subscribe api
     runtimeAction *ra = (runtimeAction *)malloc(sizeof(runtimeAction));
-    ra->actionLen = etrigure->actionLen;
+    ra->actionLen = etrigger->actionLen;
     for (int i = 0; i < ra->actionLen; i++)
     {
-        strcpy(ra->actionList[i], etrigure->actionList[i]);
+        strcpy(ra->actionList[i], etrigger->actionList[i]);
     }
     redisSubscribe(ra, redisc, subscribeList, (runtimeFunc)slurmTaskStart);
 
@@ -115,40 +124,43 @@ void jsonParsingTrigger(Document &d, char *jsonbuffer)
 
         for (i = 0; i < eventList.Size(); i++)
         {
-            //const char *tempstr = eventList[i].GetString();
-            triggure->eventList.push_back(eventList[i].GetString());
+            const char *tempstr = eventList[i].GetString();
+            string str = string(tempstr);
+            triggure->eventList.push_back(str);
 #ifdef DEBUG
-            printf("eventList[%d] = %s\n", i, tempstr);
+            printf("eventList[%d] = %s\n", i, str.data());
 #endif
-            //strcpy(trigure->eventList[i], tempstr);
+            //strcpy(etrigger->eventList[i], tempstr);
         }
-        //trigure->eventLen = (unsigned int)i;
+        //etrigger->eventLen = (unsigned int)i;
 
         const Value &actionList = d["actionList"];
 
         for (i = 0; i < actionList.Size(); i++)
         {
-            triggure->actionList.push_back(actionList[i].GetString());
-            //const char *tempstr = actionList[i].GetString();
+            const char *tempstr = actionList[i].GetString();
+            triggure->actionList.push_back(string(tempstr));
+
 #ifdef DEBUG
             printf("actionList[%d] = %s\n", i, tempstr);
 #endif
-            //strcpy(trigure->actionList[i], tempstr);
+            //strcpy(etrigger->actionList[i], tempstr);
         }
-        //trigure->actionLen = (unsigned int)i;
+        //etrigger->actionLen = (unsigned int)i;
 
         const char *driver = d["driver"].GetString();
 #ifdef DEBUG
         printf("driver:%s\n", driver);
 #endif
-        trigure->driver(driver);
+
+        triggure->driver = string(driver);
 
         //start a new thread to send the request to pub-sub backend
 
-        //printf("eventlen %d actionlen %d\n",trigure->eventLen,trigure->actionLen);
+        //printf("eventlen %d actionlen %d\n",etrigger->eventLen,etrigger->actionLen);
 
         pthread_t tid;
-        if (pthread_create(&tid, NULL, &eventSubscribe, (void *)trigure) != 0)
+        if (pthread_create(&tid, NULL, &eventSubscribe, (void *)triggure) != 0)
         {
 #ifdef DEBUG
             printf("fail to create pthread wirh id %d\n", (int)tid);

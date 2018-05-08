@@ -16,6 +16,9 @@
 //#include "../observer/taskmanager.h"
 //#include "../eventstore/eventStore.h"
 //#include "../storage/memcache.h"
+
+#include "../src/utils/getip/getip.h"
+
 #include "../src/utils/file/loaddata.h"
 
 #include "../src/observer/eventmanager.h"
@@ -39,22 +42,24 @@ enum EVENTTYPE
     deleted
 };
 
-char projectPath[50] = "/home1/zw241/observerchain/tests";
+//char projectPath[50] = "/home1/zw241/observerchain/tests";
 //char tmDir[50] = "TaskManagerFiles";
+char projectPath[100] = "/home/parallels/Documents/cworkspace/observerchain/tests";
 char tmDir[50] = "TrigureFiles";
 
-
 //go through the Trigurefile folder and register the .json file with type=trigure into the system
-void gothroughFolderRegister(Document &d,const char* dir){
+void gothroughFolderRegister(Document &d, const char *dir)
+{
     vector<string> fileList;
-    fileList=scanFolder(dir);
-    
+    fileList = scanFolder(dir);
+
     int count = fileList.size();
     char taskPath[100];
-    for (int i = 0; i < count;i++)
+    for (int i = 0; i < count; i++)
     {
         // if it is not json file
-        if(strstr(fileList[i].data(),".json")==NULL){
+        if (strstr(fileList[i].data(), ".json") == NULL)
+        {
             continue;
         }
         memset(taskPath, sizeof(taskPath), 0);
@@ -63,21 +68,24 @@ void gothroughFolderRegister(Document &d,const char* dir){
         jsonbuffer = loadFile(taskPath);
         //printf("taskPath %s\n",taskPath);
         //printf("json buffer %s\n",jsonbuffer);
-        int iftrigger=jsonIfTrigger(d,jsonbuffer);
-        if(iftrigger==1){
+        int iftrigger = jsonIfTrigger(d, jsonbuffer);
+        if (iftrigger == 1)
+        {
 #ifdef DEBUG
             //do the register operation
-            printf("register the file:(%s)\n",fileList[i].data());
+            printf("register the file:(%s)\n", fileList[i].data());
 #endif
             //subscribe the specific file
-            jsonParsingTrigger(d,jsonbuffer);
+            jsonParsingTrigger(d, jsonbuffer);
         }
     }
     return;
 }
 
-void*tempStartOperator(void *arg){
-    system("/home1/zw241/observerchain/src/operator/operator");
+void *tempStartOperator(void *arg)
+{
+    //system("/home1/zw241/observerchain/src/operator/operator");
+    system("/home/parallels/Documents/cworkspace/observerchain/src/operator");
     return NULL;
 }
 
@@ -86,6 +94,7 @@ void*tempStartOperator(void *arg){
 
 int main(int argc, char **argv)
 {
+
     int length, i = 0, wd;
     int fd;
     char buffer[BUF_LEN];
@@ -93,18 +102,22 @@ int main(int argc, char **argv)
     Document d;
     EVENTTYPE eventType;
 
-    if(argc!=2){
+    if (argc != 2)
+    {
         printf("<binary> <watchpath>\n");
         return 0;
     }
-    
-    gothroughFolderRegister(d,argv[1]);
+
+    // write ip port of current nodes into config files
+    // the load operation is defined at pubsubclient
+     
+    gothroughFolderRegister(d, argv[1]);
 
 #ifdef TIME
-    //send publish api and record time 
+    //send publish api and record time
     struct timespec start;
     clock_gettime(CLOCK_MONOTONIC, &start);
-    printf("start sec:(%ld), start nsec:(%ld)\n",start.tv_sec,start.tv_nsec);
+    printf("start sec:(%ld), start nsec:(%ld)\n", start.tv_sec, start.tv_nsec);
     pthread_t id;
     pthread_create(&id, NULL, tempStartOperator, NULL);
 #endif
@@ -199,7 +212,6 @@ int main(int argc, char **argv)
                     printf("trigure file path %s\n", taskPath);
                     if (eventType == modified)
                     {
-
                         //create the task manager by file name
                         //load the tm json file
                         printf("test modified\n");
@@ -207,7 +219,7 @@ int main(int argc, char **argv)
                         jsonbuffer = loadFile(taskPath);
                         //there will be some weird characters at the end of file leading to the parsing fail some times
                         printf("json buffer\n%s\n", jsonbuffer);
-                        jsonParsingTrigger(d,jsonbuffer);
+                        jsonParsingTrigger(d, jsonbuffer);
                         //jsonParsingTrigger(jsonbuffer);
                     }
                     else if (eventType == deleted)

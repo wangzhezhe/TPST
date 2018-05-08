@@ -26,6 +26,7 @@
 #include "pubsub.h"
 #include "unistd.h"
 #include <mutex>
+#include "../utils/getip/getip.h"
 
 #ifdef BAZEL_BUILD
 #else
@@ -79,23 +80,24 @@ class GreeterServiceImpl final : public Greeter::Service
     //reply->set_returnmessage(prefix + request->pubsubmessage());
 
     //parse the request events
-    int size=request->pubsubmessage_size();
-    printf("server get (%d) subscribed events\n",size);
-    int i=0;
+    int size = request->pubsubmessage_size();
+    printf("server get (%d) subscribed events\n", size);
+    int i = 0;
     vector<string> eventList;
     string eventStr;
-    for(i=0;i<size;i++){
-      eventStr=request->pubsubmessage(i);
-      printf("get events (%s)\n",eventStr.data());
+    for (i = 0; i < size; i++)
+    {
+      eventStr = request->pubsubmessage(i);
+      printf("get events (%s)\n", eventStr.data());
       eventList.push_back(eventStr);
       //todo parse trigure number
-      int trinum=1;
-      addNewEvent(eventStr,trinum);
+      int trinum = 1;
+      addNewEvent(eventStr, trinum);
     }
 
     pubsubSubscribe(eventList, clientId);
 
-    printf("clientid (%s) call subscribe func, waiting to be notified\n",clientId.data());
+    printf("clientid (%s) call subscribe func, waiting to be notified\n", clientId.data());
 
     //request should be a event list
 
@@ -113,6 +115,10 @@ class GreeterServiceImpl final : public Greeter::Service
       {
         break;
       }
+
+      //set timestep
+      int timestep =1;
+      sleep(timestep);
     }
     //generate uid on server end
 
@@ -126,28 +132,48 @@ class GreeterServiceImpl final : public Greeter::Service
   Status Publish(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
   {
 
-     //parse the request events
-    int size=request->pubsubmessage_size();
-    printf("server get (%d) published events\n",size);
-    int i=0;
+    //parse the request events
+    int size = request->pubsubmessage_size();
+    printf("server get (%d) published events\n", size);
+    int i = 0;
     vector<string> eventList;
     string eventStr;
-    for(i=0;i<size;i++){
-      eventStr=request->pubsubmessage(i);
-      printf("server publish event (%s)\n",eventStr.data());  
+    for (i = 0; i < size; i++)
+    {
+      eventStr = request->pubsubmessage(i);
+      printf("server publish event (%s)\n", eventStr.data());
       eventList.push_back(eventStr);
     }
-      //publish
-      pubsubPublish(eventList);
-      reply->set_returnmessage("OK");
-      return Status::OK;
+    //publish
+    pubsubPublish(eventList);
+    reply->set_returnmessage("OK");
+    return Status::OK;
   }
-
 };
 
 void RunServer()
 {
-  std::string server_address("0.0.0.0:50051");
+
+  string serverPort = string("50051");
+  string ip;
+  recordIPPort(ip,serverPort);
+  //get the server ip from the config file
+  /*
+  string ipconfigfilepath = string("./ipconfig");
+
+  //load the file
+  string ip;
+  string port;
+  int r = loadIPPort(ipconfigfilepath, ip, port);
+  if (r == 1)
+  {
+    printf("failed to open the ip port config file (%s)\n", ipconfigfilepath.data());
+  }
+  */
+
+  string socketAddr = ip + ":" + serverPort;
+
+  std::string server_address(socketAddr);
   GreeterServiceImpl service;
 
   ServerBuilder builder;

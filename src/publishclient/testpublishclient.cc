@@ -39,125 +39,19 @@ using workflowserver::PubSubReply;
 using workflowserver::PubSubRequest;
 using namespace std;
 
-/*
-class GreeterClient
-{
-  public:
-    GreeterClient(std::shared_ptr<Channel> channel)
-        : stub_(Greeter::NewStub(channel)) {}
-
-    // Assembles the client's payload, sends it and presents the response back
-    // from the server.
-    string SayHello(const string &user)
-    {
-        // Data we are sending to the server.
-        HelloRequest request;
-        request.set_name(user);
-
-        // Container for the data we expect from the server.
-        HelloReply reply;
-
-        // Context for the client. It could be used to convey extra information to
-        // the server and/or tweak certain RPC behaviors.
-        ClientContext context;
-
-        // The actual RPC.
-        Status status = stub_->SayHello(&context, request, &reply);
-
-        // Act upon its status.
-        if (status.ok())
-        {
-            return reply.message();
-        }
-        else
-        {
-            cout << status.error_code() << ": " << status.error_message()
-                 << endl;
-            return "RPC failed";
-        }
-    }
-
-    string Subscribe(vector<string> eventList)
-    {
-
-        // Container for the data we expect from the server.
-        PubSubRequest request;
-        PubSubReply reply;
-        int size = eventList.size();
-        int i = 0;
-        for (i = 0; i < size; i++)
-        {
-            //attention the use here, the request could be transfered into a specific type with specific function
-            request.add_pubsubmessage(eventList[i]);
-        }
-
-        // Context for the client. It could be used to convey extra information to
-        // the server and/or tweak certain RPC behaviors.
-        ClientContext context;
-
-        // The actual RPC.
-        Status status = stub_->Subscribe(&context, request, &reply);
-
-        // Act upon its status.
-        if (status.ok())
-        {
-            return reply.returnmessage();
-        }
-        else
-        {
-            cout << status.error_code() << ": " << status.error_message()
-                 << endl;
-            return "RPC failed";
-        }
-    }
-
-    string Publish(vector<string> eventList)
-    {
-        // Container for the data we expect from the server.
-        PubSubRequest request;
-        PubSubReply reply;
-        int size = eventList.size();
-        int i = 0;
-        for (i = 0; i < size; i++)
-        {
-            //attention the use here, the request could be transfered into a specific type with specific function
-            request.add_pubsubmessage(eventList[i]);
-        }
-
-        // Context for the client. It could be used to convey extra information to
-        // the server and/or tweak certain RPC behaviors.
-        ClientContext context;
-
-        // The actual RPC.
-        Status status = stub_->Publish(&context, request, &reply);
-
-        // Act upon its status.
-        if (status.ok())
-        {
-            return reply.returnmessage();
-        }
-        else
-        {
-            cout << status.error_code() << ": " << status.error_message()
-                 << endl;
-            return "RPC failed";
-        }
-    }
-
-  private:
-    unique_ptr<Greeter::Stub> stub_;
-};
-
-*/
-
 void *PublishOperation(void *ptr)
 {
     sleep(5);
     printf("new thread push event\n");
     vector<string> publisheventList;
     publisheventList.push_back("event1");
-
-    string reply = greeter.Publish(publisheventList);
+    GreeterClient *greeter = GreeterClient::getClient();
+    if (greeter == NULL)
+    {
+        printf("failed to get initialised greeter\n");
+        return NULL;
+    }
+    string reply = greeter->Publish(publisheventList);
     cout << "Publish return value: " << reply << endl;
 }
 
@@ -169,7 +63,15 @@ int main(int argc, char **argv)
     // (use of InsecureChannelCredentials()).
 
     string user("world");
-    string reply = greeter.SayHello(user);
+
+    //get greeter
+    GreeterClient *greeter = GreeterClient::getClient();
+    if (greeter == NULL)
+    {
+        printf("failed to get initialised greeter\n");
+        return 0;
+    }
+    string reply = greeter->SayHello(user);
     cout << "Greeter received: " << reply << endl;
 
     pthread_t id;
@@ -188,8 +90,8 @@ int main(int argc, char **argv)
         tpf->set_pubsubmessage(i,eventList[i]);
     }
     */
-
-    reply = greeter.Subscribe(subeventList);
+    //intiSocketAddr();
+    reply = greeter->Subscribe(subeventList);
     cout << "Subscribe return value: " << reply << endl;
 
     //start a new thread to do the push operation

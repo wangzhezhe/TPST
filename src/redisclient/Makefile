@@ -4,8 +4,8 @@ TARGETS = test
 
 all: $(TARGETS)
 
-redisclient.o: redisclient.c
-	$(CC) -c $(CPPFLAGS) ./redisclient.c 
+#redisclient.o: redisclient.c
+#	$(CC) -c $(CPPFLAGS) ./redisclient.c 
 
 test.o: test.c
 	$(CC) -c $(CPPFLAGS) ./test.c
@@ -13,10 +13,11 @@ test.o: test.c
 slurm.o: ../runtime/slurm.c
 	$(CC) -c $(CPPFLAGS) ../runtime/slurm.c
 
-test: test.o redisclient.o slurm.o
-	$(CC) $(CPPFLAGS) ./test.o ./redisclient.o ./slurm.o ../../deps/hiredis/*.o -lpthread -o test
+test: test.o slurm.o
+	$(CC) $(CPPFLAGS) ./test.o ./slurm.o ../../deps/hiredis/*.o -lpthread -o test
 
 clean:
-	rm test.o
+	rm *.o
 	rm test 
+	
 	

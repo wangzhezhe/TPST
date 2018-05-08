@@ -28,6 +28,7 @@
 
 #include "workflowserver.grpc.pb.h"
 #include "pubsubclient.h"
+#include "../utils/getip/getip.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -37,10 +38,34 @@ using workflowserver::HelloReply;
 using workflowserver::HelloRequest;
 using workflowserver::PubSubReply;
 using workflowserver::PubSubRequest;
+
 using namespace std;
 
-GreeterClient greeter(grpc::CreateChannel(
-    "0.0.0.0:50051", grpc::InsecureChannelCredentials()));
+// this should be loaded from the ./ipconfig
+
+//string socketaddr=string("10.211.55.5:50051");
+//GreeterClient greeter = (grpc::CreateChannel(
+//        socketaddr.data(), grpc::InsecureChannelCredentials()));
+
+GreeterClient *GreeterClient::getClient()
+{
+
+    string ip;
+    string port;
+    string ipconfigfilepath = string("/home/parallels/Documents/cworkspace/observerchain/src/server/ipconfig");
+    int r = loadIPPort(ipconfigfilepath, ip, port);
+    if (r == 1)
+    {
+        printf("failed to open the ip port config file (%s)\n", ipconfigfilepath.data());
+        return NULL;
+    }
+    string socketaddr = ip + ":" + port;
+    printf("server socket addr %s\n", socketaddr.data());
+    //singleton mode
+    static GreeterClient *singleClient = new GreeterClient(grpc::CreateChannel(
+        socketaddr.data(), grpc::InsecureChannelCredentials()));
+    return singleClient;
+}
 
 // Assembles the client's payload, sends it and presents the response back
 // from the server.
@@ -85,6 +110,7 @@ string GreeterClient::Subscribe(vector<string> eventList)
     {
         //attention the use here, the request could be transfered into a specific type with specific function
         request.add_pubsubmessage(eventList[i]);
+        //printf("subscribe %s\n",eventList[i].data());
     }
 
     // Context for the client. It could be used to convey extra information to

@@ -9,6 +9,7 @@
 #include <string>
 
 using namespace rapidjson;
+using namespace std;
 
 /*
 typedef struct EventTriggure

@@ -36,8 +36,6 @@ void addNewEvent(string str, int num)
     strtoEvent[str] = pse;
 }
 
-
-
 void pubsubSubscribe(vector<string> eventList, string clientId)
 {
 
