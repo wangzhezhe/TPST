@@ -36,7 +36,7 @@ typedef struct pubsubWrapper{
 
 
 
-extern map<string, pubsubEvent *> strtoEvent;
+extern map<string, map<int, bool>> strtoEvent;
 
 //client id to pubsubWrapper(value is real element with memory) from clientid to clientStructure
 
@@ -60,5 +60,7 @@ void addNewClient(string clientid);
 void addNewEvent(string str, int num);
 
 void output();
+
+void ParseEvent(string fullEvent, string & eventMessage, int & num);
 
 #endif

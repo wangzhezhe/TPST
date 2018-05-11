@@ -2,18 +2,16 @@
 
 change grreter into dynamic way (load ip itself)
 
-make it run on caliburn/titan
+make it run on caliburn (source ~/.grpc before compilling)
 
-integrate pub sub rpc to eventnotify
-
-fix eventnotify build
+workflow server subscribe parameter times, should be loaded by request
 
 [depedencies]:
 protobuf
 (https://blog.jeffli.me/blog/2016/12/08/install-protocol-buffer-from-source-in-centos-7/)
 https://blog.csdn.net/Programmer_H/article/details/8890800
 
-grpc
+grpc(for protobuf of grpc, use inner version of grpc by 3.4.0)
 
 add the directory containing `grpc.pc'
 to the PKG_CONFIG_PATH environment variable

@@ -42,9 +42,9 @@ enum EVENTTYPE
     deleted
 };
 
-//char projectPath[50] = "/home1/zw241/observerchain/tests";
+char projectPath[100] = "/home1/zw241/observerchain/tests";
 //char tmDir[50] = "TaskManagerFiles";
-char projectPath[100] = "/home/parallels/Documents/cworkspace/observerchain/tests";
+//char projectPath[100] = "/home/parallels/Documents/cworkspace/observerchain/tests";
 char tmDir[50] = "TrigureFiles";
 
 //go through the Trigurefile folder and register the .json file with type=trigure into the system
@@ -84,8 +84,8 @@ void gothroughFolderRegister(Document &d, const char *dir)
 
 void *tempStartOperator(void *arg)
 {
-    //system("/home1/zw241/observerchain/src/operator/operator");
-    system("/home/parallels/Documents/cworkspace/observerchain/src/operator");
+    system("/home1/zw241/observerchain/src/operator/operator");
+    //system("/home/parallels/Documents/cworkspace/observerchain/src/operator");
     return NULL;
 }
 

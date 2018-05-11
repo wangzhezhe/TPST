@@ -78,10 +78,19 @@ void testMultisubOnePush()
     output();
 }
 
+void testSplit(){
+    string fullevent=string("event1:1");
+    string eventMessage;
+    int pushNum;
+    ParseEvent(fullevent,eventMessage,pushNum);
+    printf("event message is (%s) push num is (%d)\n",eventMessage.data(),pushNum);
+}
 
 
 int main()
 {
+
+    /*
     printf("---------------test for sub-------------------\n");
     vector<string> eventList;
     eventList.push_back("ea");
@@ -124,4 +133,7 @@ int main()
     testMultisubOnePush();
 
     printf("------testMultiThreadOperation?------\n");
+    */
+
+    testSplit();
 }

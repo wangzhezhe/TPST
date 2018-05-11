@@ -17,16 +17,17 @@
 HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
 CXX = g++
-CPPFLAGS += `pkg-config --cflags protobuf grpc`
-CXXFLAGS += -std=c++11
+CPPFLAGS += `pkg-config --cflags protobuf grpc` -I/home1/zw241/Software/grpc/third_party/protobuf/src
+CXXFLAGS += -std=c++11 
+#CXXFLAGS += -std=c++11 -I../deps/  -I../deps/hiredis/ -DDEBUG
 ifeq ($(SYSTEM),Darwin)
-LDFLAGS += -L/usr/local/lib `pkg-config --libs protobuf grpc++ grpc`\
+LDFLAGS += -L/usr/local/lib -L/home1/zw241/Software/protoinstall/lib -L/home1/zw241/Software/grpc/libs/opt/protobuf -L/home1/zw241/Software/grpcinstall/lib `pkg-config --libs protobuf grpc++ grpc`\
            -lgrpc++_reflection\
-           -ldl
+           -ldl -lpthread -lgpr
 else
-LDFLAGS += -L/usr/local/lib `pkg-config --libs protobuf grpc++ grpc`\
+LDFLAGS += -L/usr/local/lib -L/home1/zw241/Software/protoinstall/lib -L/home1/zw241/Software/grpc/libs/opt/protobuf -L/home1/zw241/Software/grpcinstall/lib `pkg-config --libs protobuf grpc++ grpc`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
-           -ldl -luuid 
+           -ldl -lpthread -lgpr -luuid
 endif
 PROTOC = protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
@@ -38,13 +39,16 @@ vpath %.proto $(PROTOS_PATH)
 
 all: workflowserver
 
+split.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o split.o ../utils/split/split.cc
+
 getip.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o getip.o ../utils/getip/getip.cpp
 
 pubsub.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o pubsub.o pubsub.cc
 
-workflowserver: workflowserver.pb.o workflowserver.grpc.pb.o workflowserver.o pubsub.o getip.o
+workflowserver: workflowserver.pb.o workflowserver.grpc.pb.o workflowserver.o pubsub.o getip.o split.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc
