@@ -123,12 +123,12 @@
 % *** GRAPHICS RELATED PACKAGES ***
 %
 \ifCLASSINFOpdf
-  % \usepackage[pdftex]{graphicx}
+   \usepackage[pdftex]{graphicx}
   % declare the path(s) where your graphic files are
-  % \graphicspath{{../pdf/}{../jpeg/}}
+  \graphicspath{{../pdf/}{../jpeg/}}
   % and their extensions so you won't have to specify these with
   % every instance of \includegraphics
-  % \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
+   \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
 \else
   % or other class option (dvipsone, dvipdf, if not using dvips). graphicx
   % will default to the driver specified in the system graphics.cfg if no
@@ -189,7 +189,7 @@
 
 % *** SPECIALIZED LIST PACKAGES ***
 %
-%\usepackage{algorithmic}
+\usepackage{algorithm,algorithmic}
 % algorithmic.sty was written by Peter Williams and Rogerio Brito.
 % This package provides an algorithmic environment fo describing algorithms.
 % You can use the algorithmic environment in-text or within a figure
@@ -321,7 +321,7 @@
 
 % *** PDF, URL AND HYPERLINK PACKAGES ***
 %
-%\usepackage{url}
+\usepackage{url}
 % url.sty was written by Donald Arseneau. It provides better support for
 % handling and breaking URLs. url.sty is already installed on most LaTeX
 % systems. The latest version can be obtained at:
@@ -342,12 +342,11 @@
 % correct bad hyphenation here
 \hyphenation{op-tical net-works semi-conduc-tor}
 
-
 \begin{document}
 %
 % paper title
 % can use linebreaks \\ within to get better formatting as desired
-\title{A Dynamic Event Driven in-situ Framework for Customizing Scientific Workflow}
+\title{A Dynamic Event Driven Method for Customizing Scientific Workflow}
 
 
 % author names and affiliations
@@ -423,113 +422,15 @@ component; formatting; style; styling;
 % creates the second title. It will be ignored for other modes.
 \IEEEpeerreviewmaketitle
 
+\input{introduction}
 
+\input{background}
 
-\section{Introduction}
+\input{implementation}
 
-[scientific applications and it's workflow]
+\input{relatedwork}
 
-
-Workflow is a broad and general concept to compose tasks for different area, the scientific workflow tools aims to support the execution of scientific applications. scientific workflow is constructed according to the characteristics of those applications. Scientific applications mainly includes tasks such as scientific simulations, analysis and visualization etc, one character is the large data exchange between those applications. In-situ workflow could be composed by exchanging those intermediate data by memory/storage hierarchy and network of a high-performace computig (HPC) \cite{deelman2018future}. There are different dimentions to classify the workflow: 
-
-
-[the classification of scientific workflows, different dimension for classification, general description about the background of the question we want to solve]
-
-According to the technical stack of the workflow software, we could divide it into workflow management system (WMS) into workflow expression model and workflow execution engine.
-
-Workflow expression model: user need a flexible abstraction and model to describe the workflow and provide the hint information to define every tasks in the workflow and manage the control flow of the workflow execution. Those expression model need formulate what tasks to run, how to run the tasks and when to run the tasks. DAG is a high level abstraction to express this model. Every node in the DAG represent the task, and every edge represent the dependency and execution sequence between these tasks in general, different workflow management tool provide more specific description including DSL programing language ,GUI, or configuration files to define the workflow base on DAG graph.
-
-Workflow execution engine: workflow exist in abstraction level before execution. workflow engine need to map this model into the physical resources. Normally, there is another software layer between the workflow engine and the physical resources，This software layer is in charge of assigning resource allocation and providing suitable runtime or middleware to support the tasks. The workflow execution engine aims to call the API provided by resource management tool to satisfy the requirements of from expression model. And the recourse management tool will in charge of the resource allocation and scheduler.
-
-According to the communicator between tasks, the workflow could be divided into integrated workflow and connected workflow.\cite{dreher2017situ}. Integrated workflow run all tasks in one MPI program and Connected workflow coordinate tasks separated into different programs not sharing common communicator. One advantage for connected workflow is monitoring and customizing the workflow in dynamic way based one the property of decoupling. The design of task coupling and data movement between task is important area for workflow to compose those tasks. The key factor behind this is the scalable and robust control for the data flow and the portable migration of heterogeneous data models across tasks\cite{deelman2018future}, But current workflow tool such as Swift(integrated workflow) or Decaf(connected workflow) can describe the predefined data dependency between tasks and lack the mechanism to modify the depedency in runnign time. Argo GlobalOS \cite{perarnau2015distributed}\cite{dreher2017situ} provide a in-situ infrastructure to register callbacks on resource event aims to support dynamicity of workflow. The workflow could react according to different events created in the running time of the tasks.But they only provide the proposal without implementation details for this time. We discuss the challenge behind this dynamicity property and provide a solution to leverage this ability in scientific workflow.
-
-Edge of DAG between tasks in workflow abstraction represent the dependency between task, According to the method to establish the dependency, the workflow could be divided in control-driven workflows and data-driven workflows\cite{shields2007control}. Data driven is constructed based on the data dependency between two tasks, namely the output of first task is the input for second task. Compare with the control-driven flow (Task A must run after Task B), the data driven flow provide a view to describe the task dependency in much finer granularity way.
-
-[challenge of scientifc workflow for data driven dependency]
-
-The construction of the dependency could be divided into three steps:
-
-1.Define a channel which is used to send data between two tasks, there could be different backend for channel implementation such as the distribute memroy, disk or rpc, but they should follow the same high level behaviours.
-
-2.Associate data with channel, the producer of the data should define what data should be sent into the channel and when the data should be sent into channel.
-
-3.Start to transfer the data, the data sending behavior should be defined by the user and we should define a mechanism to let user decide when the data start to transfer. The info to help the user make decision come from two part, the first is the domain knowledge of user such as the threshold for specific variable and the second is the data created by the simulation.
-
-Some project have already provide the solution for those dependency construction such as Decaf \cite{dreher2017decaf} and Argo\cite{perarnau2015distributed}. Decaf could help use create communication channel though MPI or CCI, but the callback function should be defined before workflow running. We leverage the dynamicity of the connected workflow based on the pub-sub architecture and let user to define and switch when the data start to be transfer in communication channel, for example, we data in communication channel satisfied some condition, the data could be transferred and accepted by data consumer. One advantage is that this mechanism decrease the burden to define all kinds of callback function in source code of running application and user could modify the dependency condition of the workflow during its running time with minimum intervention of the application source code.
-
-[our solution and main contribution]
-
-There are several for communication between pub-sub system based on space, time synchronization. We leverage these advantages by using it to express data dependency between workflow tasks. In this paper, we mainly make the following contributions:(planned)
-
-1.Provide the expression model to let user define how to create data dependency and when start data transferring.
-
-2.Provide the mechanism to let user control the transferring of data dependency, the user-defined operation could be modified without stopping the workflow.
-
-3.Validate the effectiveness of workflow tools in different use scenarios.
-
-
-
-
-The rest paper is organized as follows, Section \uppercase\expandafter{\romannumeral2} introduce the background and the motivations for event-driven workflow, Section \uppercase\expandafter{\romannumeral3} introduce the design thoughts of the framework. Section \uppercase\expandafter{\romannumeral4} provide the details for implementation. Section \uppercase\expandafter{\romannumeral5} presents the experiments to show the performance of the framework. Section \uppercase\expandafter{\romannumeral6} introduce the conclusion and the future work of the paper.
-
-
-
-
-
-\section{Background}
-background contents
-
-\section{System Archetecture}
-
-\section{Implementation}
-The design and implementation details are presented in this section.
-\subsection{Dynamic Task Manager of Event Workflow}
-The typical event driven mechanism works based on the observe pattern, the subject component will maintain a list of observer component, if the state of the subject component changed, the notify function will send to the associated observer components. We define and optimize our task manage based on this observe pattern, specifically, every task manager could be the subject and object component at the same time, different task could compose a workflow chain and even be organized into more complex workflow. Every task manager could be create/updated/deleted dynamically during the process of the system running. User could create/update/deleted the description file of the task manager and the instance of the task manager will be changed correspondingly.
-
-
-Three abstraction: TaskManager, Communicator, Operator.
-
-\subsection{Event messages monitoring}
-\subsection{Event actions aggregation and matching}
-\subsection{Event message generating}
-
-\section{Experiment and Evaluation}
-
-\subsection{Evaluate design at Scale}
-Subsection text here.
-
-\subsection{Evaluate canonical work flow pattern, comparing with traditional work}
-Subsection text here.
-
-\subsection{Evaluate real world application}
-Subsection text here.
-
-
-\section{Related Work}
-
-\textbf{Pub-Sub-Notify model in HPC application:}
-The event based architecture has advantages in decouple for the aspects of time, space and synchronization\cite{eugster2003many}. Those advantages are reflected in cloud computing area and new service type such as FaaS (Function as a Service)\cite{fox2017status}. There are also all kinds of implementation in research and industry using event message broker based on those pub-sub-notify architecture\cite{hivemq,jin2012scalable}. However, these works did not fully use the properties of event driven architecture in terms of dynamical event matching and using event message to connect and trigger tasks in workflow dynamically. 
-
-
-\textbf{Workflow Execution Framework for HPC application:}
-There are two properties for the applications in dynamic workflow: the type of data intensive and the dependency between the multi-steps in workflow. There are all kinds of workflow manage tools and programming models aiming to simplify the abstraction of workflow during programming, such as Swift\cite{wilde2011swift} and Decaf \cite{dreher2017decaf} . For these types of systems and programming models, the developer should grasp the execution topology of the workflow in advance and excute the workflow by submitting the description file of task execution topology to the workflow engine. Even though those methods could cover lots of use contexts, but one drawback is the lack of data dynamics. One similar work Meteor\cite{jiang2008meteor} providing a content-based event driven decouple infrastructure based on p2p network which shows the flexibility for the dynamic programming event matching and client actions triggering. 
-
-\textbf{Workflow Control Pattern:}
-The Canonical workflow pattens are summarized in different contexts\cite{russell2006workflow} , for the HPC applications, the complex workflow could be constructed on several major patterns\cite{bharathi2008characterization}. The content-based event driven architecture could support those pattern and make some of them more efficient and dynamic in execution(supplement further)
-
-\textbf{Runtime of Workflow Execution in HPC:}
-There are all kinds of runtime frameworks including Charm++, Legion, OCR, Uintah can help researcher to express the application into AMT(asynchronised many task) model. The comparison including the prons and cons are also discussed in quantity.\cite{wilke2015asynchronousa,wilke2015asynchronousb},The applications and workflow can be programmed in sequential way and executed asynchronised by the scheduler provided by those runtime system, several parallel programming model even programming languages are further explored based on those runtime tools and AMT model.\cite{pebay2016towards,acun2014parallel,insituvisual}. Some works \cite{sun2016staging} are focusing on how to optimize the scheduler strategies to improve the running efficiency of in-situ workflow(supplement further), 
-
-
-\section{Conclusion and Future Work}
-
-
-% use section* for acknowledgement
-\section*{Acknowledgment}
-
-
-The authors would like to thank...
-more thanks here
+\input{conclution_futurework}
 
 
 % trigger a \newpage just before the given reference

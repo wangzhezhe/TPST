@@ -1,0 +1,51 @@
+This is BibTeX, Version 0.99d (TeX Live 2017)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: main.aux
+The style file: plain.bst
+Database file #1: reference.bib
+Warning--I didn't find a database entry for "todo"
+Warning--to sort, need author or key in slurmtrigure
+Warning--to sort, need author or key in hivemq
+Warning--to sort, need author or key in insituvisual
+You've used 21 entries,
+            2118 wiz_defined-function locations,
+            609 strings with 8920 characters,
+and the built_in function-call counts, 9607 in all, are:
+= -- 931
+> -- 626
+< -- 10
++ -- 254
+- -- 228
+* -- 701
+:= -- 1544
+add.period$ -- 70
+call.type$ -- 21
+change.case$ -- 176
+chr.to.int$ -- 0
+cite$ -- 24
+duplicate$ -- 330
+empty$ -- 614
+format.name$ -- 228
+if$ -- 2031
+int.to.chr$ -- 0
+int.to.str$ -- 21
+missing$ -- 14
+newline$ -- 107
+num.names$ -- 36
+pop$ -- 212
+preamble$ -- 1
+purify$ -- 152
+quote$ -- 0
+skip$ -- 269
+stack$ -- 0
+substring$ -- 461
+swap$ -- 125
+text.length$ -- 10
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 84
+warning$ -- 3
+while$ -- 70
+width$ -- 23
+write$ -- 231
+(There were 4 warnings)
