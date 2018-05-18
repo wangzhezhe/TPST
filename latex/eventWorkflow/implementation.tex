@@ -3,6 +3,16 @@
 \section{Implementation}
 We introduce the architecture of event based workflow system and then discussed the details for every component. Figure 3 shows the architecture of  event driven workflow and it's work procedure.
 
+\begin{figure} 
+\centering
+\includegraphics[width=.8\linewidth]{./figure/edflowarchitecture.jpg}
+\caption{event driven workflow framework archetecture}
+ \label{fg:state}
+\end{figure} 
+
+
+The user view and the workflow frame view are shown in Figure 3,  User need to provide the initial configuration file which define the path of the job script and the event  that every task interested, those events will be subscribed into the event store. Operator is the in-situ part integrated into the simulation code which is used to send subscribe and publish request during simulation running.   When specific events is published , the subscribe end will be notified and the job scripts will be started by task runtime. We will introduce the key component for the following parts. 
+
 
 \subsection{Optimised Pub-Sub Backend}
 

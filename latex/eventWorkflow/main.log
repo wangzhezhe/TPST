@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2018.4.4)  16 MAY 2018 15:45
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2018.4.4)  17 MAY 2018 23:02
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -290,17 +290,24 @@ File: ./figure/edtaskpattern.jpg Graphic file (type jpg)
 <use ./figure/edtaskpattern.jpg>
 Package pdftex.def Info: ./figure/edtaskpattern.jpg used on input line 25.
 (pdftex.def)             Requested size: 404.71353pt x 103.14005pt.
-) [2] (./implementation.tex [3 <./figure/taskpattern.jpg> <./figure/edtaskpatte
-rn.jpg>]
+) [2] (./implementation.tex
+<./figure/edflowarchitecture.jpg, id=16, 654.445pt x 357.335pt>
+File: ./figure/edflowarchitecture.jpg Graphic file (type jpg)
 
-LaTeX Warning: Citation `todo' on page 4 undefined on input line 89.
+<use ./figure/edflowarchitecture.jpg>
+Package pdftex.def Info: ./figure/edflowarchitecture.jpg used on input line 8.
+(pdftex.def)             Requested size: 195.12975pt x 106.54156pt.
+ [3 <./figure/taskpattern.jpg> <./figure/edtaskpattern.jpg> <./figure/edflowarc
+hitecture.jpg>]
 
-) (./relatedwork.tex) (./conclution_futurework.tex) (./main.bbl
+LaTeX Warning: Citation `todo' on page 4 undefined on input line 96.
+
+) (./relatedwork.tex) (./conclution_futurework.tex [4]) (./main.bbl
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <9> on input line 5.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <6> on input line 5.
- [4]
+
 Underfull \hbox (badness 2781) in paragraph at lines 68--72
 \OT1/ptm/m/n/9 repos-i-tory.  $https : / / github . com / cooperative-[]computi
 ng-[]lab /
@@ -311,7 +318,7 @@ Underfull \hbox (badness 1603) in paragraph at lines 104--109
 []\OT1/ptm/m/n/9 Nick Rus-sell, Arthur HM Ter Hof-st-ede, Wil MP Van
  []
 
-)
+[5])
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -323,7 +330,9 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[5] (./main.aux)
+[6
+
+] (./main.aux)
 
 LaTeX Warning: There were undefined references.
 
@@ -332,10 +341,10 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 2589 strings out of 492995
- 40385 string characters out of 6132705
- 107644 words of memory out of 5000000
- 6100 multiletter control sequences out of 15000+600000
+ 2594 strings out of 492995
+ 40550 string characters out of 6132705
+ 108644 words of memory out of 5000000
+ 6104 multiletter control sequences out of 15000+600000
  37621 words of font info for 71 fonts, out of 8000000 for 9000
  1144 hyphenation exceptions out of 8191
  39i,8n,25p,1624b,463s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -345,10 +354,10 @@ xlive/2017/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2017
 /texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texlive/2017/texmf-di
 st/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2017/texmf-dist/fonts/t
 ype1/urw/times/utmri8a.pfb>
-Output written on main.pdf (5 pages, 127360 bytes).
+Output written on main.pdf (6 pages, 167335 bytes).
 PDF statistics:
- 43 PDF objects out of 1000 (max. 8388607)
- 28 compressed objects within 1 object stream
+ 47 PDF objects out of 1000 (max. 8388607)
+ 30 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 11 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 16 words of extra memory for PDF output out of 10000 (max. 10000000)
 
