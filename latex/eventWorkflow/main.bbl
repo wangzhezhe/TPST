@@ -1,9 +1,5 @@
 \begin{thebibliography}{10}
 
-\bibitem{slurmtrigure}
-Makeflow examples repository.
-\newblock \url{https://slurm.schedmd.com/strigger.html}.
-
 \bibitem{hivemq}
 A unified data-driven approach for programming in situ analysis and
   visualization.
@@ -11,19 +7,43 @@ A unified data-driven approach for programming in situ analysis and
   \url{https://www.hivemq.com/blog/mqtt-essentials-part2-publish-subscribe}.
 \newblock 2015.
 
-\bibitem{insituvisual}
-A unified data-driven approach for programming in situ analysis and
-  visualization.
-\newblock \url{https://extremescaleresearch.labworks.org/quad-charts}.
-\newblock 2015.
+\bibitem{redispubsub}
+redispubsub.
+\newblock \url{https://redis.io/topics/pubsub}, 2017.
 
-\bibitem{acun2014parallel}
-Bilge Acun, Abhishek Gupta, Nikhil Jain, Akhil Langer, Harshitha Menon, Eric
-  Mikida, Xiang Ni, Michael Robson, Yanhua Sun, Ehsan Totoni, et~al.
-\newblock Parallel programming with migratable objects: Charm++ in practice.
-\newblock In {\em Proceedings of the International Conference for High
-  Performance Computing, Networking, Storage and Analysis}, pages 647--658.
-  IEEE Press, 2014.
+\bibitem{albrecht2012makeflow}
+Michael Albrecht, Patrick Donnelly, Peter Bui, and Douglas Thain.
+\newblock Makeflow: A portable abstraction for data intensive computing on
+  clusters, clouds, and grids.
+\newblock In {\em Proceedings of the 1st ACM SIGMOD Workshop on Scalable
+  Workflow Execution Engines and Technologies}, page~1. ACM, 2012.
+
+\bibitem{ayachit2015paraview}
+Utkarsh Ayachit, Andrew Bauer, Berk Geveci, Patrick O'Leary, Kenneth Moreland,
+  Nathan Fabian, and Jeffrey Mauldin.
+\newblock Paraview catalyst: Enabling in situ data analysis and visualization.
+\newblock In {\em Proceedings of the First Workshop on In Situ Infrastructures
+  for Enabling Extreme-Scale Analysis and Visualization}, pages 25--29. ACM,
+  2015.
+
+\bibitem{bauer2016situ}
+Andrew~C Bauer, Hasan Abbasi, James Ahrens, Hank Childs, Berk Geveci, Scott
+  Klasky, Kenneth Moreland, Patrick O'Leary, Venkatram Vishwanath, Brad
+  Whitlock, et~al.
+\newblock In situ methods, infrastructures, and applications on high
+  performance computing platforms.
+\newblock In {\em Computer Graphics Forum}, volume~35, pages 577--597. Wiley
+  Online Library, 2016.
+
+\bibitem{bennett2012combining}
+Janine~C Bennett, Hasan Abbasi, Peer-Timo Bremer, Ray Grout, Attila Gyulassy,
+  Tong Jin, Scott Klasky, Hemanth Kolla, Manish Parashar, Valerio Pascucci,
+  et~al.
+\newblock Combining in-situ and in-transit processing to enable extreme-scale
+  scientific analysis.
+\newblock In {\em Proceedings of the International Conference on High
+  Performance Computing, Networking, Storage and Analysis}, page~49. IEEE
+  Computer Society Press, 2012.
 
 \bibitem{bharathi2008characterization}
 Shishir Bharathi, Ann Chervenak, Ewa Deelman, Gaurang Mehta, Mei-Hui Su, and
@@ -32,13 +52,17 @@ Shishir Bharathi, Ann Chervenak, Ewa Deelman, Gaurang Mehta, Mei-Hui Su, and
 \newblock In {\em Workflows in Support of Large-Scale Science, 2008. WORKS
   2008. Third Workshop on}, pages 1--10. IEEE, 2008.
 
-\bibitem{deelman2018future}
-Ewa Deelman, Tom Peterka, Ilkay Altintas, Christopher~D Carothers, Kerstin
-  Kleese~van Dam, Kenneth Moreland, Manish Parashar, Lavanya Ramakrishnan,
-  Michela Taufer, and Jeffrey Vetter.
-\newblock The future of scientific workflows.
-\newblock {\em The International Journal of High Performance Computing
-  Applications}, page 1094342017704893, 2018.
+\bibitem{childs2012situ}
+Hank Childs, Kwan-Liu Ma, Hongfeng Yu, Brad Whitlock, Jeremy Meredith, Jean
+  Favre, Scott Klasky, Norbert Podhorszki, Karsten Schwan, Matthew Wolf, et~al.
+\newblock In situ processing.
+\newblock 2012.
+
+\bibitem{docan2012dataspaces}
+Ciprian Docan, Manish Parashar, and Scott Klasky.
+\newblock Dataspaces: an interaction and coordination framework for coupled
+  simulation workflows.
+\newblock {\em Cluster Computing}, 15(2):163--181, 2012.
 
 \bibitem{dreher2017situ}
 Matthieu Dreher, Swann Perarnau, Tom Peterka, Kamil Iskra, and Pete Beckman.
@@ -58,24 +82,11 @@ Patrick~Th Eugster, Pascal~A Felber, Rachid Guerraoui, and Anne-Marie
 \newblock The many faces of publish/subscribe.
 \newblock {\em ACM computing surveys (CSUR)}, 35(2):114--131, 2003.
 
-\bibitem{fox2017status}
-Geoffrey~C Fox, Vatche Ishakian, Vinod Muthusamy, and Aleksander Slominski.
-\newblock Status of serverless computing and function-as-a-service (faas) in
-  industry and research.
-\newblock {\em arXiv preprint arXiv:1708.08028}, 2017.
-
 \bibitem{makeflowexample}
 Nick Hazekamp and Douglas Thain.
 \newblock Makeflow examples repository.
 \newblock \url{https://github.com/cooperative-computing-lab/makeflow-examples},
   2017.
-
-\bibitem{jiang2008meteor}
-Nanyan Jiang, Andres Quiroz, Cristina Schmidt, and Manish Parashar.
-\newblock Meteor: a middleware infrastructure for content-based decoupled
-  interactions in pervasive grid environments.
-\newblock {\em Concurrency and Computation: Practice and Experience},
-  20(12):1455--1484, 2008.
 
 \bibitem{jin2012scalable}
 Tong Jin, Fan Zhang, Manish Parashar, Scott Klasky, Norbert Podhorszki, and
@@ -85,63 +96,17 @@ Tong Jin, Fan Zhang, Manish Parashar, Scott Klasky, Norbert Podhorszki, and
 \newblock In {\em High Performance Computing (HiPC), 2012 19th International
   Conference on}, pages 1--10. IEEE, 2012.
 
-\bibitem{pebay2016towards}
-Philippe P{\'e}ba{\"y}, Janine~C Bennett, David Hollman, Sean Treichler,
-  Patrick~S McCormick, Christine~M Sweeney, Hemanth Kolla, and Alex Aiken.
-\newblock Towards asynchronous many-task in situ data analysis using legion.
-\newblock In {\em Parallel and Distributed Processing Symposium Workshops, 2016
-  IEEE International}, pages 1033--1037. IEEE, 2016.
-
-\bibitem{perarnau2015distributed}
-Swann Perarnau, Rajeev Thakur, Kamil Iskra, Ken Raffenetti, Franck Cappello,
-  Rinku Gupta, Pete Beckman, Marc Snir, Henry Hoffmann, Martin Schulz, et~al.
-\newblock Distributed monitoring and management of exascale systems in the argo
-  project.
-\newblock In {\em IFIP International Conference on Distributed Applications and
-  Interoperable Systems}, pages 173--178. Springer, 2015.
-
-\bibitem{russell2006workflow}
-Nick Russell, Arthur~HM Ter~Hofstede, Wil~MP Van Der~Aalst, and Nataliya
-  Mulyar.
-\newblock Workflow control-flow patterns: A revised view.
-\newblock {\em BPM Center Report BPM-06-22, BPMcenter. org}, pages 06--22,
-  2006.
-
-\bibitem{shields2007control}
-Matthew Shields.
-\newblock Control-versus data-driven workflows.
-\newblock In {\em Workflows for e-Science}, pages 167--173. Springer, 2007.
-
-\bibitem{sun2016staging}
-Qian Sun, Melissa Romanus, Tong Jin, Hongfeng Yu, Peer-Timo Bremer, Steve
-  Petruzza, Scott Klasky, and Manish Parashar.
-\newblock In-staging data placement for asynchronous coupling of task-based
-  scientific workflows.
-\newblock In {\em Extreme Scale Programming Models and Middlewar (ESPM2),
-  International Workshop on}, pages 2--9. IEEE, 2016.
+\bibitem{oldfield2014evaluation}
+Ron~A Oldfield, Kenneth Moreland, Nathan Fabian, and David Rogers.
+\newblock Evaluation of methods to integrate analysis into a large-scale shock
+  shock physics code.
+\newblock In {\em Proceedings of the 28th ACM international conference on
+  Supercomputing}, pages 83--92. ACM, 2014.
 
 \bibitem{wilde2011swift}
 Michael Wilde, Mihael Hategan, Justin~M Wozniak, Ben Clifford, Daniel~S Katz,
   and Ian Foster.
 \newblock Swift: A language for distributed parallel scripting.
 \newblock {\em Parallel Computing}, 37(9):633--652, 2011.
-
-\bibitem{wilke2015asynchronousa}
-Jeremiah~J Wilke, Matthew~Tyler Bettencourt, Steven~W Bova, Ken Franko, Marc
-  Gamell, Ryan Grant, Simon~David Hammond, David~S Hollman, Samuel Knight,
-  Hemanth Kolla, et~al.
-\newblock Asynchronous many-task programming models for next generation
-  platforms.
-\newblock Technical report, Sandia National Laboratories (SNL-CA), Livermore,
-  CA (United States); Sandia National Laboratories, Albuquerque, NM, 2015.
-
-\bibitem{wilke2015asynchronousb}
-Jeremiah~J Wilke, Matthew~Tyler Bettencourt, Steven~W Bova, Ken Franko, Marc
-  Gamell, Ryan Grant, Simon~David Hammond, David~S Hollman, Samuel Knight,
-  Hemanth Kolla, et~al.
-\newblock Asynchronous many-task programming models for next generation
-  platforms.
-\newblock Technical report, Sandia National Laboratories (SNL-CA), Livermore,
-  CA (United States); Sandia National Laboratories, Albuquerque, NM, 2015.
 
 \end{thebibliography}

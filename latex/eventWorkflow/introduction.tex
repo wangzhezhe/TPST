@@ -1,41 +1,24 @@
 \section{Introduction}
 
-[scientific applications and it's workflow]
+In-situ processing is a solution to solve the gap between the computation and communication performance of HPC infrastructure for several decades\cite{childs2012situ}. Several works are focusing on the in-situ solution and how to make it leverage the scientific application\cite{bauer2016situ,oldfield2014evaluation}. Typical subtypes for simulation-analyzing-visualization application\cite{childs2012situ}: post-processing , co-processing, concurrent processing, Hybrid. There are other dimension to divide the application such as if they are running within same program \cite{dreher2017decaf}. Based on those definitions of the concept of in-situ, in-transit, hybrid scientific application, we clarify properties of every solution by several  essential underlying perspective which are shown in Figure 1, to be more specific:
 
+\begin{figure} 
+\centering
+\includegraphics[width=.95\linewidth]{./figure/application_classification.jpg}
+\caption{classification for scientific application running pattern}
+ \label{fg:state}
+\end{figure} 
 
-Workflow is typically defined as a sequence of operations or tasks needed to manage a buiiness or computational activity, the scientific workflow tools aims to support the execution of scientific applications mainly including tasks such as scientific simulations, analysis and visualization etc. one character is the large data exchange between those applications. In-situ workflow could be composed by exchanging those intermediate data by memory/storage hierarchy and network of a high-performance computing (HPC) \cite{deelman2018future}. Those intermediate data can be fully used to guide the excution of the scientific workflow.  
+The post-processing analysis with disk using is the naive and traditional way to compose a scientific workflow. The visualization/simulation will load the disk data outputted by previous dependent tasks. There is a minimum degree of coupling (largest independency) between two tasks in this context because the task of data produces don't need any information about the task which consuming data. 
 
+The post-processing analysis with staging server works by constructing pipeline based on data management service. The I/O cost can be decreased by leverage the function of staging service, but it required some modification of simulation in order to using API provided by staging service. Further optimization could be adopted in staging service to decrease I/O cost relatively such as data locality and placement strategies.
 
-[general description about the question we want to solve]
+If tasks are composed within one program, the data could also be transferred by the network such as using MPI or other dedicated network library (in-transit workflow) this will increase the coupling level and instrument simulation code in much higher level. The data could also be transformed by the specialized adaptor to transform the data structure.
 
-According to the communication model between tasks, the scientific workflow could be divided into integrated workflow and connected workflow.\cite{dreher2017situ}. Integrated workflow run all tasks in one MPI program and Connected workflow coordinate tasks separated into different programs not sharing common communicator. One advantage for connected workflow is customizing the occasion to start the tasks based on the influential events in workflow.
+Within one program, the data could also be transferred by much higher level coupling namely run visualization code synchronously after each iteration which increases coupling level and data transfer speed (in same memory space).
 
-Typical workflow engine follows predefined DAG (Directed Acyclic Graph) to start every tasks. Every node in DAG represent a task and every edge represent the dependency between task. According to the method to establish the dependency, the workflow could be divided into control-driven workflows and data-driven workflows\cite{shields2007control}. Data driven is constructed based on the data dependency between two tasks, namely the output of first task is the input for second task. Compare with the control-driven flow (Task A must run after Task B), the data driven flow provide a view to describe the task dependency in much finer granularity way.
+There is no absolute preference  solution for any using context and every solution has tradeoff in Figure 1, in situ and in transit analysis does not displace the need for post-post processing pattern even if there is large I/O cost for scientific workflow\cite{bauer2016situ}.  For in-situ  and in-transit application the disadvantage is that the in-situ code will influence the performance of the simulation, not all coupling task is suitable for the in-situ pattern. The Hybrid workflow is more useful in real scientific workflow which is composed of different level of coupling task inorder to leverage the advantage for specific task and minimize their disadvantages. One challenge is how the workflow to support the complex integration of application patterns in Figure 1. Even though there are all kinds of work focusing on the intermediate component such as data staging service or in-situ adaptor to leverage specific scenarios (we will discuss this in Background and related work) there are few works explore how to support hybrid pattern in portable, flexible and scalable way(the aim of the experiments).
 
-[challenge of scientific workflow for data driven dependency]
+Our work provides a method based on event programming to leverage the hybrid scientific pattern including in-situ and in-transit part, we also implement an event driving workflow tool to compose the scientific application and evaluate its effectiveness in Experiment part. We also show the potential to combine this workflow with low-level resource scheduler system to leverage whole running task of the scientific workflow (more detailed after experiments finishing, maybe provide some good practice to implement the hybrid workflow including in-situ in-transit and post-processing)
 
-One scenario in complex scientific application is that the dependency is constructed according to the status of task itself and the contents of intermediated data. For example, when the task fail or intermediate data satisfy some conditions, extra tasks will be triggered. 
-
-Some project have already provide the solution for those dependency construction such as Decaf \cite{dreher2017decaf} and Argo\cite{perarnau2015distributed} but they mechanism of how to construct and control fine granularity depedency is not fully explored. We leverage the dynamicity of the connected workflow based on the event driven pub-sub architecture and let user describe and subscribe their interested events for every task. When those event based on data content happens in workflow, the related task will be triggered based on those events. 
-
-slurm is the common tool For HPC users,  even if it provide the strigger function to assign a trigger command when some events happens\cite{slurmtrigure}, but only the user with root permission could use the slurm trigger function and the types of the event is also limited and could not be customized.
-
-advantages to use the container Singularity(1 convenience for development and production 2 provide more dynamic way to monitor the runtime of the process and publish specific status by event message)
-
-[our solution and main contribution]
-
-There are several for communication between pub-sub system based on space, time synchronization\cite{eugster2003many}. We leverage these advantages by using it to express data dependency between workflow tasks. In this paper, we mainly make the following contributions:(planned)
-
-1.Provide the expression model to let user describe the event and the logic to judge how this event will happen.
-
-2.Implement a event driven pub-sub system which could start the task at the occasion of the subscribed event happen in system
-
-3.Provide the mechanism to acquire the events from the running tasks status and the intermediate data of the workflow.
-
-4.Validate the effectiveness of workflow tools in different use scenarios.
-
-dynamic register the event in running time is also another contribution (the function of unsubscribe could also be added into the system)
-
-
-
-The rest paper is organized as follows, Section \uppercase\expandafter{\romannumeral2} introduce the background and the motivations for event-driven workflow, Section \uppercase\expandafter{\romannumeral3} introduce the design thoughts of the framework. Section \uppercase\expandafter{\romannumeral4} provide the details for implementation. Section \uppercase\expandafter{\romannumeral5} presents the experiments to show the performance of the framework. Section \uppercase\expandafter{\romannumeral6} introduce the conclusion and the future work of the paper.
+The rest paper is organized as follows, Section \uppercase\expandafter{\romannumeral2} introduce the background and the related work of event-driven workflow, Section \uppercase\expandafter{\romannumeral3} introduce the design and implementation of workflow framework. Section \uppercase\expandafter{\romannumeral4} presents the experiments to show the performance and effectiveness of the framework. Section \uppercase\expandafter{\romannumeral5} introduce the conclusion and the future work of the work.
