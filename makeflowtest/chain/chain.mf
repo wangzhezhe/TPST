@@ -1,0 +1,18 @@
+
+
+sim0.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 > sim0.out
+
+ana0.out: sim0.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim0.out > ana0.out
+
+
+
+
+sim1.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 > sim1.out
+
+ana1.out: sim1.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim1.out > ana1.out
+
+
