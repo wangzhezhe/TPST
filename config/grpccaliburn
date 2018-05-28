@@ -1,0 +1,11 @@
+#the path of the graph relevent binary
+export PATH=$PATH:/home1/zw241/Software/grpcinstall/bin
+
+#the path of the proton binary
+export PATH=$PATH:/home1/zw241/Software/grpc/third_party/protobuf/src
+
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/home1/zw241/Software/protoinstall/lib/pkgconfig
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/home1/zw241/Software/grpcinstall/lib/pkgconfig
+
+#set the path of the dynamic library
+export LD_LIBRARY_PATH=/home1/zw241/Software/grpc/libs/opt

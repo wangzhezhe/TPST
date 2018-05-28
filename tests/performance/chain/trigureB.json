@@ -1,0 +1,8 @@
+{
+    "type": "TRIGGER",
+    "eventList": ["T1_FINISH"],
+    "driver": "local",
+    "actionList": [
+       "/bin/bash ./tests/performance/app/runtask.sh taskb"
+    ]
+}
