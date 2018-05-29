@@ -28,38 +28,54 @@
 
 #include "workflowserver.grpc.pb.h"
 #include "../publishclient/pubsubclient.h"
-
-/*
-//deprecated by using redis
-int main(int argc, char **argv)
-{
-    redisContext *c = redisInit();
-
-    printf("do some monitoring operation\n");
-    printf("when interesting things happen, for example, some conditions are satisfied, publish events\n");
-
-    char *pubEvents = "T1_FINISH";
-    char *pubMessages ="empty";
-
-    redisPublish(c, pubEvents, pubMessages);
-
-    return 0;
-}
-*/
+#include "../utils/split/split.h"
 
 //using self defined pub sub server
 int main(int argc, char **argv)
 {
-    sleep(5);
-    printf("new thread push event\n");
-    vector<string> publisheventList;
-    publisheventList.push_back("T1_FINISH");
+
+    // check the input argument first is pub/sub second is the event list , shuld be the following format [event1,event2,event3]
+
+    if (argc != 3)
+    {
+        printf("using following format: ./operator publish [event1,event2] or ./operator subscribe [event1.event2]\n");
+        return 0;
+    }
+
+    //check second parameter
+
+    string operation = string(argv[1]);
+    if (operation.compare("publish") != 0 && operation.compare("subscribe") != 0)
+    {
+        printf("operation should be publish or subscribe\n");
+        return 0;
+    }
+
+    string eventStr = string(argv[2]);
+    string seprater = string(",");
+
+    printf("operation %s event list %s\n", operation.data(), eventStr.data());
+
+    //check third parameter
+
+    vector<string> eventList;
+    eventList = split(eventStr, seprater);
+
     GreeterClient *greeter = GreeterClient::getClient();
     if (greeter == NULL)
     {
         printf("failed to get initialised greeter\n");
         return 0;
     }
-    string reply = greeter->Publish(publisheventList);
-    cout << "Publish return value: " << reply << endl;
+    if (operation.compare("publish") == 0)
+    {
+        string reply = greeter->Publish(eventList);
+        cout << "Publish return value: " << reply << endl;
+    }
+    else
+    {
+        //subscribe
+        string reply = greeter->Subscribe(eventList);
+        cout << "Subscribe return value: " << reply << endl;
+    }
 }

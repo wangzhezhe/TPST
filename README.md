@@ -11,7 +11,7 @@ protobuf
 (https://blog.jeffli.me/blog/2016/12/08/install-protocol-buffer-from-source-in-centos-7/)
 https://blog.csdn.net/Programmer_H/article/details/8890800
 
-grpc(for protobuf of grpc, use inner version of grpc by 3.4.0)
+grpc(for protobuf of grpc, use **inner version** of grpc by 3.4.0)
 
 add the directory containing `grpc.pc'
 to the PKG_CONFIG_PATH environment variable

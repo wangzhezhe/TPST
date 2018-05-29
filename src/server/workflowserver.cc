@@ -116,7 +116,7 @@ class GreeterServiceImpl final : public Greeter::Service
         break;
       }
 
-      //set timestep
+      //set timestep?
       int timestep =1;
       sleep(timestep);
     }
@@ -156,6 +156,7 @@ void RunServer()
 
   string serverPort = string("50051");
   string ip;
+  printf("record ip\n");
   recordIPPort(ip,serverPort);
   //get the server ip from the config file
   /*

@@ -18,7 +18,7 @@ HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
 CXX = g++
 CPPFLAGS += `pkg-config --cflags protobuf grpc`
-CXXFLAGS += -std=c++11 -I../deps/  -I../deps/hiredis/ -I/home1/zw241/Software/grpc/third_party/protobuf/src -DTIME -DDEBUG
+CXXFLAGS += -std=c++11 -I../deps/ -I/home1/zw241/Software/grpc/third_party/protobuf/src -DTIME -DDEBUG
 #CXXFLAGS += -std=c++11 -I../deps/  -I../deps/hiredis/ -DDEBUG
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += -L/usr/local/lib -L/home1/zw241/Software/protoinstall/lib -L/home1/zw241/Software/grpc/libs/opt/protobuf -L/home1/zw241/Software/grpcinstall/lib `pkg-config --libs protobuf grpc++ grpc`\
@@ -51,10 +51,13 @@ loaddata.o:
 slurm.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/runtime/slurm.c -o slurm.o
 
+local.o:
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/runtime/local.c -o local.o
+
 pubsubclient.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/publishclient/pubsubclient.cc -o pubsubclient.o
 
-eventNotify: workflowserver.pb.o workflowserver.grpc.pb.o eventNotify.o loaddata.o eventmanager.o slurm.o pubsubclient.o getip.o
+eventNotify: workflowserver.pb.o workflowserver.grpc.pb.o eventNotify.o loaddata.o eventmanager.o slurm.o local.o pubsubclient.o getip.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc

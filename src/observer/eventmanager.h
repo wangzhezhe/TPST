@@ -34,7 +34,10 @@ typedef struct EventTriggure
 
 } EventTriggure;
 
+
+
 void jsonParsingTrigger(Document &d, char *jsonbuffer);
-int jsonIfTrigger(Document &d, char *jsonbuffer);
+int jsonIfTriggerorOperator(Document &d, char *jsonbuffer);
+void waitthreadFinish();
 
 #endif

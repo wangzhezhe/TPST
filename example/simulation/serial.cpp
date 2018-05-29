@@ -83,17 +83,24 @@ int main(int argc, char **argv)
             //  save if necessary
             //
             char filename[100];
-            sprintf(filename, "%s/output_%d.csv", savefolder, step);
+            if (step < 10)
+            {
+                sprintf(filename, "%s/output_0%d.csv", savefolder, step);
+                printf("debug fileneme %s\n",filename);
+            }
+            else
+            {
+                sprintf(filename, "%s/output_%d.csv", savefolder, step);
+            }
+
             string savename = string(filename);
-            
+
             if (step % SAVEFREQ == 0)
             {
                 FILE *fsave = fopen(savename.data(), "w");
                 save(fsave, n, particles);
                 fclose(fsave);
             }
-
-            
         }
     }
     simulation_time = read_timer() - simulation_time;

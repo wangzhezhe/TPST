@@ -19,12 +19,15 @@ void recordIPPort(string &ipstr, string port)
     int n;
     struct ifreq ifr;
     //assume the network interface exist
-    char array[] = "eth5";
-    FILE *fpt = fopen("../../tests/ipconfig", "w");
+    //char array[] = "eth5";
+    char array[] = "eno1";
+    FILE *fpt = fopen("./ipconfig", "w");
+    printf("debug1");
     if (fpt==NULL){
-        printf("failed to create ../../tests/ipconfig\n");
+        printf("failed to create ./ipconfig\n");
         return;
     }
+    printf("debug2");
     n = socket(AF_INET, SOCK_DGRAM, 0);
     //Type of address to retrieve - IPv4 IP address
     ifr.ifr_addr.sa_family = AF_INET;
@@ -35,6 +38,7 @@ void recordIPPort(string &ipstr, string port)
     //display result
     char * ip=inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
     fprintf(fpt, "%s:%s\n", ip, port.data());
+    printf("debug test %s:%s\n",ip, port.data());
     fclose(fpt);
     ipstr=string (ip);
 }

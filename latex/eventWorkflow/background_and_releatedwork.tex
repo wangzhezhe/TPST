@@ -1,8 +1,26 @@
 \section{Background and Related Work}
-In this section, we briefly introduce the relevant work of scientific application from the aspect of task dependencies, then we introduce the workflow system that supports those using scenarios and explain the shortage of current workflow system, at last, we will introduce the pub-sub mechanism and it's using in the workflow system.
+In this section, we briefly introduce the relevant work of scientific application from the aspect of task dependencies, then we introduce the workflow system that supports those using scenarios and explain the shortage of current workflow system, at last, we will introduce the pub-sub mechanism and how it will be used in the workflow system.
 
-\subsection{Types of Scientific Application and Workflow System}
-Considering the scientific application in \cite{makeflowexample}, the execution of tasks in workflow could be represented as DAG (Directed Acyclic Graph), every node represent the execution of the task and every edge represent the sequence of the execution between tasks. For workflow tool such as \cite{makeflowexample,wilde2011swift}, the abstraction of DAG should be fixed before the application running, the user should grasp the topology of the task dependency in advance and execute the workflow by submitting the description file, then workflow will schedule and execute the task according to this DAG blueprint. The intermediate file was used to control the execution of the typical dependency pattern\cite{bharathi2008characterization}.
+\subsection{Types of Scientific Application}
+
+The typical running pattern for scientific application referring to simulation, analyzing and visualization tasks are divided into post-processing and in-situ\cite{childs2012situ}. Post-processing use disk or memory staging service to transfer the intermediate data. In-situ processing is a different approach to solve the gap between the computation and communication performance of HPC infrastructure without involving disk storage\cite{childs2012situ}. Several works are focusing on the in-situ pattern and how to leverage the scientific application\cite{bauer2016situ,oldfield2014evaluation} by the in-situ pattern. We clarify properties of the scientific application running pattern by several essential underlying perspectives which are shown in Figure 2.
+
+\begin{figure} 
+\centering
+\includegraphics[width=.95\linewidth]{./figure/application_classification.jpg}
+\caption{Classification for scientific application running pattern}
+ \label{fg:state}
+\end{figure} 
+
+Every column in Figure 1 represents a specific dimension of scientific application pattern. For traditional disk I/O based post-processing, the visualization/simulation will load data outputted by previous dependent tasks from disk, the complexity to modify the source code is low because it is straightforward to output data into disk files. There is also comparatively low coupling level \cite{beck2011congruence} because the task to output data and the task to load the data can be put into the different programs. Because the data will be consumed after the simulation finish, the time between data generation and consumption is also long compared with other using scenario. Besides, the post-processing can be leveraged by using RDMA and staging service to decrease I/O overhead.
+
+If several tasks are included in one program, the data can be transferred by the network using MPI or other dedicated network libraries (in-transit/in-situ workflow), coupling level will increase by this way and instrument code to transfer data is non-trivial. The specialized adaptor such as the Visit Libsm \cite{visitlibsm} and Paraview Catalyst  \cite{ayachit2015paraview} can be used synchronously in simulation code to transfer data to fit in the visualization component and the time between data generation and data consumption will decrease by avoiding disk I/ O. Besides, the in-transit pattern can be leveraged further by in-situ way if visualization and simulation are composed together using memory copy to transfer data.
+
+There is no absolute preferred pattern for any using context and there is some tradeoff for every pattern according to Figure 1. In-situ and in-transit analysis do not displace the need for post-processing pattern even if there is large I/O cost for scientific workflow\cite{bauer2016situ}. For example, post-processing is better when scientists need to use visualization tool to observe the simulation data from different perspective manually to get more insights. For the in-situ and in-transit application, the disadvantage is that the performance effect for the simulation and not all coupling task is suitable for the in-situ pattern. The Hybrid workflow including several different types of running pattern in Figure 2 is more wildly used in the real scientific workflow which is composed of different level of coupling tasks in order to leverage the advantage of the specific running pattern and minimize their disadvantages. 
+
+\subsection{Types of Scientific Workflow Pattern}
+
+Considering the scientific application in \cite{makeflowexample}, the execution of tasks in workflow could be represented as DAG, every node represent the execution of the task and every edge represent the sequence of the execution between tasks. For workflow tool such as \cite{makeflowexample,wilde2011swift}, the abstraction of DAG should be fixed before the application running, the user should grasp the topology of the task dependency in advance and execute the workflow by submitting the description file, then workflow will schedule and execute the task according to this DAG blueprint. The intermediate file was used to control the execution of the typical dependency pattern\cite{bharathi2008characterization}.
 
 There are other types applications without fixed and explicit task dependency pattern before the task running, the task may or may not be triggered during task running and it depends on the content of the data instead of the input/output data files in those cases. For example, in simulation-analyzing-visualization workflow, a large amount of simulation data will be generated in short time, some simulation will also running several days, there are some redundant data in the output of the data but only some of them are useful data. If we only want to visualize the data with the average value larger than the specific threshold, the picture will be plotted only when data satisfy our predefined condition. There are several strategies for workflow system to address this issue, one is post-processing which will load all the simulation data into the disk and then process the data in separate tasks. But this solution only useful for small-scale simulation, the increasing data, size and limited storage and bandwidth make high fidelity post-processing impractical\cite{ayachit2015paraview}. In situ workflow is the latest trend to solve this issue\cite{dreher2017situ}. There are several intermediate components to leverage the in-situ workflow\cite{docan2012dataspaces,ayachit2015paraview}  there are works exploring how to decompose original algorithm into in-situ method such as\cite{bennett2012combining} some works are exploring the properties of workflow at exascale\cite{dreher2017situ} but few works focusing on how workflow support different type of in-situ tasks involving flexible dependencies relationship. 
 
@@ -11,7 +29,7 @@ One critical distinction between the traditional workflow(without in-situ task) 
 \begin{figure*} 
 \centering
 \includegraphics[width=.8\linewidth]{./figure/taskpattern.jpg}
-\caption{typical workflow pattern}
+\caption{Typical workflow pattern}
  \label{fg:state}
 \end{figure*} 
 
@@ -23,7 +41,7 @@ Once we assume event message as a special intermediate data used to synchronize 
 \begin{figure*} 
 \centering
 \includegraphics[width=.8\linewidth]{./figure/edtaskpattern.jpg}
-\caption{typical event-driven workflow pattern}
+\caption{Typical event-driven workflow pattern}
  \label{fg:state}
 \end{figure*} 
 One advantage to use event message to express dependency is the flexibility for dependency granularity, the event message is an abstraction of the user-defined dependent data bock which could be the disk files or data instance in memory. 
@@ -35,4 +53,4 @@ There are following scenarios to use event programming to leverage scientific wo
 
 (3)In-situ, in-transit and post-processing tasks can be composed together in a workflow by event message abstraction
 
-The broadcaster and pipeline pattern are supported by pub-sub-notify mechanism naively but there is no support for aggregation pattern. For typical pub-sub mechanism, is subscriber subscribe multiple events such as eventA, eventB eventC, and publishing of those three events will notify the subscriber and trigger execution of task, however, in workflow aggregation scenario, the specific subscribed runtime is supposed to be triggered when all eventA , eventB and eventC are published and satisfied. We will discuss the details of pub-sub event store and relevant runtime client to support all of those patterns in implementation part. 
+The broadcaster and pipeline pattern are supported by pub-sub-notify mechanism naively but there is no support for aggregation pattern. For typical pub-sub mechanism, if subscriber subscribe multiple events such as eventA, eventB eventC then any publishing of those three events will notify the subscriber and trigger execution of task, however, in workflow aggregation scenario, the specific subscribed runtime is supposed to be triggered when all eventA , eventB and eventC are satisfied and published. We will discuss the details of pub-sub event store and relevant runtime client to support all of those patterns in implementation part. 

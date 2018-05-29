@@ -306,7 +306,7 @@ void pubsubPublish(vector<string> eventList)
                     if (RequireTriggureMap.find(pushNum) == RequireTriggureMap.end())
                     {
                         //event is not subscribed
-                        printf("event (%s) (%d) is not subscribed\n",eventkey,pushNum);
+                        printf("event (%s) (%d) is not subscribed\n",eventkey.data(),pushNum);
                         notifyFlag = false;
                         break;
                     }

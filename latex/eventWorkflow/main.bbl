@@ -7,6 +7,15 @@ A unified data-driven approach for programming in situ analysis and
   \url{https://www.hivemq.com/blog/mqtt-essentials-part2-publish-subscribe}.
 \newblock 2015.
 
+\bibitem{visitlibsm}
+visitlibsm.
+\newblock \url{https://wci.llnl.gov/simulation/computer-codes/visit}.
+
+\bibitem{caliburn}
+visitlibsm.
+\newblock
+  \url{https://ored.rutgers.edu/content/rutgers-new-supercomputer-ranked-2-among-big-ten-universities-8-among-us-academic}.
+
 \bibitem{redispubsub}
 redispubsub.
 \newblock \url{https://redis.io/topics/pubsub}, 2017.
@@ -34,6 +43,13 @@ Andrew~C Bauer, Hasan Abbasi, James Ahrens, Hank Childs, Berk Geveci, Scott
   performance computing platforms.
 \newblock In {\em Computer Graphics Forum}, volume~35, pages 577--597. Wiley
   Online Library, 2016.
+
+\bibitem{beck2011congruence}
+Fabian Beck and Stephan Diehl.
+\newblock On the congruence of modularity and code coupling.
+\newblock In {\em Proceedings of the 19th ACM SIGSOFT symposium and the 13th
+  European conference on Foundations of software engineering}, pages 354--364.
+  ACM, 2011.
 
 \bibitem{bennett2012combining}
 Janine~C Bennett, Hasan Abbasi, Peer-Timo Bremer, Ray Grout, Attila Gyulassy,
@@ -69,12 +85,6 @@ Matthieu Dreher, Swann Perarnau, Tom Peterka, Kamil Iskra, and Pete Beckman.
 \newblock In situ workflows at exascale: System software to the rescue.
 \newblock In {\em Proceedings of the In Situ Infrastructures on Enabling
   Extreme-Scale Analysis and Visualization}, pages 22--26. ACM, 2017.
-
-\bibitem{dreher2017decaf}
-Matthieu Dreher and Tom Peterka.
-\newblock Decaf: Decoupled dataflows for in situ high-performance workflows.
-\newblock Technical report, Argonne National Lab.(ANL), Argonne, IL (United
-  States), 2017.
 
 \bibitem{eugster2003many}
 Patrick~Th Eugster, Pascal~A Felber, Rachid Guerraoui, and Anne-Marie

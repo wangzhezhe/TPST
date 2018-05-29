@@ -3,49 +3,51 @@ Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
 The top-level auxiliary file: main.aux
 The style file: plain.bst
 Database file #1: reference.bib
+Warning--to sort, need author or key in visitlibsm
 Warning--to sort, need author or key in hivemq
 Warning--to sort, need author or key in redispubsub
+Warning--to sort, need author or key in caliburn
 Warning--can't use both volume and number fields in bauer2016situ
 Warning--empty booktitle in childs2012situ
-You've used 16 entries,
+You've used 18 entries,
             2118 wiz_defined-function locations,
-            585 strings with 7908 characters,
-and the built_in function-call counts, 6993 in all, are:
-= -- 662
-> -- 454
-< -- 9
-+ -- 183
+            590 strings with 8159 characters,
+and the built_in function-call counts, 7544 in all, are:
+= -- 720
+> -- 456
+< -- 10
++ -- 185
 - -- 164
-* -- 527
-:= -- 1139
-add.period$ -- 55
-call.type$ -- 16
-change.case$ -- 128
+* -- 551
+:= -- 1191
+add.period$ -- 60
+call.type$ -- 18
+change.case$ -- 133
 chr.to.int$ -- 0
-cite$ -- 20
-duplicate$ -- 235
-empty$ -- 479
+cite$ -- 24
+duplicate$ -- 264
+empty$ -- 551
 format.name$ -- 164
-if$ -- 1473
+if$ -- 1618
 int.to.chr$ -- 0
-int.to.str$ -- 16
-missing$ -- 12
-newline$ -- 82
+int.to.str$ -- 18
+missing$ -- 13
+newline$ -- 90
 num.names$ -- 28
-pop$ -- 165
+pop$ -- 185
 preamble$ -- 1
-purify$ -- 111
+purify$ -- 115
 quote$ -- 0
-skip$ -- 163
+skip$ -- 192
 stack$ -- 0
-substring$ -- 306
-swap$ -- 73
-text.length$ -- 9
+substring$ -- 348
+swap$ -- 86
+text.length$ -- 10
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 64
-warning$ -- 4
-while$ -- 54
-width$ -- 18
-write$ -- 179
-(There were 4 warnings)
+type$ -- 72
+warning$ -- 6
+while$ -- 57
+width$ -- 20
+write$ -- 194
+(There were 6 warnings)

@@ -2,9 +2,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "local.h"
-#include "../../src/utils/log/log.h"
 
-namespace spd = spdlog;
 
 int localTaskStart(const char *batchPath)
 {
@@ -20,7 +18,7 @@ int localTaskStart(const char *batchPath)
     //#endif
     sprintf(command, "%s", batchPath);
 #ifdef DEBUG
-    printf("execute command:(%s)\n", command);
+    printf("execute command by local way:(%s)\n", command);
 #endif
 
     //test using
@@ -29,7 +27,7 @@ int localTaskStart(const char *batchPath)
     struct timespec finish;
     clock_gettime(CLOCK_MONOTONIC, &finish);
     //auto console = spd::stdout_color_mt("console");
-    spdconsole->info("finish sec:({:d}),finish nsec:({:d})", finish.tv_sec, finish.tv_nsec);
+    //spdconsole->info("finish sec:({:d}),finish nsec:({:d})", finish.tv_sec, finish.tv_nsec);
 
     return 0;
 }

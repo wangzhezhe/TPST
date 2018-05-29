@@ -52,7 +52,9 @@ GreeterClient *GreeterClient::getClient()
 
     string ip;
     string port;
-    string ipconfigfilepath = string("/home/parallels/Documents/cworkspace/observerchain/src/server/ipconfig");
+    //string ipconfigfilepath = string("/home/parallels/Documents/cworkspace/observerchain/src/server/ipconfig");
+    //workflow server and eventNotify should run at same directory, ipconfig will be outputed into this dir
+    string ipconfigfilepath = string("./ipconfig");
     int r = loadIPPort(ipconfigfilepath, ip, port);
     if (r == 1)
     {
@@ -110,9 +112,10 @@ string GreeterClient::Subscribe(vector<string> eventList)
     {
         //attention the use here, the request could be transfered into a specific type with specific function
         request.add_pubsubmessage(eventList[i]);
-        //printf("subscribe %s\n",eventList[i].data());
+        //printf("add %s into request \n",eventList[i].data());
     }
-
+    
+    
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
     ClientContext context;

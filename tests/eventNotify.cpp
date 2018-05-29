@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 //#include "../observer/taskmanager.h"
 //#include "../eventstore/eventStore.h"
@@ -45,31 +46,58 @@ enum EVENTTYPE
 char projectPath[100] = "/home1/zw241/observerchain/tests";
 //char tmDir[50] = "TaskManagerFiles";
 //char projectPath[100] = "/home/parallels/Documents/cworkspace/observerchain/tests";
+//char tmDir[50] = "TrigureFiles";
 char tmDir[50] = "TrigureFiles";
 
+vector<string> operatorList;
+
 //go through the Trigurefile folder and register the .json file with type=trigure into the system
-void gothroughFolderRegister(Document &d, const char *dir)
+void gothroughFolderRegister(const char *watchdir)
 {
+
     vector<string> fileList;
-    fileList = scanFolder(dir);
+    fileList = scanFolder(watchdir);
 
     int count = fileList.size();
     char taskPath[100];
     for (int i = 0; i < count; i++)
     {
+        Document d;
         // if it is not json file
         if (strstr(fileList[i].data(), ".json") == NULL)
         {
             continue;
         }
         memset(taskPath, sizeof(taskPath), 0);
-        snprintf(taskPath, sizeof taskPath, "%s/%s/%s", projectPath, tmDir, fileList[i].data());
+
+        char cwd[FILENAME_MAX];
+        if (getcwd(cwd, sizeof(cwd)) == NULL)
+        {
+            //Current working dir: /home1/zw241/observerchain/tests/performance
+            //printf("Current working dir: %s\n", cwd);
+            printf("failed to get current dir\n");
+            return;
+        }
+
+        //get current dir
+
+        //snprintf(taskPath, sizeof taskPath, "%s/%s/%s", projectPath, tmDir, fileList[i].data());
+        //snprintf(taskPath, sizeof taskPath, "%s/%s/%s", projectPath, dir, fileList[i].data());
+
+        //delete . and / in watchdir path
+        string watchdirstr = string(watchdir);
+        watchdirstr.erase(std::remove(watchdirstr.begin(), watchdirstr.end(), '.'), watchdirstr.end());
+        watchdirstr.erase(std::remove(watchdirstr.begin(), watchdirstr.end(), '/'), watchdirstr.end());
+
+        snprintf(taskPath, sizeof taskPath, "%s/%s/%s", cwd, watchdirstr.data(), fileList[i].data());
+
         char *jsonbuffer = NULL;
         jsonbuffer = loadFile(taskPath);
-        //printf("taskPath %s\n",taskPath);
-        //printf("json buffer %s\n",jsonbuffer);
-        int iftrigger = jsonIfTrigger(d, jsonbuffer);
-        if (iftrigger == 1)
+        printf("dir path original %s after deletion %s\n", watchdir, watchdirstr.data());
+        printf("taskPath %s\n", taskPath);
+        //printf("original json buffer %s\n", jsonbuffer);
+        int typelabel = jsonIfTriggerorOperator(d, jsonbuffer);
+        if (typelabel == 1)
         {
 #ifdef DEBUG
             //do the register operation
@@ -78,13 +106,43 @@ void gothroughFolderRegister(Document &d, const char *dir)
             //subscribe the specific file
             jsonParsingTrigger(d, jsonbuffer);
         }
+        else if (typelabel == 2)
+        {
+            //put operator into the list
+            string operatorStr = string(jsonbuffer);
+            operatorList.push_back(operatorStr);
+        }
     }
     return;
 }
 
+void initOperator()
+{
+    //it's better to declare a new document instance for new file every time
+    Document d;
+    //go throught the operatorVector
+    int len = operatorList.size();
+    int i = 0;
+    char command[500];
+    for (i = 0; i < len; i++)
+    {
+        //get the operator command
+        //printf("parsing operator (%s)\n", operatorList[i].data());
+        d.Parse(operatorList[i].data());
+
+        const char *type = d["type"].GetString();
+        printf("execute type:(%s)\n", type);
+        const char *action = d["action"].GetString();
+        printf("execute action:(%s)\n", action);
+        system(action);
+    }
+}
+
 void *tempStartOperator(void *arg)
 {
-    system("/home1/zw241/observerchain/src/operator/operator");
+    printf("execute the init operator\n");
+
+    //system("/home1/zw241/observerchain/src/operator/operator");
     //system("/home/parallels/Documents/cworkspace/observerchain/src/operator");
     return NULL;
 }
@@ -94,12 +152,20 @@ void *tempStartOperator(void *arg)
 
 int main(int argc, char **argv)
 {
+#ifdef TIME
+    //send publish api and record time
+    struct timespec start;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    printf("start sec:(%ld), start nsec:(%ld)\n", start.tv_sec, start.tv_nsec);
+    pthread_t id;
+    //pthread_create(&id, NULL, tempStartOperator, NULL);
+
+#endif
 
     int length, i = 0, wd;
     int fd;
     char buffer[BUF_LEN];
 
-    Document d;
     EVENTTYPE eventType;
 
     if (argc != 2)
@@ -110,22 +176,24 @@ int main(int argc, char **argv)
 
     // write ip port of current nodes into config files
     // the load operation is defined at pubsubclient
-     
-    gothroughFolderRegister(d, argv[1]);
+
+    gothroughFolderRegister(argv[1]);
 
 #ifdef TIME
-    //send publish api and record time
-    struct timespec start;
-    clock_gettime(CLOCK_MONOTONIC, &start);
-    printf("start sec:(%ld), start nsec:(%ld)\n", start.tv_sec, start.tv_nsec);
-    pthread_t id;
-    pthread_create(&id, NULL, tempStartOperator, NULL);
+    initOperator();
 #endif
+    waitthreadFinish();
+}
+
+    //use pthread_join to wait all the thread finish
+
+    /* 
+    don't do this during test
 
     // TODO If put the Document d in the while loop/
     // it will crash when load the data for second time???
 
-    /* Initialize Inotify*/
+    // Initialize Inotify
     fd = inotify_init();
     //void *funcHandleAction;
     //void *funcHandleFilter;
@@ -144,7 +212,8 @@ int main(int argc, char **argv)
     //map<int, vector<float> > memcache = initMemCache();
 
     //TODO scan the dir before watch to register all the .json files automatically
-    /* add watch to starting directory */
+    // add watch to starting directory 
+
     wd = inotify_add_watch(fd, argv[1], IN_CREATE | IN_MODIFY | IN_DELETE);
     //use the dynamic link load the function back
     void *funcHandle;
@@ -162,7 +231,9 @@ int main(int argc, char **argv)
     //pthread_t id;
     //pthread_create(&id, NULL, createData, &es);
 
-    /* do it forever*/
+    //use new one for every document
+    //Document d;
+
     while (1)
     {
         i = 0;
@@ -239,13 +310,14 @@ int main(int argc, char **argv)
         }
     }
 
-    /* Clean up*/
     //if handler is closed, the function could not be excuted!
     //TODO use a new handler for the new function
     dlclose(funcHandle);
     //TODO else ,modify the old one
     inotify_rm_watch(fd, wd);
     close(fd);
-
-    return 0;
+    
+        return 0;
 }
+
+*/

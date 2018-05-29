@@ -8,7 +8,12 @@
 #include "eventmanager.h"
 //#include "../redisclient/redisclient.h"
 #include "../runtime/slurm.h"
+#include "../runtime/local.h"
 #include "../publishclient/pubsubclient.h"
+#include <string>
+#include <iostream>
+
+using namespace std;
 
 /*
 {
@@ -28,35 +33,53 @@ enum FILETYPE
     OPERATOR
 };
 
+vector<pthread_t> threadIdList;
+
 void *eventSubscribe(void *arguments)
 {
     //only could be transfered by this way if original pointed is initiallises by malloc instead on new
     EventTriggure *etrigger = (EventTriggure *)arguments;
 #ifdef DEBUG
     printf("start new thread\n");
-    printf("event len %d\n", etrigger->eventLen);
+    printf("event len %d\n", etrigger->eventList.size());
 #endif
 
-    //GreeterClient greeter=intiSocketAddr();
     GreeterClient *greeter = GreeterClient::getClient();
     if (greeter == NULL)
     {
         printf("failed to get initialised greeter\n");
         return NULL;
     }
-    
+
     string reply = greeter->Subscribe(etrigger->eventList);
     cout << "Subscribe return value: " << reply << endl;
+    int i = 0;
+    if (reply.compare("TRIGGERED") != 0)
+    {
+        printf("rpc failed, don't execute command:\n");
+        int actionSize = etrigger->actionList.size();
+        for (i = 0; i < actionSize; i++)
+        {
+            printf("%s\n", etrigger->actionList[i].data());
+        }
+
+        return 0;
+    }
 
     //TODO
     //when trigureed, call the runtime function
     //(runtimeFunc)slurmTaskStart(path)
 
-    int i = 0;
+
     int actionSize = etrigger->actionList.size();
     for (i = 0; i < actionSize; i++)
     {
-        slurmTaskStart(etrigger->actionList[i].data());
+        //TODO use different runtime according to the driver type
+        //slurmTaskStart(etrigger->actionList[i].data());
+        if (etrigger->driver.compare("local") == 0)
+        {
+            localTaskStart(etrigger->actionList[i].data());
+        }
     }
 
     //send rpc request to back end
@@ -90,17 +113,25 @@ void *eventSubscribe(void *arguments)
     return NULL;
 }
 
-int jsonIfTrigger(Document &d, char *jsonbuffer)
+int jsonIfTriggerorOperator(Document &d, char *jsonbuffer)
 {
     d.Parse(jsonbuffer);
+    //printf("jsonIfTriggerorOperator (%s)\n",jsonbuffer);
     const char *type = d["type"].GetString();
+    //printf("get type after parsing (%s)\n",type);
     if (strcmp(type, "TRIGGER") == 0)
     {
+        //printf("TRIGGER type\n");
         return 1;
+    }
+    else if (strcmp(type, "OPERATOR") == 0)
+    {
+        //printf("OPERATOR type\n");
+        return 2;
     }
     else
     {
-        return 0;
+        return -1;
     }
 }
 
@@ -111,14 +142,14 @@ void jsonParsingTrigger(Document &d, char *jsonbuffer)
     //#endif
     d.Parse(jsonbuffer);
     const char *type = d["type"].GetString();
+    EventTriggure *triggure = new (EventTriggure);
+    printf("----get type %s----\n", type);
     if (strcmp(type, "TRIGGER") == 0)
     {
 #ifdef DEBUG
         printf("process event trigure\n");
 #endif
         //register trigure and send subscribe call to pub-sub backend
-
-        EventTriggure *triggure = new (EventTriggure);
         const Value &eventList = d["eventList"];
         SizeType i;
 
@@ -167,14 +198,19 @@ void jsonParsingTrigger(Document &d, char *jsonbuffer)
 #endif
             return;
         }
+        threadIdList.push_back(tid);
     }
-    else if (strcmp(type, "OPERATOR") == 0)
-    {
-        printf("process operator\n");
-    }
-    else
-    {
-        printf("unsupported type\n");
-    }
+
     return;
+}
+
+void waitthreadFinish()
+{
+    int len = threadIdList.size();
+    int i, joinReturn;
+    for (i = 0; i < len; i++)
+    {
+        joinReturn = pthread_join(threadIdList[i], NULL);
+        printf("thread id %d return %d\n", threadIdList[i], joinReturn);
+    }
 }
