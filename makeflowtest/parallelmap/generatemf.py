@@ -12,14 +12,14 @@ if len(sys.argv)!=2:
 pairnum=int(sys.argv[1])
 
 # load file content to str
-with open('chain_template.mf', 'r') as myfile:
+with open('parallelmap_template.mf', 'r') as myfile:
   data = myfile.read()
 
 print data
 
-file = open("chain.mf","w")
+file = open("parallelmap.mf","w")
 
-for x in range(pairnum): 
+for x in range(1,pairnum): 
     simout='sim'+str(x)+'.out'
     anaout='ana'+str(x)+'.out'
     #replace the mf str and write into new file

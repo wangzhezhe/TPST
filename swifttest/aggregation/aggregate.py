@@ -7,6 +7,7 @@ import datetime
 import time
 import os
 
+os.system('rm ./output/*')
 current_time1 = datetime.datetime.now()
 # execute the seift chained operation
 os.system('swift aggregate.swift')

@@ -1,9 +1,13 @@
 type file;
 
+
+
+
 app (file o) simulation (int sim_steps, int sim_range, int sim_values)
 {
   simulate "--timesteps" sim_steps "--range" sim_range "--nvalues" sim_values stdout=filename(o);
 }
+
 
 app (file o) analyze (file s)
 {
@@ -16,10 +20,12 @@ int range  = toInt(arg("range","100"));
 int values = toInt(arg("values","5"));
 
 
-file simout <single_file_mapper; file=strcat("output/sim.out")>;
-simout = simulation(steps,range,values);
+
 
 foreach i in [1:nsim] {
+  file simout <single_file_mapper; file=strcat("output/sim_",i,".out")>;
+  simout = simulation(steps,range,values);
+  
   file anaout <single_file_mapper; file=strcat("output/ana_",i,".out")>;
   anaout = analyze(simout);
 }

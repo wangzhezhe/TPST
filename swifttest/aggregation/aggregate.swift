@@ -10,14 +10,14 @@ app (file o) analyze (file s[])
   stats filenames(s) stdout=filename(o);
 }
 
-int nsim   = toInt(arg("nsim","100"));
+int nsim   = toInt(arg("nsim","64"));
 int steps  = toInt(arg("steps","1"));
 int range  = toInt(arg("range","100"));
 int values = toInt(arg("values","5"));
 
 file sims[];
 
-foreach i in [0:nsim-1] {
+foreach i in [1:nsim] {
   file simout <single_file_mapper; file=strcat("output/sim_",i,".out")>;
   simout = simulation(steps,range,values);
   sims[i] = simout;

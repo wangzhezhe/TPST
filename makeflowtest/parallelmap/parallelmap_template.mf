@@ -1,0 +1,27 @@
+
+
+sim1.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim1.out
+
+ana1.out: sim1.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim1.out > ana1.out
+
+
+
+
+sim2.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim2.out
+
+ana2.out: sim2.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim2.out > ana2.out
+
+
+
+
+sim3.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim3.out
+
+ana3.out: sim3.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim3.out > ana3.out
+
+

@@ -9,7 +9,7 @@ os.system("rm *.out")
 
 current_time1 = datetime.datetime.now()
 # execute the seift chained operation
-os.system('../../bin/makeflow -T local chain.mf')
+os.system('../../bin/makeflow -T local parallelmap.mf')
 current_time2 = datetime.datetime.now()
 
 print (current_time2 - current_time1)
