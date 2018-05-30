@@ -12,6 +12,7 @@
 #include "../publishclient/pubsubclient.h"
 #include <string>
 #include <iostream>
+#include <queue>
 
 using namespace std;
 
@@ -33,7 +34,8 @@ enum FILETYPE
     OPERATOR
 };
 
-vector<pthread_t> threadIdList;
+queue<pthread_t> threadIdQueue;
+
 
 void *eventSubscribe(void *arguments)
 {
@@ -69,7 +71,6 @@ void *eventSubscribe(void *arguments)
     //TODO
     //when trigureed, call the runtime function
     //(runtimeFunc)slurmTaskStart(path)
-
 
     int actionSize = etrigger->actionList.size();
     for (i = 0; i < actionSize; i++)
@@ -113,37 +114,16 @@ void *eventSubscribe(void *arguments)
     return NULL;
 }
 
-int jsonIfTriggerorOperator(Document &d, char *jsonbuffer)
-{
-    d.Parse(jsonbuffer);
-    //printf("jsonIfTriggerorOperator (%s)\n",jsonbuffer);
-    const char *type = d["type"].GetString();
-    //printf("get type after parsing (%s)\n",type);
-    if (strcmp(type, "TRIGGER") == 0)
-    {
-        //printf("TRIGGER type\n");
-        return 1;
-    }
-    else if (strcmp(type, "OPERATOR") == 0)
-    {
-        //printf("OPERATOR type\n");
-        return 2;
-    }
-    else
-    {
-        return -1;
-    }
-}
 
-void jsonParsingTrigger(Document &d, char *jsonbuffer)
+
+void jsonParsingTrigger(Document &d)
 {
     //#ifdef DEBUG
     //    printf("debug json buffer%s\n",jsonbuffer);
     //#endif
-    d.Parse(jsonbuffer);
+    //d.Parse(jsonbuffer);
     const char *type = d["type"].GetString();
     EventTriggure *triggure = new (EventTriggure);
-    printf("----get type %s----\n", type);
     if (strcmp(type, "TRIGGER") == 0)
     {
 #ifdef DEBUG
@@ -198,19 +178,45 @@ void jsonParsingTrigger(Document &d, char *jsonbuffer)
 #endif
             return;
         }
-        threadIdList.push_back(tid);
+        //threadIdList.push_back(tid);
+        threadIdQueue.push(tid);
     }
 
     return;
 }
 
+int jsonIfTriggerorOperator(Document &d, char *jsonbuffer)
+{
+    d.Parse(jsonbuffer);
+    //printf("jsonIfTriggerorOperator (%s)\n",jsonbuffer);
+    const char *type = d["type"].GetString();
+    //printf("get type after parsing (%s)\n",type);
+    if (strcmp(type, "TRIGGER") == 0)
+    {
+        return 1;
+    }
+    else if (strcmp(type, "OPERATOR") == 0)
+    {
+        return 2;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+
+
 void waitthreadFinish()
 {
-    int len = threadIdList.size();
-    int i, joinReturn;
-    for (i = 0; i < len; i++)
+
+    int joinReturn;
+    pthread_t currpid;
+    while (threadIdQueue.empty() == false)
     {
-        joinReturn = pthread_join(threadIdList[i], NULL);
-        printf("thread id %d return %d\n", threadIdList[i], joinReturn);
+        currpid = threadIdQueue.front();
+        joinReturn = pthread_join(currpid, NULL);
+        printf("thread id %d return %d\n", int(joinReturn), joinReturn);
+        threadIdQueue.pop();
     }
 }

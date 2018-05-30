@@ -1,0 +1,323 @@
+
+
+sim1.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim1.out
+
+
+
+sim2.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim2.out
+
+
+
+sim3.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim3.out
+
+
+
+sim4.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim4.out
+
+
+
+sim5.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim5.out
+
+
+
+sim6.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim6.out
+
+
+
+sim7.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim7.out
+
+
+
+sim8.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim8.out
+
+
+
+sim9.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim9.out
+
+
+
+sim10.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim10.out
+
+
+
+sim11.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim11.out
+
+
+
+sim12.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim12.out
+
+
+
+sim13.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim13.out
+
+
+
+sim14.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim14.out
+
+
+
+sim15.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim15.out
+
+
+
+sim16.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim16.out
+
+
+
+sim17.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim17.out
+
+
+
+sim18.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim18.out
+
+
+
+sim19.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim19.out
+
+
+
+sim20.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim20.out
+
+
+
+sim21.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim21.out
+
+
+
+sim22.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim22.out
+
+
+
+sim23.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim23.out
+
+
+
+sim24.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim24.out
+
+
+
+sim25.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim25.out
+
+
+
+sim26.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim26.out
+
+
+
+sim27.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim27.out
+
+
+
+sim28.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim28.out
+
+
+
+sim29.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim29.out
+
+
+
+sim30.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim30.out
+
+
+
+sim31.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim31.out
+
+
+
+sim32.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim32.out
+
+
+
+sim33.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim33.out
+
+
+
+sim34.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim34.out
+
+
+
+sim35.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim35.out
+
+
+
+sim36.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim36.out
+
+
+
+sim37.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim37.out
+
+
+
+sim38.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim38.out
+
+
+
+sim39.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim39.out
+
+
+
+sim40.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim40.out
+
+
+
+sim41.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim41.out
+
+
+
+sim42.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim42.out
+
+
+
+sim43.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim43.out
+
+
+
+sim44.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim44.out
+
+
+
+sim45.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim45.out
+
+
+
+sim46.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim46.out
+
+
+
+sim47.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim47.out
+
+
+
+sim48.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim48.out
+
+
+
+sim49.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim49.out
+
+
+
+sim50.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim50.out
+
+
+
+sim51.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim51.out
+
+
+
+sim52.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim52.out
+
+
+
+sim53.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim53.out
+
+
+
+sim54.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim54.out
+
+
+
+sim55.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim55.out
+
+
+
+sim56.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim56.out
+
+
+
+sim57.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim57.out
+
+
+
+sim58.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim58.out
+
+
+
+sim59.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim59.out
+
+
+
+sim60.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim60.out
+
+
+
+sim61.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim61.out
+
+
+
+sim62.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim62.out
+
+
+
+sim63.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim63.out
+
+
+
+sim64.out: ../app/simulate.sh
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim64.out
+
+
+ana.out:  sim1.out sim2.out sim3.out sim4.out sim5.out sim6.out sim7.out sim8.out sim9.out sim10.out sim11.out sim12.out sim13.out sim14.out sim15.out sim16.out sim17.out sim18.out sim19.out sim20.out sim21.out sim22.out sim23.out sim24.out sim25.out sim26.out sim27.out sim28.out sim29.out sim30.out sim31.out sim32.out sim33.out sim34.out sim35.out sim36.out sim37.out sim38.out sim39.out sim40.out sim41.out sim42.out sim43.out sim44.out sim45.out sim46.out sim47.out sim48.out sim49.out sim50.out sim51.out sim52.out sim53.out sim54.out sim55.out sim56.out sim57.out sim58.out sim59.out sim60.out sim61.out sim62.out sim63.out sim64.out  ../app/analysis.sh
+    /bin/bash ../app/analysis.sh  sim1.out sim2.out sim3.out sim4.out sim5.out sim6.out sim7.out sim8.out sim9.out sim10.out sim11.out sim12.out sim13.out sim14.out sim15.out sim16.out sim17.out sim18.out sim19.out sim20.out sim21.out sim22.out sim23.out sim24.out sim25.out sim26.out sim27.out sim28.out sim29.out sim30.out sim31.out sim32.out sim33.out sim34.out sim35.out sim36.out sim37.out sim38.out sim39.out sim40.out sim41.out sim42.out sim43.out sim44.out sim45.out sim46.out sim47.out sim48.out sim49.out sim50.out sim51.out sim52.out sim53.out sim54.out sim55.out sim56.out sim57.out sim58.out sim59.out sim60.out sim61.out sim62.out sim63.out sim64.out  > ana.out

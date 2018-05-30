@@ -10,6 +10,7 @@ using namespace std;
 
 int main()
 {
+    /*
     const char *dir = "/home/parallels/Documents/cworkspace/observerchain/tests/TrigureFiles";
     vector<string> strList;
     strList=scanFolder(dir);
@@ -23,4 +24,9 @@ int main()
     {
         cout << strList[i] << endl;
     }
+    */
+   char *file="./testfolder/trigureana.json";
+   string filecontent;
+   filecontent=loadFile(file);
+   printf("load data (%s)\n",filecontent.data());
 }

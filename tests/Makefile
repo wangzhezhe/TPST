@@ -18,8 +18,9 @@ HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
 CXX = g++
 CPPFLAGS += `pkg-config --cflags protobuf grpc`
-CXXFLAGS += -std=c++11 -I../deps/ -I/home1/zw241/Software/grpc/third_party/protobuf/src -DTIME -DDEBUG
+#CXXFLAGS += -std=c++11 -I../deps/ -I/home1/zw241/Software/grpc/third_party/protobuf/src -DTIME -DDEBUG
 #CXXFLAGS += -std=c++11 -I../deps/  -I../deps/hiredis/ -DDEBUG
+CXXFLAGS += -std=c++11 -I../deps/ -I/home1/zw241/Software/grpc/third_party/protobuf/src 
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += -L/usr/local/lib -L/home1/zw241/Software/protoinstall/lib -L/home1/zw241/Software/grpc/libs/opt/protobuf -L/home1/zw241/Software/grpcinstall/lib `pkg-config --libs protobuf grpc++ grpc`\
            -lgrpc++_reflection\

@@ -22,12 +22,12 @@ void recordIPPort(string &ipstr, string port)
     //char array[] = "eth5";
     char array[] = "eno1";
     FILE *fpt = fopen("./ipconfig", "w");
-    printf("debug1");
+    
     if (fpt==NULL){
         printf("failed to create ./ipconfig\n");
         return;
     }
-    printf("debug2");
+   
     n = socket(AF_INET, SOCK_DGRAM, 0);
     //Type of address to retrieve - IPv4 IP address
     ifr.ifr_addr.sa_family = AF_INET;
@@ -38,7 +38,7 @@ void recordIPPort(string &ipstr, string port)
     //display result
     char * ip=inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
     fprintf(fpt, "%s:%s\n", ip, port.data());
-    printf("debug test %s:%s\n",ip, port.data());
+    
     fclose(fpt);
     ipstr=string (ip);
 }
@@ -57,7 +57,7 @@ int loadIPPort(string configpath,string &ipstr,string &port)
     while (fgets(buf, sizeof(buf), fp) != NULL)
     {
         buf[strlen(buf) - 1] = '\0'; // eat the newline fgets() stores
-        printf("load ip:port (%s)\n", buf);
+        //printf("load ip:port (%s)\n", buf);
     }
     fclose(fp);
 

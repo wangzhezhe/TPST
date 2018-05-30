@@ -91,12 +91,11 @@ void gothroughFolderRegister(const char *watchdir)
 
         snprintf(taskPath, sizeof taskPath, "%s/%s/%s", cwd, watchdirstr.data(), fileList[i].data());
 
-        char *jsonbuffer = NULL;
-        jsonbuffer = loadFile(taskPath);
-        printf("dir path original %s after deletion %s\n", watchdir, watchdirstr.data());
+        string jsonbuffer  = loadFile(taskPath);
+        //printf("dir path original %s after deletion %s\n", watchdir, watchdirstr.data());
         printf("taskPath %s\n", taskPath);
-        //printf("original json buffer %s\n", jsonbuffer);
-        int typelabel = jsonIfTriggerorOperator(d, jsonbuffer);
+        //printf("original json buffer after file loading\n (%s)\n", jsonbuffer.data());
+        int typelabel = jsonIfTriggerorOperator(d, const_cast<char*>(jsonbuffer.data()));
         if (typelabel == 1)
         {
 #ifdef DEBUG
@@ -104,12 +103,12 @@ void gothroughFolderRegister(const char *watchdir)
             printf("register the file:(%s)\n", fileList[i].data());
 #endif
             //subscribe the specific file
-            jsonParsingTrigger(d, jsonbuffer);
+            jsonParsingTrigger(d);
         }
         else if (typelabel == 2)
         {
             //put operator into the list
-            string operatorStr = string(jsonbuffer);
+            string operatorStr = jsonbuffer;
             operatorList.push_back(operatorStr);
         }
     }
@@ -179,9 +178,9 @@ int main(int argc, char **argv)
 
     gothroughFolderRegister(argv[1]);
 
-#ifdef TIME
+
     initOperator();
-#endif
+
     waitthreadFinish();
 }
 

@@ -118,7 +118,8 @@ class GreeterServiceImpl final : public Greeter::Service
 
       //set timestep?
       int timestep =1;
-      sleep(timestep);
+      //sleep(timestep);
+      usleep(1 * 50);
     }
     //generate uid on server end
 

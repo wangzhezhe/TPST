@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2018.4.4)  28 MAY 2018 19:26
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2018.4.4)  27 MAY 2018 20:22
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -153,20 +153,7 @@ Package: algorithmic 2009/08/24 v0.1 Document Style `algorithmic'
 (/usr/local/texlive/2017/texmf-dist/tex/latex/url/url.sty
 \Urlmuskip=\muskip10
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
-) (./main.aux
-
-LaTeX Warning: Label `fg:state' multiply defined.
-
-
-LaTeX Warning: Label `fg:state' multiply defined.
-
-
-LaTeX Warning: Label `fg:state' multiply defined.
-
-
-LaTeX Warning: Label `fg:state' multiply defined.
-
-)
+) (./main.aux)
 \openout1 = `main.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 345.
@@ -181,7 +168,8 @@ LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 345.
 LaTeX Font Info:    ... okay on input line 345.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 345.
 LaTeX Font Info:    ... okay on input line 345.
- (/usr/local/texlive/2017/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+
+(/usr/local/texlive/2017/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count98
 \scratchdimen=\dimen119
@@ -246,132 +234,192 @@ LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <14> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 401.
 
 (./introduction.tex
-<./figure/scientificworkflowpattern.jpg, id=1, 392.46625pt x 462.72874pt>
-File: ./figure/scientificworkflowpattern.jpg Graphic file (type jpg)
 
-<use ./figure/scientificworkflowpattern.jpg>
-Package pdftex.def Info: ./figure/scientificworkflowpattern.jpg used on input l
+LaTeX Warning: Citation `childs2012situ' on page 1 undefined on input line 3.
+
+
+LaTeX Warning: Citation `childs2012situ' on page 1 undefined on input line 3.
+
+
+LaTeX Warning: Citation `bauer2016situ' on page 1 undefined on input line 3.
+
+
+LaTeX Warning: Citation `oldfield2014evaluation' on page 1 undefined on input l
+ine 3.
+
+
+LaTeX Warning: Citation `oldfield2014evaluation' on page 1 undefined on input l
 ine 7.
-(pdftex.def)             Requested size: 182.93344pt x 215.68913pt.
-) [1{/usr/local/texlive/2017/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
+
+) (./background_and_releatedwork.tex
+
+LaTeX Warning: Citation `childs2012situ' on page 1 undefined on input line 6.
 
 
- <./figure/scientificworkflowpattern.jpg>] (./background_and_releatedwork.tex
-<./figure/application_classification.jpg, id=11, 954.56625pt x 282.05376pt>
+LaTeX Warning: Citation `childs2012situ' on page 1 undefined on input line 6.
+
+
+LaTeX Warning: Citation `bauer2016situ' on page 1 undefined on input line 6.
+
+
+LaTeX Warning: Citation `oldfield2014evaluation' on page 1 undefined on input l
+ine 6.
+
+[1{/usr/local/texlive/2017/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
+
+
+]
+<./figure/application_classification.jpg, id=10, 954.56625pt x 282.05376pt>
 File: ./figure/application_classification.jpg Graphic file (type jpg)
 
 <use ./figure/application_classification.jpg>
 Package pdftex.def Info: ./figure/application_classification.jpg used on input 
 line 10.
 (pdftex.def)             Requested size: 231.71494pt x 68.46465pt.
- [2 <./figure/application_classification.jpg>] <./figure/taskpattern.jpg, id=15
-, 683.55376pt x 169.63374pt>
+
+
+LaTeX Warning: Citation `beck2011congruence' on page 2 undefined on input line 
+15.
+
+
+LaTeX Warning: Citation `visitlibsm' on page 2 undefined on input line 17.
+
+
+LaTeX Warning: Citation `ayachit2015paraview' on page 2 undefined on input line
+ 17.
+
+
+LaTeX Warning: Citation `bauer2016situ' on page 2 undefined on input line 19.
+
+
+LaTeX Warning: Citation `makeflowexample' on page 2 undefined on input line 23.
+
+
+
+LaTeX Warning: Citation `makeflowexample' on page 2 undefined on input line 23.
+
+
+
+LaTeX Warning: Citation `wilde2011swift' on page 2 undefined on input line 23.
+
+
+LaTeX Warning: Citation `bharathi2008characterization' on page 2 undefined on i
+nput line 23.
+
+
+LaTeX Warning: Citation `ayachit2015paraview' on page 2 undefined on input line
+ 25.
+
+
+LaTeX Warning: Citation `dreher2017situ' on page 2 undefined on input line 25.
+
+
+LaTeX Warning: Citation `docan2012dataspaces' on page 2 undefined on input line
+ 25.
+
+
+LaTeX Warning: Citation `ayachit2015paraview' on page 2 undefined on input line
+ 25.
+
+
+LaTeX Warning: Citation `bennett2012combining' on page 2 undefined on input lin
+e 25.
+
+
+LaTeX Warning: Citation `dreher2017situ' on page 2 undefined on input line 25.
+
+
+LaTeX Warning: Citation `albrecht2012makeflow' on page 2 undefined on input lin
+e 28.
+
+
+LaTeX Warning: Citation `albrecht2012makeflow' on page 2 undefined on input lin
+e 28.
+
+
+LaTeX Warning: Citation `bharathi2008characterization' on page 2 undefined on i
+nput line 28.
+
+<./figure/taskpattern.jpg, id=11, 683.55376pt x 169.63374pt>
 File: ./figure/taskpattern.jpg Graphic file (type jpg)
 
 <use ./figure/taskpattern.jpg>
 Package pdftex.def Info: ./figure/taskpattern.jpg used on input line 31.
 (pdftex.def)             Requested size: 404.71353pt x 100.43764pt.
+ [2 <./figure/application_classification.jpg>]
+
+LaTeX Warning: Citation `albrecht2012makeflow' on page 3 undefined on input lin
+e 36.
+
+
+LaTeX Warning: Citation `eugster2003many' on page 3 undefined on input line 40.
+
+
+
+LaTeX Warning: Citation `hivemq' on page 3 undefined on input line 40.
+
+
+LaTeX Warning: Citation `jin2012scalable' on page 3 undefined on input line 40.
+
+
+
+LaTeX Warning: Citation `redispubsub' on page 3 undefined on input line 40.
+
+
+LaTeX Warning: Citation `jin2012scalable' on page 3 undefined on input line 40.
+
+
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <7> on input line 40.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <5> on input line 40.
-
-<./figure/edtaskpattern.jpg, id=16, 673.51625pt x 171.64125pt>
+<./figure/edtaskpattern.jpg, id=15, 673.51625pt x 171.64125pt>
 File: ./figure/edtaskpattern.jpg Graphic file (type jpg)
 
 <use ./figure/edtaskpattern.jpg>
 Package pdftex.def Info: ./figure/edtaskpattern.jpg used on input line 43.
 (pdftex.def)             Requested size: 404.71353pt x 103.14005pt.
 ) (./implementation.tex
-<./figure/edflowarchitecture.jpg, id=17, 654.445pt x 357.335pt>
+<./figure/edflowarchitecture.jpg, id=16, 654.445pt x 357.335pt>
 File: ./figure/edflowarchitecture.jpg Graphic file (type jpg)
 
 <use ./figure/edflowarchitecture.jpg>
 Package pdftex.def Info: ./figure/edflowarchitecture.jpg used on input line 7.
 (pdftex.def)             Requested size: 243.91125pt x 133.17696pt.
- [3] [4 <./figure/taskpattern.jpg> <./figure/edtaskpattern.jpg> <./figure/edflo
-warchitecture.jpg>]) (./experiments.tex
+ [3]) (./experiments.tex
 
-LaTeX Warning: Citation `caliburn' on page 5 undefined on input line 2.
+LaTeX Warning: Citation `caliburn' on page 4 undefined on input line 2.
 
-) (./conclution_futurework.tex) (./main.bbl
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <9> on input line 7.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 7.
+[4 <./figure/taskpattern.jpg> <./figure/edtaskpattern.jpg> <./figure/edflowarch
+itecture.jpg>]
 
-Underfull \hbox (badness 1571) in paragraph at lines 11--13
-[]\OT1/ptm/m/n/9 visitlibsm.  $https : / / wci . llnl . gov / simulation / comp
-uter-[]codes /
- []
+LaTeX Warning: Citation `wilde2011swift' on page 5 undefined on input line 5.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 15--18
-[]\OT1/ptm/m/n/9 visitlibsm.  $https : / / ored . rutgers . edu / content /
- []
+LaTeX Warning: Citation `albrecht2012makeflow' on page 5 undefined on input lin
+e 5.
 
+./experiments.tex:7: Missing $ inserted.
+<inserted text> 
+                $
+l.7 For chained pattern when taskA_
+                                   X finish taskB_X will be triggered, we in...
 
-Overfull \hbox (101.3814pt too wide) in paragraph at lines 15--18
-\OT1/ptm/m/n/9 rutgers-[]new-[]supercomputer-[]ranked-[]2-[]among-[]big-[]ten-[
-]universities-[]8-[]among-[]us-[]academic$. 
- []
+? 
+./experiments.tex:7: Emergency stop.
+<inserted text> 
+                $
+l.7 For chained pattern when taskA_
+                                   X finish taskB_X will be triggered, we in...
+End of file on the terminal!
 
-
-Underfull \hbox (badness 2671) in paragraph at lines 31--37
-[]\OT1/ptm/m/n/9 Utkarsh Ay-a-chit, An-drew Bauer, Berk Geveci, Patrick
- []
-
-
-Underfull \hbox (badness 1584) in paragraph at lines 39--46
-[]\OT1/ptm/m/n/9 Andrew C Bauer, Hasan Ab-basi, James Ahrens, Hank
- []
-
-[5]
-Underfull \hbox (badness 2781) in paragraph at lines 96--100
-\OT1/ptm/m/n/9 repos-i-tory.  $https : / / github . com / cooperative-[]computi
-ng-[]lab /
- []
-
-)
-
-** Conference Paper **
-Before submitting the final camera ready copy, remember to:
-
- 1. Manually equalize the lengths of two columns on the last page
- of your paper;
-
- 2. Ensure that any PostScript and/or PDF output post-processing
- uses only Type 1 fonts and that every step in the generation
- process uses the appropriate paper size.
-
-[6
-
-] (./main.aux)
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: There were multiply-defined labels.
-
- ) 
+ 
 Here is how much of TeX's memory you used:
- 2563 strings out of 492995
- 40590 string characters out of 6132705
- 108632 words of memory out of 5000000
- 6071 multiletter control sequences out of 15000+600000
- 37621 words of font info for 71 fonts, out of 8000000 for 9000
+ 2530 strings out of 492995
+ 40087 string characters out of 6132705
+ 108522 words of memory out of 5000000
+ 6055 multiletter control sequences out of 15000+600000
+ 33584 words of font info for 63 fonts, out of 8000000 for 9000
  1144 hyphenation exceptions out of 8191
- 39i,8n,25p,1715b,322s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/local/texlive/2017/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/t
-exlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/te
-xlive/2017/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2017
-/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texlive/2017/texmf-di
-st/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2017/texmf-dist/fonts/t
-ype1/urw/times/utmri8a.pfb>
-Output written on main.pdf (6 pages, 246162 bytes).
-PDF statistics:
- 49 PDF objects out of 1000 (max. 8388607)
- 30 compressed objects within 1 object stream
- 0 named destinations out of 1000 (max. 500000)
- 26 words of extra memory for PDF output out of 10000 (max. 10000000)
-
+ 39i,8n,25p,1715b,293s stack positions out of 5000i,500n,10000p,200000b,80000s
+./experiments.tex:7:  ==> Fatal error occurred, no output PDF file produced!

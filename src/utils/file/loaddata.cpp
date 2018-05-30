@@ -7,9 +7,10 @@
 #include <sys/stat.h>
 #include <string>
 #include <vector>
-
+#include <fstream>
 using namespace std;
 
+/*
 char *loadFile(char *filename)
 {
     FILE *f = fopen(filename, "rb");
@@ -34,6 +35,16 @@ char *loadFile(char *filename)
 
     return buffer;
 }
+*/
+
+string loadFile(char *filename)
+{
+  ifstream ifs(filename);
+  string content( (std::istreambuf_iterator<char>(ifs)),
+                       (std::istreambuf_iterator<char>()));
+  return content;
+}
+
 
 char *getTaskNameFromEventName(char *filename)
 {
