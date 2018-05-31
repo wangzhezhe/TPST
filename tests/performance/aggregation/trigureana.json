@@ -1,12 +1,9 @@
 {
     "type": "TRIGGER",
-    "eventList": ["T1SIM_FINISH:2"],
+    "eventList": ["T1SIM_FINISH:4"],
     "driver": "local",
     "actionList": [
-       "/bin/bash ./app/analysis.sh sim1.out > ana1.out",
+       "/bin/bash ./app/analysis.sh sim1.out  sim2.out sim3.out sim4.out > ana1.out",
        "./operator publish T1ANA_FINISH"
      ]
 }
-
-
-

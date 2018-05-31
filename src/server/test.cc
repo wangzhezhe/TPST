@@ -34,24 +34,29 @@ void testOnesubMultiPush()
     testclear();
 
     //add new client new event
-    vector<string> eventList;
-    eventList.push_back("ea");
+    vector<string> eventSubList;
+    vector<string> eventPushList;
+    eventSubList.push_back("T1_FINISH:2");
+    eventPushList.push_back("T1_FINISH");
     string clientid = "id1";
     addNewClient(clientid);
-    addNewEvent("ea", 3);
+    //in real using, parse this before subscribe
+    addNewEvent("T1_FINISH", 3);
 
-    pubsubSubscribe(eventList, clientid);
+    pubsubSubscribe(eventSubList, clientid);
     output();
     printf("send push\n\n");
-    pubsubPublish(eventList);
+    pubsubPublish(eventPushList);
 
     output();
     printf("send push\n\n");
-    pubsubPublish(eventList);
+    pubsubPublish(eventPushList);
     printf("send push\n\n");
-    pubsubPublish(eventList);
+    pubsubPublish(eventPushList);
 
     output();
+
+    
 }
 
 void testMultisubOnePush()
@@ -90,6 +95,9 @@ void testSplit(){
 int main()
 {
 
+    //multipush could trigure one subscribed client
+    printf("------testOnesubMultiPush------\n");
+    testOnesubMultiPush();
     /*
     printf("---------------test for sub-------------------\n");
     vector<string> eventList;
@@ -135,5 +143,5 @@ int main()
     printf("------testMultiThreadOperation?------\n");
     */
 
-    testSplit();
+    //testSplit();
 }

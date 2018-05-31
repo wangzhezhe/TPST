@@ -90,9 +90,12 @@ class GreeterServiceImpl final : public Greeter::Service
       eventStr = request->pubsubmessage(i);
       printf("get events (%s)\n", eventStr.data());
       eventList.push_back(eventStr);
-      //todo parse trigure number
+      //default number is 1
       int trinum = 1;
-      addNewEvent(eventStr, trinum);
+      string eventMessage;
+      ParseEvent(eventStr, eventMessage, trinum);
+      printf("after parsing %s %d\n",eventMessage.data(),trinum);
+      addNewEvent(eventMessage, trinum);
     }
 
     pubsubSubscribe(eventList, clientId);

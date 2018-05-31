@@ -52,6 +52,7 @@ void addNewEvent(string str, int num)
         map<int, bool> innermap;
         innermap[num] = false;
         strtoEventMtx.lock();
+        printf("add event %s %d\n", str.data(), num);
         strtoEvent[str] = innermap;
         strtoEventMtx.unlock();
     }
@@ -94,6 +95,8 @@ void deleteEvent(string str, int num)
 }
 
 //the event here is in full format such as: event1:1, event2:2
+//when subscribe, only one of same event type could exist, for example event1:2 and event1:3 coube not be subscribed at the same time
+//TODO return error when same event has been subscribed with multiple number
 void pubsubSubscribe(vector<string> eventList, string clientId)
 {
 
@@ -104,19 +107,26 @@ void pubsubSubscribe(vector<string> eventList, string clientId)
 
     for (i = 0; i < size; i++)
     {
+        string eventWithoutNum;
+        int requireNum;
+
+        ParseEvent(eventList[i],eventWithoutNum,requireNum);
+
+
         if (clienttoSub.find(clientId) == clienttoSub.end())
         {
             // not found
             map<string, int> innermap;
-            innermap[eventList[i]] = 0;
+            innermap[eventWithoutNum] = 0;
+            //used to store dynamic pushed number
             clienttoSub[clientId] = innermap;
         }
         else
         {
-            if (clienttoSub[clientId].find(eventList[i]) == clienttoSub[clientId].end())
+            if (clienttoSub[clientId].find(eventWithoutNum) == clienttoSub[clientId].end())
             {
                 // not found
-                clienttoSub[clientId][eventList[i]] = 0;
+                clienttoSub[clientId][eventWithoutNum] = 0;
             }
             else
             {
@@ -126,17 +136,17 @@ void pubsubSubscribe(vector<string> eventList, string clientId)
         }
 
         //put value into subtoCliet
-        if (subtoClient.find(eventList[i]) == subtoClient.end())
+        if (subtoClient.find(eventWithoutNum) == subtoClient.end())
         {
             // not found
             set<string> s;
             s.insert(clientId);
-            subtoClient[eventList[i]] = s;
+            subtoClient[eventWithoutNum] = s;
         }
         else
         {
             //if client id exist
-            subtoClient[eventList[i]].insert(clientId);
+            subtoClient[eventWithoutNum].insert(clientId);
         }
     }
 }
@@ -171,7 +181,9 @@ void ParseEvent(string fullEvent, string &eventMessage, int &num)
 void output()
 {
     //output subtoCliet
+    printf("---------current inner data value----------\n");
     map<string, set<string>>::iterator itera;
+    map<int, bool>::iterator inneritea;
     for (itera = subtoClient.begin(); itera != subtoClient.end(); ++itera)
     {
         //parse the event key
@@ -180,7 +192,14 @@ void output()
         int num;
         ParseEvent(fullEvent, eventMessage, num);
 
-        printf("subtoCliet key (%s) static trigNum (%d)\n", eventMessage.data(), num);
+        //traverse the innermap of strtoEvent
+        map<int, bool> staticNumber = strtoEvent[eventMessage];
+
+        for (inneritea = staticNumber.begin(); inneritea != staticNumber.end(); ++inneritea)
+        {
+            int requiredNum = inneritea->first;
+            printf("sub %s required num %d\n", eventMessage.data(), requiredNum);
+        }
 
         set<string> s = itera->second;
         set<string>::iterator itset;
@@ -214,32 +233,45 @@ void pubsubPublish(vector<string> eventList)
     int i;
     for (i = 0; i < size; i++)
     {
-        //this event is supposed to be in format of event:num
-        string currpushEvent = eventList[i];
-        //search for pub to client
-        string currentEventMessage;
+        //this event should not in full format, for required number larger than 1, one event should only binding with one number
+        string eventwithoutNum = eventList[i];
+
         int currentEventReqNum;
-        ParseEvent(currpushEvent, currentEventMessage, currentEventReqNum);
-        printf("parse event (%s) (%d)\n", currentEventMessage.data(), currentEventReqNum);
+
+        //get require number
 
         //get RequireTriggure Map from strtoEvent
         map<int, bool> RequireTriggureMap;
 
-        if (strtoEvent.find(currentEventMessage) == strtoEvent.end())
+        if (strtoEvent.find(eventwithoutNum) == strtoEvent.end())
         {
             // not found
             // do nothing
-            printf("failed to get event %s from strtoEvent\n", currentEventMessage.data());
+            printf("failed to get event %s from strtoEvent\n", eventwithoutNum.data());
             continue;
         }
         else
         {
-            RequireTriggureMap = strtoEvent[currentEventMessage];
+            RequireTriggureMap = strtoEvent[eventwithoutNum];
+            //range RequireTriggureMap to get currentEventReqNum
+            map<int, bool>::iterator itinnermap;
+            for (itinnermap = RequireTriggureMap.begin(); itinnermap != RequireTriggureMap.end(); ++itinnermap)
+            {
+                currentEventReqNum = itinnermap->first;
+            }
         }
+
+        printf("parse event (%s) required num (%d)\n", eventwithoutNum.data(), currentEventReqNum);
+
+        string eventWithNum = eventwithoutNum + string(":") + to_string(currentEventReqNum);
+
+        printf("event with num (%s)\n", eventWithNum.data());
 
         //get clientSet
 
-        set<string> clientSet = subtoClient[currpushEvent];
+        //use full format
+
+        set<string> clientSet = subtoClient[eventwithoutNum];
         //traverse set
         set<string>::iterator itset;
         for (itset = clientSet.begin(); itset != clientSet.end(); ++itset)
@@ -270,15 +302,15 @@ void pubsubPublish(vector<string> eventList)
                 else
                 {
 
-                    if (clienttoSub[clientid].find(currentEventMessage) == clienttoSub[clientid].end())
+                    if (clienttoSub[clientid].find(eventwithoutNum) == clienttoSub[clientid].end())
                     {
                         //new comming event
-                        clienttoSub[clientid][currentEventMessage] = 0;
+                        clienttoSub[clientid][eventwithoutNum] = 0;
                     }
                     else
                     {
-                        clienttoSub[clientid][currentEventMessage]++;
-                        newPublishTime = clienttoSub[clientid][currentEventMessage];
+                        clienttoSub[clientid][eventwithoutNum]++;
+                        newPublishTime = clienttoSub[clientid][eventwithoutNum];
                     }
                 }
 
@@ -306,7 +338,7 @@ void pubsubPublish(vector<string> eventList)
                     if (RequireTriggureMap.find(pushNum) == RequireTriggureMap.end())
                     {
                         //event is not subscribed
-                        printf("event (%s) (%d) is not subscribed\n",eventkey.data(),pushNum);
+                        printf("event (%s) (%d) is not subscribed\n", eventkey.data(), pushNum);
                         notifyFlag = false;
                         break;
                     }

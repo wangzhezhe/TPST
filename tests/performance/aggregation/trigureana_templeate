@@ -1,0 +1,9 @@
+{
+    "type": "TRIGGER",
+    "eventList": ["T1SIM_FINISH:NUM"],
+    "driver": "local",
+    "actionList": [
+       "/bin/bash ./app/analysis.sh sim1.out sim.out > ana1.out",
+       "./operator publish T1ANA_FINISH"
+     ]
+}
