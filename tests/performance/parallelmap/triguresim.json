@@ -3,7 +3,6 @@
     "eventList": ["INIT"],
     "driver": "local",
     "actionList": [
-       "/bin/bash ./app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim1.out",
-       "./operator publish T1SIM_FINISH"
+       "/bin/bash ./app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim1.out"
      ]
 }

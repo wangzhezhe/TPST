@@ -178,8 +178,8 @@ int main(int argc, char **argv)
 
     gothroughFolderRegister(argv[1]);
 
-
-    initOperator();
+    //printf("created thread num %d\n",operatorList.size());
+    //initOperator();
 
     waitthreadFinish();
 }

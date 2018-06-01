@@ -137,6 +137,8 @@ class GreeterServiceImpl final : public Greeter::Service
 
     //get reply
     //TODO use openmp to do parallel checking
+    int timestep = 1;
+    int clientsize=0;
     while (1)
     {
       if (clientidtoWrapper[clientId]->iftrigure == true)
@@ -145,9 +147,13 @@ class GreeterServiceImpl final : public Greeter::Service
       }
 
       //set timestep?
-      int timestep = 1;
+      
       //sleep(timestep);
-      usleep(1 * 50);
+      clientsize=subtoClient[debugevents].size();
+      //printf("stage wait for event %s number %d clientSize %d\n",debugevents.data(),timestep, clientsize);
+      
+      usleep(1 * 10);
+      timestep++;
     }
     //generate uid on server end
 
@@ -203,7 +209,7 @@ class GreeterServiceImpl final : public Greeter::Service
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end); /* mark the end time */
     diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
-    printf("debug for publish (%s) response time = (%lf) second\n", debugeventspub.data(), (long long unsigned int)diff);
+    printf("debug for publish (%s) response time = (%llu) second\n", debugeventspub.data(), (long long unsigned int)diff);
     return Status::OK;
   }
 };

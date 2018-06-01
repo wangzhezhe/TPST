@@ -233,8 +233,10 @@ void waitthreadFinish()
 
     int joinReturn;
     pthread_t currpid;
+    
     while (threadIdQueue.empty() == false)
     {
+        printf("thread num waiting to be finished %d\n",threadIdQueue.size());
         currpid = threadIdQueue.front();
         joinReturn = pthread_join(currpid, NULL);
         printf("thread id %ld return %d\n", currpid, joinReturn);
