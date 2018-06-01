@@ -13,6 +13,11 @@
 #include <string>
 #include <iostream>
 #include <queue>
+#include <stdint.h>	/* for uint64 definition */
+#include <stdlib.h>	/* for exit() definition */
+#include <time.h>	/* for clock_gettime */
+
+#define BILLION 1000000000L
 
 using namespace std;
 
@@ -53,8 +58,24 @@ void *eventSubscribe(void *arguments)
         return NULL;
     }
 
+    //debug how long should be used to go get the subscribed event
+
+
+
+    uint64_t diff;
+	struct timespec start, end;
+
+	/* measure monotonic time */
+	clock_gettime(CLOCK_MONOTONIC, &start);	/* mark start time */
+
     string reply = greeter->Subscribe(etrigger->eventList);
     cout << "Subscribe return value: " << reply << endl;
+
+	clock_gettime(CLOCK_MONOTONIC, &end);	/* mark the end time */
+
+	diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+	printf("debug time get (%s) response time = (%lf) second\n", etrigger->eventList[0].data(),(float) diff/BILLION);
+
     int i = 0;
     if (reply.compare("TRIGGERED") != 0)
     {
@@ -216,7 +237,7 @@ void waitthreadFinish()
     {
         currpid = threadIdQueue.front();
         joinReturn = pthread_join(currpid, NULL);
-        printf("thread id %d return %d\n", int(joinReturn), joinReturn);
+        printf("thread id %ld return %d\n", currpid, joinReturn);
         threadIdQueue.pop();
     }
 }

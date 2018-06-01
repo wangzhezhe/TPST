@@ -3,7 +3,6 @@
     "eventList": ["T1SIM_FINISH"],
     "driver": "local",
     "actionList": [
-       "/bin/bash ./app/analysis.sh sim1.out > ana1.out",
-       "./operator publish T1ANA_FINISH"
+       "/bin/bash ./app/analysis.sh sim1.out > ana1.out"
      ]
 }

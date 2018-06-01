@@ -28,6 +28,11 @@
 #include <mutex>
 #include "../utils/getip/getip.h"
 
+#include <stdint.h> /* for uint64 definition */
+#include <stdlib.h> /* for exit() definition */
+#include <time.h>   /* for clock_gettime */
+#define BILLION 1000000000L
+
 #ifdef BAZEL_BUILD
 #else
 #include "workflowserver.grpc.pb.h"
@@ -58,7 +63,10 @@ class GreeterServiceImpl final : public Greeter::Service
 
   Status Subscribe(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
   {
+    uint64_t diff;
+    struct timespec start, end;
 
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start); /* mark start time */
     //create the uuid
 
     uuid_t uuid;
@@ -76,6 +84,10 @@ class GreeterServiceImpl final : public Greeter::Service
     clientidtoWrapper[clientId] = psw;
     clientidtoWrapperMtx.unlock();
 
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end); /* mark the end time */
+    diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+    printf("debug for subevent stage1 response time = (%llu) second\n", (long long unsigned int)diff);
+
     //every elemnt could be accessed by specific function
     //reply->set_returnmessage(prefix + request->pubsubmessage());
 
@@ -85,23 +97,36 @@ class GreeterServiceImpl final : public Greeter::Service
     int i = 0;
     vector<string> eventList;
     string eventStr;
+
+    //test respond time
+    string debugevents;
+
     for (i = 0; i < size; i++)
     {
       eventStr = request->pubsubmessage(i);
+      //for debug
+      debugevents = eventStr;
       printf("get events (%s)\n", eventStr.data());
       eventList.push_back(eventStr);
       //default number is 1
       int trinum = 1;
       string eventMessage;
       ParseEvent(eventStr, eventMessage, trinum);
-      printf("after parsing %s %d\n",eventMessage.data(),trinum);
+      printf("after parsing %s %d\n", eventMessage.data(), trinum);
       addNewEvent(eventMessage, trinum);
     }
+
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end); /* mark the end time */
+    diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+    printf("debug for subevent stage2 response time = (%llu) second\n", (long long unsigned int)diff);
 
     pubsubSubscribe(eventList, clientId);
 
     printf("clientid (%s) call subscribe func, waiting to be notified\n", clientId.data());
 
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end); /* mark the end time */
+    diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+    printf("debug for subevent stage3 response time = (%llu) second\n", (long long unsigned int)diff);
     //request should be a event list
 
     //put event list into vector and call subscribe function
@@ -111,7 +136,7 @@ class GreeterServiceImpl final : public Greeter::Service
     //satisfied value is controled by publish function
 
     //get reply
-
+    //TODO use openmp to do parallel checking
     while (1)
     {
       if (clientidtoWrapper[clientId]->iftrigure == true)
@@ -120,7 +145,7 @@ class GreeterServiceImpl final : public Greeter::Service
       }
 
       //set timestep?
-      int timestep =1;
+      int timestep = 1;
       //sleep(timestep);
       usleep(1 * 50);
     }
@@ -130,11 +155,33 @@ class GreeterServiceImpl final : public Greeter::Service
 
     //delete the clientid in the global map
     reply->set_returnmessage("TRIGGERED");
+
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end); /* mark the end time */
+    diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+    printf("debug for subevent stage4 (%s) response time = (%llu) second\n", debugevents.data(), (long long unsigned int)diff);
+    //delete clientID
+    deleteClient(clientId);
+
+    //traverse clientList again, delete subtoClient
+
+    size = eventList.size();
+    for (i = 0; i < size; i++)
+    {
+      deleteClientFromSTC(clientId, eventList[i]);
+    }
+
     return Status::OK;
   }
 
   Status Publish(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
   {
+
+    //test respond time
+    string debugeventspub;
+    uint64_t diff;
+    struct timespec start, end;
+
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start); /* mark start time */
 
     //parse the request events
     int size = request->pubsubmessage_size();
@@ -142,15 +189,21 @@ class GreeterServiceImpl final : public Greeter::Service
     int i = 0;
     vector<string> eventList;
     string eventStr;
+
     for (i = 0; i < size; i++)
     {
       eventStr = request->pubsubmessage(i);
+      debugeventspub = eventStr;
       printf("server publish event (%s)\n", eventStr.data());
       eventList.push_back(eventStr);
     }
     //publish
     pubsubPublish(eventList);
     reply->set_returnmessage("OK");
+
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end); /* mark the end time */
+    diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+    printf("debug for publish (%s) response time = (%lf) second\n", debugeventspub.data(), (long long unsigned int)diff);
     return Status::OK;
   }
 };
@@ -161,7 +214,7 @@ void RunServer()
   string serverPort = string("50051");
   string ip;
   printf("record ip\n");
-  recordIPPort(ip,serverPort);
+  recordIPPort(ip, serverPort);
   //get the server ip from the config file
   /*
   string ipconfigfilepath = string("./ipconfig");

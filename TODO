@@ -1,20 +1,15 @@
 [TODO]
 
-change grreter into dynamic way (load ip itself)
-
-make it run on caliburn (source ~/.grpc before compilling)
-
-start to build the test cases (need to finish operator operation)
-
-workflow server subscribe parameter times, should be loaded by request
-
-when init a new json file leave some extra blank at the end of files, there might be weird characters
-
 Config content:
 global directory
 
+when using publish, it's better to add new message and send this message to client when trigguring
+
 
 [depedencies]:
+
+on caliburn (source ~/.grpc before compilling)
+
 protobuf
 (https://blog.jeffli.me/blog/2016/12/08/install-protocol-buffer-from-source-in-centos-7/)
 https://blog.csdn.net/Programmer_H/article/details/8890800

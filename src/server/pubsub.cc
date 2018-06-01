@@ -2,6 +2,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string"
+#include <omp.h>
 #include "../utils/split/split.h"
 
 //event string to pubsubevent (value is real element with memory) from eventstring to eventStructure
@@ -18,6 +19,7 @@ map<string, pubsubWrapper *> clientidtoWrapper;
 
 // to pubsubWrapperid (value is pointer) from subeventstring to set of clientid
 // the key here is full form insluding the publish number for example event1:1
+mutex subtoClientMtx;
 map<string, set<string>> subtoClient;
 
 // clientid to pubsubEvent (value is pointer) from clientid to map of subscribedEvent
@@ -41,6 +43,13 @@ void deleteClient(string clientid)
     clientidtoWrapperMtx.lock();
     clientidtoWrapper.erase(clientid);
     clientidtoWrapperMtx.unlock();
+}
+void deleteClientFromSTC(string clientid, string substr)
+{
+
+    subtoClientMtx.lock();
+    subtoClient[substr].erase(clientid);
+    subtoClientMtx.unlock();
 }
 
 void addNewEvent(string str, int num)
@@ -110,8 +119,7 @@ void pubsubSubscribe(vector<string> eventList, string clientId)
         string eventWithoutNum;
         int requireNum;
 
-        ParseEvent(eventList[i],eventWithoutNum,requireNum);
-
+        ParseEvent(eventList[i], eventWithoutNum, requireNum);
 
         if (clienttoSub.find(clientId) == clienttoSub.end())
         {
@@ -274,6 +282,7 @@ void pubsubPublish(vector<string> eventList)
         set<string> clientSet = subtoClient[eventwithoutNum];
         //traverse set
         set<string>::iterator itset;
+#pragma omp parallel
         for (itset = clientSet.begin(); itset != clientSet.end(); ++itset)
         {
             //test if specific element in set exist in clientidtoWrapper
@@ -285,7 +294,7 @@ void pubsubPublish(vector<string> eventList)
                 //delete this element in set
                 //the value have been already deleted in idtowrapper
                 clientSet.erase(clientid);
-                continue;
+                //continue;
             }
             else
             {
@@ -297,7 +306,7 @@ void pubsubPublish(vector<string> eventList)
                     // not found
                     // do nothing
                     printf("failed to get dynamicEventPushMap from clienttoSub by clientId %s\n", clientid.data());
-                    continue;
+                    //continue;
                 }
                 else
                 {
@@ -317,7 +326,7 @@ void pubsubPublish(vector<string> eventList)
                 if (RequireTriggureMap.find(newPublishTime) == RequireTriggureMap.end())
                 {
                     //not exist
-                    continue;
+                    //continue;
                 }
                 else
                 {
@@ -329,6 +338,7 @@ void pubsubPublish(vector<string> eventList)
                 bool notifyFlag = true;
 
                 map<string, int>::iterator itsetsub;
+
                 for (itsetsub = dynamicEventPushMap.begin(); itsetsub != dynamicEventPushMap.end(); ++itsetsub)
                 {
 
