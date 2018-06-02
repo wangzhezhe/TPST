@@ -49,12 +49,10 @@ char projectPath[100] = "/home1/zw241/observerchain/tests";
 //char tmDir[50] = "TrigureFiles";
 char tmDir[50] = "TrigureFiles";
 
-vector<string> operatorList;
+
 
 //controle when to start operator
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-
-int jsonFileinFolder;
 
 //go through the Trigurefile folder and register the .json file with type=trigure into the system
 void gothroughFolderRegister(const char *watchdir)
@@ -65,7 +63,6 @@ void gothroughFolderRegister(const char *watchdir)
 
     int count = fileList.size();
     char taskPath[100];
-    int jsonNum=0;
     for (int i = 0; i < count; i++)
     {
         Document d;
@@ -97,22 +94,21 @@ void gothroughFolderRegister(const char *watchdir)
 
         snprintf(taskPath, sizeof taskPath, "%s/%s/%s", cwd, watchdirstr.data(), fileList[i].data());
 
-        string jsonbuffer  = loadFile(taskPath);
+        string jsonbuffer = loadFile(taskPath);
         //printf("dir path original %s after deletion %s\n", watchdir, watchdirstr.data());
         printf("taskPath %s\n", taskPath);
-        
+
         //printf("original json buffer after file loading\n (%s)\n", jsonbuffer.data());
-        int typelabel = jsonIfTriggerorOperator(d, const_cast<char*>(jsonbuffer.data()));
+        int typelabel = jsonIfTriggerorOperator(d, const_cast<char *>(jsonbuffer.data()));
         if (typelabel == 1)
         {
-            jsonNum++;
+
 #ifdef DEBUG
             //do the register operation
             printf("register the file:(%s)\n", fileList[i].data());
 #endif
             //subscribe the specific file
             jsonParsingTrigger(d);
-
         }
         else if (typelabel == 2)
         {
@@ -122,52 +118,11 @@ void gothroughFolderRegister(const char *watchdir)
         }
     }
 
-    jsonFileinFolder=jsonNum;
     return;
 }
 
-/*
-void initOperator(int jsonNum)
-{
-
-//there is another operator
-  while( SubscribedClient < jsonNum-1 )
-    {
- 
-      printf( "[thread main] done is %d which is < %d so waiting on cond\n", 
-	      SubscribedClient, jsonNum );
-      
-    // block this thread until another thread signals cond. While
-	// blocked, the mutex is released, then re-aquired before this
-	// thread is woken up and the call returns. 
-      pthread_cond_wait( & cond, & subscribedMutex ); 
-      
-    }
-
-    
 
 
-
-    //it's better to declare a new document instance for new file every time
-    Document d;
-    //go throught the operatorVector
-    int len = operatorList.size();
-    int i = 0;
-    char command[500];
-    for (i = 0; i < len; i++)
-    {
-        //get the operator command
-        //printf("parsing operator (%s)\n", operatorList[i].data());
-        d.Parse(operatorList[i].data());
-
-        const char *type = d["type"].GetString();
-        printf("execute type:(%s)\n", type);
-        const char *action = d["action"].GetString();
-        printf("execute action:(%s)\n", action);
-        system(action);
-    }
-}
-*/
 void *tempStartOperator(void *arg)
 {
     printf("execute the init operator\n");
@@ -182,15 +137,6 @@ void *tempStartOperator(void *arg)
 
 int main(int argc, char **argv)
 {
-#ifdef TIME
-    //send publish api and record time
-    struct timespec start;
-    clock_gettime(CLOCK_MONOTONIC, &start);
-    printf("start sec:(%ld), start nsec:(%ld)\n", start.tv_sec, start.tv_nsec);
-    pthread_t id;
-    //pthread_create(&id, NULL, tempStartOperator, NULL);
-
-#endif
 
     int length, i = 0, wd;
     int fd;
@@ -198,9 +144,9 @@ int main(int argc, char **argv)
 
     EVENTTYPE eventType;
 
-    if (argc != 2)
+    if (argc != 3)
     {
-        printf("<binary> <watchpath>\n");
+        printf("<binary> <watchpath> <requred client number to send the INIT>\n");
         return 0;
     }
 
@@ -209,17 +155,16 @@ int main(int argc, char **argv)
 
     gothroughFolderRegister(argv[1]);
 
-    
+    int jsonFileinFolder = atoi(argv[2]);
 
-    //printf("created thread num %d\n",operatorList.size());
-    //initOperator(jsonFileinFolder);
+    initOperator(jsonFileinFolder);
 
     waitthreadFinish();
 }
 
-    //use pthread_join to wait all the thread finish
+//use pthread_join to wait all the thread finish
 
-    /* 
+/* 
     don't do this during test
 
     // TODO If put the Document d in the while loop/

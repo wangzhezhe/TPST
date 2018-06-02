@@ -39,6 +39,9 @@ using workflowserver::HelloRequest;
 using workflowserver::PubSubReply;
 using workflowserver::PubSubRequest;
 
+using workflowserver::SubNumRequest;
+using workflowserver::SubNumReply;
+
 using namespace std;
 
 // this should be loaded from the ./ipconfig
@@ -168,3 +171,37 @@ string GreeterClient::Publish(vector<string> eventList)
         return "RPC failed";
     }
 }
+
+
+
+int GreeterClient::GetSubscribedNumber(string eventStr)
+{
+    SubNumRequest request;
+    
+   // Data we are sending to the server.
+    SubNumReply reply;
+    
+    request.set_subevent(eventStr);
+
+
+    // Context for the client. It could be used to convey extra information to
+    // the server and/or tweak certain RPC behaviors.
+    ClientContext context;
+
+    // The actual RPC.
+    Status status = stub_->GetSubscribedNumber(&context, request, &reply);
+
+    // Act upon its status.
+    if (status.ok())
+    {
+        return reply.clientnumber();
+    }
+    else
+    {
+        cout << status.error_code() << ": " << status.error_message()
+             << endl;
+        return -1;
+    }
+
+}
+

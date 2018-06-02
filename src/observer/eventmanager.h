@@ -42,9 +42,10 @@ int jsonIfTriggerorOperator(Document &d, char *jsonbuffer);
 void waitthreadFinish();
 void jsonParsingTrigger(Document &d);
 
-
+void initOperator(int jsonNum);
 
 extern mutex subscribedMutex;
 extern int SubscribedClient;
+extern vector<string> operatorList;
 
 #endif

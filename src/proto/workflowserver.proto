@@ -24,6 +24,8 @@ service Greeter {
   rpc Subscribe (PubSubRequest) returns (PubSubReply) {}
   // publish service
   rpc Publish (PubSubRequest) returns (PubSubReply) {}
+
+  rpc GetSubscribedNumber (SubNumRequest) returns (SubNumReply) {}
 }
 
 // The request message containing the user's name.
@@ -36,6 +38,7 @@ message HelloReply {
   string message = 1;
 }
 
+
 message PubSubRequest {
   //string array
   repeated string pubsubmessage = 1;
@@ -43,4 +46,15 @@ message PubSubRequest {
 
 message PubSubReply {
   string returnmessage = 1;
+}
+
+
+//determine how many clients subscribe this event 
+//don't set the long name
+message SubNumRequest {
+  string subevent = 1;
+}
+
+message SubNumReply {
+  int32 clientnumber = 1;
 }

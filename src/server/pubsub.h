@@ -69,6 +69,9 @@ void ParseEvent(string fullEvent, string & eventMessage, int & num);
 void deleteClient(string clientid);
 
 void deleteClientFromSTC(string clientid, string substr);
+
 bool checkIfTriggure(string clientid);
+
+int getSubscribedClientsNumber(string subEvent);
 
 #endif

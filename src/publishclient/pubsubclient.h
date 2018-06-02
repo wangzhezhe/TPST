@@ -21,6 +21,12 @@ using workflowserver::HelloReply;
 using workflowserver::HelloRequest;
 using workflowserver::PubSubReply;
 using workflowserver::PubSubRequest;
+//using workflowserver::SubscribedNumberRequest;
+//using workflowserver::SubscribedNumberReply;
+using workflowserver::SubNumRequest;
+using workflowserver::SubNumReply;
+
+
 using namespace std;
 
 class GreeterClient
@@ -45,6 +51,8 @@ public:
   string Subscribe(vector<string> eventList);
 
   string Publish(vector<string> eventList);
+
+  int GetSubscribedNumber(string eventStr);
 };
 
 //define as singleton global variable

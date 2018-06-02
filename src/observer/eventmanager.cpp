@@ -42,6 +42,49 @@ enum FILETYPE
 queue<pthread_t> threadIdQueue;
 mutex subscribedMutex;
 int SubscribedClient = 0;
+vector<string> operatorList;
+
+void initOperator(int jsonNum)
+{
+
+    GreeterClient *greeter = GreeterClient::getClient();
+    if (greeter == NULL)
+    {
+        printf("failed to get initialised greeter\n");
+        return;
+    }
+
+    while (1)
+    {
+        int reply = greeter->GetSubscribedNumber("INIT");
+        printf("there are %d clients subscribe INIT event\n", reply);
+        if (reply < jsonNum)
+        {
+            usleep(100);
+        }else{
+            break;
+        }
+    }
+
+    //it's better to declare a new document instance for new file every time
+    Document d;
+    //go throught the operatorVector
+    int len = operatorList.size();
+    int i = 0;
+    char command[500];
+    for (i = 0; i < len; i++)
+    {
+        //get the operator command
+        //printf("parsing operator (%s)\n", operatorList[i].data());
+        d.Parse(operatorList[i].data());
+
+        const char *type = d["type"].GetString();
+        printf("execute type:(%s)\n", type);
+        const char *action = d["action"].GetString();
+        printf("execute action:(%s)\n", action);
+        system(action);
+    }
+}
 
 void *eventSubscribe(void *arguments)
 {
@@ -72,12 +115,12 @@ void *eventSubscribe(void *arguments)
     subscribedMutex.unlock();
 
     string reply = greeter->Subscribe(etrigger->eventList);
-    cout << "Subscribe return value: " << reply << endl;
+    //cout << "Subscribe return value: " << reply << endl;
 
     clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
 
     diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
-    printf("debug time get (%s) response time = (%lf) second\n", etrigger->eventList[0].data(), (float)diff / BILLION);
+    //printf("debug time get (%s) response time = (%lf) second\n", etrigger->eventList[0].data(), (float)diff / BILLION);
 
     int i = 0;
     if (reply.compare("TRIGGERED") != 0)
@@ -236,10 +279,10 @@ void waitthreadFinish()
 
     while (threadIdQueue.empty() == false)
     {
-        printf("thread num waiting to be finished %d\n", threadIdQueue.size());
+        //printf("thread num waiting to be finished %d\n", threadIdQueue.size());
         currpid = threadIdQueue.front();
         joinReturn = pthread_join(currpid, NULL);
-        printf("thread id %ld return %d\n", currpid, joinReturn);
+        //printf("thread id %ld return %d\n", currpid, joinReturn);
         threadIdQueue.pop();
     }
 }

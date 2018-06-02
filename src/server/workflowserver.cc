@@ -47,8 +47,13 @@ using workflowserver::HelloReply;
 using workflowserver::HelloRequest;
 using workflowserver::PubSubReply;
 using workflowserver::PubSubRequest;
+using workflowserver::SubNumRequest;
+using workflowserver::SubNumReply;
+
 
 using namespace std;
+
+int waitTime;
 
 // Logic and data behind the server's behavior.
 class GreeterServiceImpl final : public Greeter::Service
@@ -58,6 +63,21 @@ class GreeterServiceImpl final : public Greeter::Service
   {
     std::string prefix("Hello:");
     reply->set_message(prefix + request->name());
+    return Status::OK;
+  }
+
+  Status GetSubscribedNumber(ServerContext *context, const SubNumRequest *request, SubNumReply *reply)
+  {
+
+    //get the request event
+    string requestEvent = request->subevent();
+    //printf("search the clients number associated with %s\n", requestEvent.data());
+    //search how many clients associated with this event
+    int clientsNumber = getSubscribedClientsNumber(requestEvent);
+
+    //return this number
+    reply->set_clientnumber(clientsNumber);
+
     return Status::OK;
   }
 
@@ -137,13 +157,12 @@ class GreeterServiceImpl final : public Greeter::Service
 
     //get reply
     //TODO use openmp to do parallel checking
-    int timestep = 1;
+    //int timestep = 1;
     int clientsize = 0;
     while (1)
     {
 
       bool notifyFlag = checkIfTriggure(clientId);
-       
 
       //printf("notifyflag for client id %s (%d)\n",clientId.data(),notifyFlag);
       if (notifyFlag == true)
@@ -178,8 +197,8 @@ class GreeterServiceImpl final : public Greeter::Service
         clientsize = subtoClient[debugevents].size();
         //printf("stage wait for event %s number %d clientSize %d\n",debugevents.data(),timestep, clientsize);
 
-        usleep(1 * 1500);
-        timestep++;
+        usleep(1 * waitTime);
+        //timestep++;
       }
     }
 
@@ -207,8 +226,7 @@ class GreeterServiceImpl final : public Greeter::Service
     return Status::OK;
   }
 
-  Status
-  Publish(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
+  Status Publish(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
   {
 
     //test respond time
@@ -286,6 +304,19 @@ void RunServer()
 
 int main(int argc, char **argv)
 {
+
+  //get wait time ./workflowserver 1000
+  printf("parameter length %d\n", argc);
+  if (argc == 2)
+  {
+    waitTime = atoi(argv[1]);
+    printf("subscribe wait period %d\n", waitTime);
+  }
+  else
+  {
+    printf("./workflowserver <subscribe period time>\n");
+    return 0;
+  }
 
   RunServer();
   return 0;

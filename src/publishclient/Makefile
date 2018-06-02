@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+# build server firstly, than build the client
 HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
 CXX = g++

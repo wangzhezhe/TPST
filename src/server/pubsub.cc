@@ -30,6 +30,18 @@ map<string, map<string, int>> clienttoSub;
 //strtoEvent and clientidtoWrapper have been established before this function
 using namespace std;
 
+int getSubscribedClientsNumber(string subEvent)
+{
+    if (subtoClient.find(subEvent) == subtoClient.end())
+    {
+        // not found
+        return -1;
+    }
+
+    //if client id exist
+    return subtoClient[subEvent].size();
+}
+
 void addNewClient(string clientid)
 {
     pubsubWrapper *psw = new (pubsubWrapper);
@@ -130,6 +142,8 @@ bool checkIfTriggure(string clientid)
             //printf("event (%s) (%d) is not subscribed\n", eventkeywithoutNum.data(), pushNum);
             //printf("event %s not in RequireTriggureMap\n",eventkeywithoutNum.data());
             notifyFlag = false;
+            //don't need to check others if there is one false
+            break;
         }
         else
         {
@@ -138,8 +152,10 @@ bool checkIfTriggure(string clientid)
             //this could be transfered into a set
             if (RequireTriggureMap[pushNum] == false)
             {
-                 printf(" RequireTriggureMap with pushNum %d is false\n",pushNum,eventkeywithoutNum.data());
+                printf(" RequireTriggureMap with pushNum %d is false\n", pushNum, eventkeywithoutNum.data());
                 notifyFlag = false;
+                //don't need to check others if there is one false
+                break;
             }
         }
     }
@@ -306,7 +322,7 @@ void pubsubPublish(vector<string> eventList)
 
     int size = eventList.size();
     int i;
-    printf("eventList len %d\n",size);
+    printf("eventList len %d\n", size);
     for (i = 0; i < size; i++)
     {
         //this event should not in full format, for required number larger than 1, one event should only binding with one number
