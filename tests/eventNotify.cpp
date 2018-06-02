@@ -51,6 +51,11 @@ char tmDir[50] = "TrigureFiles";
 
 vector<string> operatorList;
 
+//controle when to start operator
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
+int jsonFileinFolder;
+
 //go through the Trigurefile folder and register the .json file with type=trigure into the system
 void gothroughFolderRegister(const char *watchdir)
 {
@@ -60,6 +65,7 @@ void gothroughFolderRegister(const char *watchdir)
 
     int count = fileList.size();
     char taskPath[100];
+    int jsonNum=0;
     for (int i = 0; i < count; i++)
     {
         Document d;
@@ -94,16 +100,19 @@ void gothroughFolderRegister(const char *watchdir)
         string jsonbuffer  = loadFile(taskPath);
         //printf("dir path original %s after deletion %s\n", watchdir, watchdirstr.data());
         printf("taskPath %s\n", taskPath);
+        
         //printf("original json buffer after file loading\n (%s)\n", jsonbuffer.data());
         int typelabel = jsonIfTriggerorOperator(d, const_cast<char*>(jsonbuffer.data()));
         if (typelabel == 1)
         {
+            jsonNum++;
 #ifdef DEBUG
             //do the register operation
             printf("register the file:(%s)\n", fileList[i].data());
 #endif
             //subscribe the specific file
             jsonParsingTrigger(d);
+
         }
         else if (typelabel == 2)
         {
@@ -112,11 +121,33 @@ void gothroughFolderRegister(const char *watchdir)
             operatorList.push_back(operatorStr);
         }
     }
+
+    jsonFileinFolder=jsonNum;
     return;
 }
 
-void initOperator()
+/*
+void initOperator(int jsonNum)
 {
+
+//there is another operator
+  while( SubscribedClient < jsonNum-1 )
+    {
+ 
+      printf( "[thread main] done is %d which is < %d so waiting on cond\n", 
+	      SubscribedClient, jsonNum );
+      
+    // block this thread until another thread signals cond. While
+	// blocked, the mutex is released, then re-aquired before this
+	// thread is woken up and the call returns. 
+      pthread_cond_wait( & cond, & subscribedMutex ); 
+      
+    }
+
+    
+
+
+
     //it's better to declare a new document instance for new file every time
     Document d;
     //go throught the operatorVector
@@ -136,7 +167,7 @@ void initOperator()
         system(action);
     }
 }
-
+*/
 void *tempStartOperator(void *arg)
 {
     printf("execute the init operator\n");
@@ -178,8 +209,10 @@ int main(int argc, char **argv)
 
     gothroughFolderRegister(argv[1]);
 
+    
+
     //printf("created thread num %d\n",operatorList.size());
-    //initOperator();
+    //initOperator(jsonFileinFolder);
 
     waitthreadFinish();
 }

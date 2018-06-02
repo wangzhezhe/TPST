@@ -49,6 +49,9 @@ extern map<string, set<string>> subtoClient;
 
 // clientid to pubsubEvent (value is pointer) from clientid to map of subscribedEvent
 // in the inner map, the integer represent the time that the event have been pushed
+
+extern mutex clienttoSubMtx;
+
 extern map<string, map<string, int>> clienttoSub;
 
 void pubsubSubscribe(vector<string> eventList, string clientId);
@@ -66,6 +69,6 @@ void ParseEvent(string fullEvent, string & eventMessage, int & num);
 void deleteClient(string clientid);
 
 void deleteClientFromSTC(string clientid, string substr);
-
+bool checkIfTriggure(string clientid);
 
 #endif

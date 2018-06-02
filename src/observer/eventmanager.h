@@ -7,6 +7,8 @@
 
 #include <vector>
 #include <string>
+#include <pthread.h>
+#include <mutex>
 
 using namespace rapidjson;
 using namespace std;
@@ -39,5 +41,10 @@ typedef struct EventTriggure
 int jsonIfTriggerorOperator(Document &d, char *jsonbuffer);
 void waitthreadFinish();
 void jsonParsingTrigger(Document &d);
+
+
+
+extern mutex subscribedMutex;
+extern int SubscribedClient;
 
 #endif

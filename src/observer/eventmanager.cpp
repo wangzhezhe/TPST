@@ -13,10 +13,10 @@
 #include <string>
 #include <iostream>
 #include <queue>
-#include <stdint.h>	/* for uint64 definition */
-#include <stdlib.h>	/* for exit() definition */
-#include <time.h>	/* for clock_gettime */
-
+#include <stdint.h> /* for uint64 definition */
+#include <stdlib.h> /* for exit() definition */
+#include <time.h>   /* for clock_gettime */
+#include <pthread.h>
 #define BILLION 1000000000L
 
 using namespace std;
@@ -40,7 +40,8 @@ enum FILETYPE
 };
 
 queue<pthread_t> threadIdQueue;
-
+mutex subscribedMutex;
+int SubscribedClient = 0;
 
 void *eventSubscribe(void *arguments)
 {
@@ -60,21 +61,23 @@ void *eventSubscribe(void *arguments)
 
     //debug how long should be used to go get the subscribed event
 
-
-
     uint64_t diff;
-	struct timespec start, end;
+    struct timespec start, end;
 
-	/* measure monotonic time */
-	clock_gettime(CLOCK_MONOTONIC, &start);	/* mark start time */
+    /* measure monotonic time */
+    clock_gettime(CLOCK_MONOTONIC, &start); /* mark start time */
+
+    subscribedMutex.lock();
+    SubscribedClient++;
+    subscribedMutex.unlock();
 
     string reply = greeter->Subscribe(etrigger->eventList);
     cout << "Subscribe return value: " << reply << endl;
 
-	clock_gettime(CLOCK_MONOTONIC, &end);	/* mark the end time */
+    clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
 
-	diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
-	printf("debug time get (%s) response time = (%lf) second\n", etrigger->eventList[0].data(),(float) diff/BILLION);
+    diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+    printf("debug time get (%s) response time = (%lf) second\n", etrigger->eventList[0].data(), (float)diff / BILLION);
 
     int i = 0;
     if (reply.compare("TRIGGERED") != 0)
@@ -135,14 +138,13 @@ void *eventSubscribe(void *arguments)
     return NULL;
 }
 
-
-
 void jsonParsingTrigger(Document &d)
 {
     //#ifdef DEBUG
     //    printf("debug json buffer%s\n",jsonbuffer);
     //#endif
     //d.Parse(jsonbuffer);
+    int subscribedNum = 0;
     const char *type = d["type"].GetString();
     EventTriggure *triggure = new (EventTriggure);
     if (strcmp(type, "TRIGGER") == 0)
@@ -226,17 +228,15 @@ int jsonIfTriggerorOperator(Document &d, char *jsonbuffer)
     }
 }
 
-
-
 void waitthreadFinish()
 {
 
     int joinReturn;
     pthread_t currpid;
-    
+
     while (threadIdQueue.empty() == false)
     {
-        printf("thread num waiting to be finished %d\n",threadIdQueue.size());
+        printf("thread num waiting to be finished %d\n", threadIdQueue.size());
         currpid = threadIdQueue.front();
         joinReturn = pthread_join(currpid, NULL);
         printf("thread id %ld return %d\n", currpid, joinReturn);

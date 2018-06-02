@@ -138,23 +138,51 @@ class GreeterServiceImpl final : public Greeter::Service
     //get reply
     //TODO use openmp to do parallel checking
     int timestep = 1;
-    int clientsize=0;
+    int clientsize = 0;
     while (1)
     {
-      if (clientidtoWrapper[clientId]->iftrigure == true)
+
+      bool notifyFlag = checkIfTriggure(clientId);
+       
+
+      //printf("notifyflag for client id %s (%d)\n",clientId.data(),notifyFlag);
+      if (notifyFlag == true)
       {
+        printf("trigure/notify curr id (%s)\n", clientId.data());
+
+        //modify the global satisfied label to true
+        //clientidtoWrapperMtx.lock();
+
+        //clientidtoWrapper[clientid]->iftrigure = true;
+
+        //clientidtoWrapperMtx.unlock();
+        //the value should be zero after trigguring operation
+
+        //put dynamic area of associated events into zero
+        map<string, int>::iterator itsetsub;
+        map<string, int> dynamicEventPushMap = clienttoSub[clientId];
+        for (itsetsub = dynamicEventPushMap.begin(); itsetsub != dynamicEventPushMap.end(); ++itsetsub)
+        {
+
+          string eventkey = itsetsub->first;
+          //add lock here??
+          clienttoSubMtx.lock();
+          clienttoSub[clientId][eventkey] = 0;
+          clienttoSubMtx.unlock();
+        }
         break;
       }
+      else
+      {
+        //sleep(timestep);
+        clientsize = subtoClient[debugevents].size();
+        //printf("stage wait for event %s number %d clientSize %d\n",debugevents.data(),timestep, clientsize);
 
-      //set timestep?
-      
-      //sleep(timestep);
-      clientsize=subtoClient[debugevents].size();
-      //printf("stage wait for event %s number %d clientSize %d\n",debugevents.data(),timestep, clientsize);
-      
-      usleep(1 * 10);
-      timestep++;
+        usleep(1 * 1500);
+        timestep++;
+      }
     }
+
     //generate uid on server end
 
     //send message subscribe function
@@ -179,7 +207,8 @@ class GreeterServiceImpl final : public Greeter::Service
     return Status::OK;
   }
 
-  Status Publish(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
+  Status
+  Publish(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
   {
 
     //test respond time

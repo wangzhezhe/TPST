@@ -24,6 +24,7 @@ map<string, set<string>> subtoClient;
 
 // clientid to pubsubEvent (value is pointer) from clientid to map of subscribedEvent
 // in the inner map, the integer represent the time that the event have been pushed
+mutex clienttoSubMtx;
 map<string, map<string, int>> clienttoSub;
 
 //strtoEvent and clientidtoWrapper have been established before this function
@@ -59,7 +60,7 @@ void addNewEvent(string str, int num)
         // not found
         // add new innermap
         map<int, bool> innermap;
-        innermap[num] = false;
+        innermap[num] = true;
         strtoEventMtx.lock();
         printf("add event %s %d\n", str.data(), num);
         strtoEvent[str] = innermap;
@@ -70,7 +71,7 @@ void addNewEvent(string str, int num)
         if (strtoEvent[str].find(num) == strtoEvent[str].end())
         {
             //not found
-            strtoEvent[str][num] = false;
+            strtoEvent[str][num] = true;
         }
         else
         {
@@ -103,6 +104,69 @@ void deleteEvent(string str, int num)
     }
 }
 
+bool checkIfTriggure(string clientid)
+{
+
+    map<string, int> dynamicEventPushMap = clienttoSub[clientid];
+    // check all associated event to make sure if the client is triggured
+    bool notifyFlag = true;
+
+    map<string, int>::iterator itsetsub;
+
+    for (itsetsub = dynamicEventPushMap.begin(); itsetsub != dynamicEventPushMap.end(); ++itsetsub)
+    {
+
+        string eventkeywithoutNum = itsetsub->first;
+        int pushNum = itsetsub->second;
+
+        //printf("client id %s event %s pushNum %d\n",clientid.data(),eventkeywithoutNum.data(),pushNum);
+        //output();
+
+        map<int, bool> RequireTriggureMap = strtoEvent[eventkeywithoutNum];
+
+        if (RequireTriggureMap.find(pushNum) == RequireTriggureMap.end())
+        {
+            //event is not satisfied the required map
+            //printf("event (%s) (%d) is not subscribed\n", eventkeywithoutNum.data(), pushNum);
+            //printf("event %s not in RequireTriggureMap\n",eventkeywithoutNum.data());
+            notifyFlag = false;
+        }
+        else
+        {
+
+            //dynamic number in the required triggure map
+            //this could be transfered into a set
+            if (RequireTriggureMap[pushNum] == false)
+            {
+                 printf(" RequireTriggureMap with pushNum %d is false\n",pushNum,eventkeywithoutNum.data());
+                notifyFlag = false;
+            }
+        }
+    }
+
+    return notifyFlag;
+    /*
+    if (notifyFlag == true)
+    {
+        printf("trigure/notify curr id (%s)\n", clientid.data());
+
+        //modify the global satisfied label to true
+        clientidtoWrapperMtx.lock();
+
+        clientidtoWrapper[clientid]->iftrigure = true;
+
+        clientidtoWrapperMtx.unlock();
+        //the value should be zero after trigguring operation
+        for (itsetsub = dynamicEventPushMap.begin(); itsetsub != dynamicEventPushMap.end(); ++itsetsub)
+        {
+
+            string eventkey = itsetsub->first;
+            clienttoSub[clientid][eventkey] = 0;
+        }
+    }
+    */
+}
+
 //the event here is in full format such as: event1:1, event2:2
 //when subscribe, only one of same event type could exist, for example event1:2 and event1:3 coube not be subscribed at the same time
 //TODO return error when same event has been subscribed with multiple number
@@ -127,6 +191,7 @@ void pubsubSubscribe(vector<string> eventList, string clientId)
             map<string, int> innermap;
             innermap[eventWithoutNum] = 0;
             //used to store dynamic pushed number
+
             clienttoSub[clientId] = innermap;
         }
         else
@@ -134,7 +199,9 @@ void pubsubSubscribe(vector<string> eventList, string clientId)
             if (clienttoSub[clientId].find(eventWithoutNum) == clienttoSub[clientId].end())
             {
                 // not found
+                clienttoSubMtx.lock();
                 clienttoSub[clientId][eventWithoutNum] = 0;
+                clienttoSubMtx.unlock();
             }
             else
             {
@@ -239,6 +306,7 @@ void pubsubPublish(vector<string> eventList)
 
     int size = eventList.size();
     int i;
+    printf("eventList len %d\n",size);
     for (i = 0; i < size; i++)
     {
         //this event should not in full format, for required number larger than 1, one event should only binding with one number
@@ -306,11 +374,13 @@ void pubsubPublish(vector<string> eventList)
                         //the value have been already deleted in idtowrapper
                         //#pragma omp critical
                         //{
-                            clientSet.erase(clientid);
+                        clientSet.erase(clientid);
                         //}
-                       
+
                         //continue;
-                    }else{
+                    }
+                    else
+                    {
                         //clientId is valid
                         //get  map<string, int> dynamicEventPushMap;
                         int newPublishTime;
@@ -329,36 +399,34 @@ void pubsubPublish(vector<string> eventList)
                                 //new comming event
                                 //#pragma omp critical
                                 //{
-                                    clienttoSub[clientid][eventwithoutNum] = 0;
+                                clienttoSubMtx.lock();
+                                clienttoSub[clientid][eventwithoutNum] = 0;
+                                clienttoSubMtx.unlock();
                                 //}
-                              
                             }
                             else
                             {
                                 //#pragma omp critical
                                 //{
+                                clienttoSubMtx.lock();
                                 clienttoSub[clientid][eventwithoutNum]++;
+                                clienttoSubMtx.unlock();
                                 //}
                                 newPublishTime = clienttoSub[clientid][eventwithoutNum];
                             }
                         }
 
-                        if (RequireTriggureMap.find(newPublishTime) == RequireTriggureMap.end())
-                        {
-                            //not exist
-                            //continue;
-                        }
-                        else
-                        {
-                            strtoEventMtx.lock();
-                            RequireTriggureMap[newPublishTime] = true;
-                            strtoEventMtx.unlock();
-                        }
+                        strtoEventMtx.lock();
+                        RequireTriggureMap[newPublishTime] = true;
+                        strtoEventMtx.unlock();
+
+                        /* do this inner for loop in the subscribe
                         map<string, int> dynamicEventPushMap = clienttoSub[clientid];
                         bool notifyFlag = true;
 
                         map<string, int>::iterator itsetsub;
 
+                        
                         for (itsetsub = dynamicEventPushMap.begin(); itsetsub != dynamicEventPushMap.end(); ++itsetsub)
                         {
 
@@ -381,7 +449,8 @@ void pubsubPublish(vector<string> eventList)
                                 }
                             }
                         }
-
+                        */
+                        /*
                         if (notifyFlag == true)
                         {
                             printf("trigure/notify curr id (%s)\n", clientid.data());
@@ -401,6 +470,7 @@ void pubsubPublish(vector<string> eventList)
                                 clienttoSub[clientid][eventkey] = 0;
                             }
                         }
+                        */
                     }
                 }
             }
