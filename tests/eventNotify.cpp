@@ -157,7 +157,8 @@ int main(int argc, char **argv)
 
     int jsonFileinFolder = atoi(argv[2]);
 
-    initOperator(jsonFileinFolder);
+    //do this in operator
+    //initOperator(jsonFileinFolder);
 
     waitthreadFinish();
 }

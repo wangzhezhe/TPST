@@ -23,6 +23,8 @@
 
 #include <unistd.h>
 #include <pthread.h>
+#include <stdlib.h>
+#include <string>
 
 #include <grpc++/grpc++.h>
 
@@ -30,28 +32,57 @@
 #include "../publishclient/pubsubclient.h"
 #include "../utils/split/split.h"
 
+
+void initOperator(string queryEvent, int jsonNum)
+{
+
+    GreeterClient *greeter = GreeterClient::getClient();
+    if (greeter == NULL)
+    {
+        printf("failed to get initialised greeter\n");
+        return;
+    }
+
+    while (1)
+    {
+        int reply = greeter->GetSubscribedNumber(queryEvent.data());
+        printf("there are %d clients subscribe INIT event\n", reply);
+        if (reply < jsonNum)
+        {
+            usleep(500);
+        }
+        else
+        {
+            break;
+        }
+    }
+}
+
 //using self defined pub sub server
 int main(int argc, char **argv)
 {
 
     // check the input argument first is pub/sub second is the event list , shuld be the following format [event1,event2,event3]
 
-    if (argc != 3)
+    if (argc != 5)
     {
-        printf("using following format: ./operator publish [event1,event2] or ./operator subscribe [event1.event2]\n");
+        printf("using following format: ./operator <checkEvent> <requiredNum> publish [event1,event2] or ./operator subscribe [event1.event2]\n");
         return 0;
     }
 
+    string queryEvent = string(argv[1]);
+    int requiredNum = atoi(argv[2]);
+
     //check second parameter
 
-    string operation = string(argv[1]);
+    string operation = string(argv[3]);
     if (operation.compare("publish") != 0 && operation.compare("subscribe") != 0)
     {
         printf("operation should be publish or subscribe\n");
         return 0;
     }
 
-    string eventStr = string(argv[2]);
+    string eventStr = string(argv[4]);
     string seprater = string(",");
 
     printf("operation %s event list %s\n", operation.data(), eventStr.data());
@@ -60,6 +91,8 @@ int main(int argc, char **argv)
 
     vector<string> eventList;
     eventList = split(eventStr, seprater);
+
+    initOperator(queryEvent,requiredNum);
 
     GreeterClient *greeter = GreeterClient::getClient();
     if (greeter == NULL)
