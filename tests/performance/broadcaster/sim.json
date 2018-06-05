@@ -4,6 +4,6 @@
     "driver": "local",
     "actionList": [
        "/bin/bash ./app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim1.out",
-       "./operator publish T1SIM_FINISH"
+       "./operator T1SIM_FINISH 3 publish T1SIM_FINISH"
      ]
 }

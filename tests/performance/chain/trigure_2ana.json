@@ -1,9 +1,9 @@
 {
     "type": "TRIGGER",
-    "eventList": ["T1SIM_FINISH"],
+    "eventList": ["T2SIM_FINISH"],
     "driver": "local",
     "actionList": [
        "/bin/bash ./app/analysis.sh sim2.out > ana2.out",
-       "./operator publish T1ANA_FINISH"
+       "./operator T2ANA_FINISH 1 publish T2ANA_FINISH"
      ]
 }

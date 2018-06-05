@@ -57,7 +57,7 @@ void initOperator(int jsonNum)
     while (1)
     {
         int reply = greeter->GetSubscribedNumber("INIT");
-        printf("there are %d clients subscribe INIT event\n", reply);
+        //printf("there are %d clients subscribe INIT event\n", reply);
         if (reply < jsonNum)
         {
             usleep(100);
@@ -279,7 +279,7 @@ void waitthreadFinish()
 
     while (threadIdQueue.empty() == false)
     {
-        //printf("thread num waiting to be finished %d\n", threadIdQueue.size());
+        printf("thread num waiting to be finished %d\n", threadIdQueue.size());
         currpid = threadIdQueue.front();
         joinReturn = pthread_join(currpid, NULL);
         //printf("thread id %ld return %d\n", currpid, joinReturn);

@@ -46,7 +46,7 @@ void initOperator(string queryEvent, int jsonNum)
     while (1)
     {
         int reply = greeter->GetSubscribedNumber(queryEvent.data());
-        printf("there are %d clients subscribe INIT event\n", reply);
+        printf("there are %d clients subscribe %s event\n", queryEvent.data(), reply);
         if (reply < jsonNum)
         {
             usleep(500);

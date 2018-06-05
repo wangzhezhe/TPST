@@ -65,7 +65,7 @@ GreeterClient *GreeterClient::getClient()
         return NULL;
     }
     string socketaddr = ip + ":" + port;
-    printf("server socket addr %s\n", socketaddr.data());
+    //printf("server socket addr %s\n", socketaddr.data());
     //singleton mode
     static GreeterClient *singleClient = new GreeterClient(grpc::CreateChannel(
         socketaddr.data(), grpc::InsecureChannelCredentials()));

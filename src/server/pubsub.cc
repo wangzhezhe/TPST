@@ -74,7 +74,7 @@ void addNewEvent(string str, int num)
         map<int, bool> innermap;
         innermap[num] = true;
         strtoEventMtx.lock();
-        printf("add event %s %d\n", str.data(), num);
+        //printf("add event %s %d\n", str.data(), num);
         strtoEvent[str] = innermap;
         strtoEventMtx.unlock();
     }
@@ -88,7 +88,7 @@ void addNewEvent(string str, int num)
         else
         {
             //found, this event have already been added
-            printf("event (%s:%d) have already been registered into the global event map\n", str.data(), num);
+            //printf("event (%s:%d) have already been registered into the global event map\n", str.data(), num);
         }
     }
 }
@@ -97,14 +97,14 @@ void deleteEvent(string str, int num)
     if (strtoEvent.find(str) == strtoEvent.end())
     {
         // not found, event is already deleted
-        printf("event with prefix (%s) have already been deleted\n", str.data());
+        //printf("event with prefix (%s) have already been deleted\n", str.data());
     }
     else
     {
         if (strtoEvent[str].find(num) == strtoEvent[str].end())
         {
             //not found
-            printf("event (%s:%d) have already been deleted\n", str.data(), num);
+            //printf("event (%s:%d) have already been deleted\n", str.data(), num);
         }
         else
         {
@@ -289,7 +289,7 @@ void output()
         for (inneritea = staticNumber.begin(); inneritea != staticNumber.end(); ++inneritea)
         {
             int requiredNum = inneritea->first;
-            printf("sub %s required num %d\n", eventMessage.data(), requiredNum);
+            //printf("sub %s required num %d\n", eventMessage.data(), requiredNum);
         }
 
         set<string> s = itera->second;
@@ -297,7 +297,7 @@ void output()
         for (itset = s.begin(); itset != s.end(); ++itset)
         {
             string str = *itset;
-            printf("set value (%s)\n", str.data());
+            //printf("set value (%s)\n", str.data());
         }
     }
 
@@ -322,7 +322,7 @@ void pubsubPublish(vector<string> eventList)
 
     int size = eventList.size();
     int i;
-    printf("eventList len %d\n", size);
+    //printf("eventList len %d\n", size);
     for (i = 0; i < size; i++)
     {
         //this event should not in full format, for required number larger than 1, one event should only binding with one number
@@ -339,7 +339,7 @@ void pubsubPublish(vector<string> eventList)
         {
             // not found
             // do nothing
-            printf("failed to get event %s from strtoEvent\n", eventwithoutNum.data());
+            //printf("failed to get event %s from strtoEvent\n", eventwithoutNum.data());
             continue;
         }
         else
@@ -353,11 +353,11 @@ void pubsubPublish(vector<string> eventList)
             }
         }
 
-        printf("parse event (%s) required num (%d)\n", eventwithoutNum.data(), currentEventReqNum);
+        //printf("parse event (%s) required num (%d)\n", eventwithoutNum.data(), currentEventReqNum);
 
         string eventWithNum = eventwithoutNum + string(":") + to_string(currentEventReqNum);
 
-        printf("event with num (%s)\n", eventWithNum.data());
+        //printf("event with num (%s)\n", eventWithNum.data());
 
         //get clientSet
 
@@ -368,7 +368,7 @@ void pubsubPublish(vector<string> eventList)
         set<string>::iterator itset;
 
         int setnum = clientSet.size();
-        printf("number for clientset %d when publish event %s\n", setnum, eventwithoutNum.data());
+        //printf("number for clientset %d when publish event %s\n", setnum, eventwithoutNum.data());
         for (itset = clientSet.begin(); itset != clientSet.end(); ++itset)
         {
 
@@ -381,7 +381,7 @@ void pubsubPublish(vector<string> eventList)
 #pragma omp single nowait private(tid)
                 {
                     tid = omp_get_thread_num();
-                    printf("threadid %d for client %s\n", tid, clientid.data());
+                    //printf("threadid %d for client %s\n", tid, clientid.data());
 
                     //if not exist, delete this string
                     if (clientidtoWrapper.find(clientid) == clientidtoWrapper.end())
@@ -404,7 +404,7 @@ void pubsubPublish(vector<string> eventList)
                         {
                             // not found
                             // do nothing
-                            printf("failed to get dynamicEventPushMap from clienttoSub by clientId %s\n", clientid.data());
+                            //printf("failed to get dynamicEventPushMap from clienttoSub by clientId %s\n", clientid.data());
                             //continue;
                         }
                         else

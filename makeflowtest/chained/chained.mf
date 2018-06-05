@@ -6,7 +6,6 @@ ana1.out: sim1.out ../app/analysis.sh
 
 
 
-
 sim2.out: ../app/simulate.sh ana1.out
     /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim2.out
 
@@ -252,4 +251,260 @@ sim32.out: ../app/simulate.sh ana31.out
 
 ana32.out: sim32.out ../app/analysis.sh
     /bin/bash ../app/analysis.sh sim32.out > ana32.out
+
+
+
+sim33.out: ../app/simulate.sh ana32.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim33.out
+
+ana33.out: sim33.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim33.out > ana33.out
+
+
+
+sim34.out: ../app/simulate.sh ana33.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim34.out
+
+ana34.out: sim34.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim34.out > ana34.out
+
+
+
+sim35.out: ../app/simulate.sh ana34.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim35.out
+
+ana35.out: sim35.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim35.out > ana35.out
+
+
+
+sim36.out: ../app/simulate.sh ana35.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim36.out
+
+ana36.out: sim36.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim36.out > ana36.out
+
+
+
+sim37.out: ../app/simulate.sh ana36.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim37.out
+
+ana37.out: sim37.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim37.out > ana37.out
+
+
+
+sim38.out: ../app/simulate.sh ana37.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim38.out
+
+ana38.out: sim38.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim38.out > ana38.out
+
+
+
+sim39.out: ../app/simulate.sh ana38.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim39.out
+
+ana39.out: sim39.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim39.out > ana39.out
+
+
+
+sim40.out: ../app/simulate.sh ana39.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim40.out
+
+ana40.out: sim40.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim40.out > ana40.out
+
+
+
+sim41.out: ../app/simulate.sh ana40.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim41.out
+
+ana41.out: sim41.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim41.out > ana41.out
+
+
+
+sim42.out: ../app/simulate.sh ana41.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim42.out
+
+ana42.out: sim42.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim42.out > ana42.out
+
+
+
+sim43.out: ../app/simulate.sh ana42.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim43.out
+
+ana43.out: sim43.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim43.out > ana43.out
+
+
+
+sim44.out: ../app/simulate.sh ana43.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim44.out
+
+ana44.out: sim44.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim44.out > ana44.out
+
+
+
+sim45.out: ../app/simulate.sh ana44.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim45.out
+
+ana45.out: sim45.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim45.out > ana45.out
+
+
+
+sim46.out: ../app/simulate.sh ana45.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim46.out
+
+ana46.out: sim46.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim46.out > ana46.out
+
+
+
+sim47.out: ../app/simulate.sh ana46.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim47.out
+
+ana47.out: sim47.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim47.out > ana47.out
+
+
+
+sim48.out: ../app/simulate.sh ana47.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim48.out
+
+ana48.out: sim48.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim48.out > ana48.out
+
+
+
+sim49.out: ../app/simulate.sh ana48.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim49.out
+
+ana49.out: sim49.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim49.out > ana49.out
+
+
+
+sim50.out: ../app/simulate.sh ana49.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim50.out
+
+ana50.out: sim50.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim50.out > ana50.out
+
+
+
+sim51.out: ../app/simulate.sh ana50.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim51.out
+
+ana51.out: sim51.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim51.out > ana51.out
+
+
+
+sim52.out: ../app/simulate.sh ana51.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim52.out
+
+ana52.out: sim52.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim52.out > ana52.out
+
+
+
+sim53.out: ../app/simulate.sh ana52.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim53.out
+
+ana53.out: sim53.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim53.out > ana53.out
+
+
+
+sim54.out: ../app/simulate.sh ana53.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim54.out
+
+ana54.out: sim54.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim54.out > ana54.out
+
+
+
+sim55.out: ../app/simulate.sh ana54.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim55.out
+
+ana55.out: sim55.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim55.out > ana55.out
+
+
+
+sim56.out: ../app/simulate.sh ana55.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim56.out
+
+ana56.out: sim56.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim56.out > ana56.out
+
+
+
+sim57.out: ../app/simulate.sh ana56.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim57.out
+
+ana57.out: sim57.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim57.out > ana57.out
+
+
+
+sim58.out: ../app/simulate.sh ana57.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim58.out
+
+ana58.out: sim58.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim58.out > ana58.out
+
+
+
+sim59.out: ../app/simulate.sh ana58.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim59.out
+
+ana59.out: sim59.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim59.out > ana59.out
+
+
+
+sim60.out: ../app/simulate.sh ana59.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim60.out
+
+ana60.out: sim60.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim60.out > ana60.out
+
+
+
+sim61.out: ../app/simulate.sh ana60.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim61.out
+
+ana61.out: sim61.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim61.out > ana61.out
+
+
+
+sim62.out: ../app/simulate.sh ana61.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim62.out
+
+ana62.out: sim62.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim62.out > ana62.out
+
+
+
+sim63.out: ../app/simulate.sh ana62.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim63.out
+
+ana63.out: sim63.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim63.out > ana63.out
+
+
+
+sim64.out: ../app/simulate.sh ana63.out
+    /bin/bash ../app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim64.out
+
+ana64.out: sim64.out ../app/analysis.sh
+    /bin/bash ../app/analysis.sh sim64.out > ana64.out
 

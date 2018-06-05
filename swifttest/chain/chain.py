@@ -2,6 +2,7 @@
 # using this dir /home1/zw241/Software/swift-0.96.2/swift-tutorial/testtime
 # simulation is located in this dir swift-tutorial/app
 # refer to this tutorial to set up the init env http://swift-lang.org/swift-tutorial/doc/tutorial.html
+# module load java
 # export PATH=$PATH:/home1/zw241/Software/swift-0.96.2/bin
 # source setup.sh  # You must run this with "source" !
 # use interactive mode to get a dedicated nodes(salloc -N 1 bash)

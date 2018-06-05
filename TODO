@@ -5,6 +5,8 @@ global directory
 
 when using publish, it's better to add new message and send this message to client when trigguring
 
+check memory leak after every operation pattern
+
 
 [depedencies]:
 

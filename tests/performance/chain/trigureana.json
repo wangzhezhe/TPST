@@ -4,6 +4,6 @@
     "driver": "local",
     "actionList": [
        "/bin/bash ./app/analysis.sh sim1.out > ana1.out",
-       "./operator publish T1ANA_FINISH"
+       "./operator T1ANA_FINISH 1 publish T1ANA_FINISH"
      ]
 }

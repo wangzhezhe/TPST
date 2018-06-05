@@ -31,7 +31,6 @@ for x in range(2,pairnum+1):
     simout="sim"+str(x)+".out"
 
     simoutlist=simoutlist+" "+simout
-
     
     newsim=sim.replace("sim1.out",simout)
     

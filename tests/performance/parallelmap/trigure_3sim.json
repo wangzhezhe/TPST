@@ -1,0 +1,9 @@
+{
+    "type": "TRIGGER",
+    "eventList": ["INIT"],
+    "driver": "local",
+    "actionList": [
+       "/bin/bash ./app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim3.out",
+       "./operator T3SIM_FINISH 1 publish T3SIM_FINISH"
+     ]
+}

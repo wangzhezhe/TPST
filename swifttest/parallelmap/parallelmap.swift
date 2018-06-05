@@ -14,7 +14,7 @@ app (file o) analyze (file s)
   stats filenames(s) stdout=filename(o);
 }
 
-int nsim   = toInt(arg("nsim","64"));
+int nsim   = toInt(arg("nsim","1024"));
 int steps  = toInt(arg("steps","1"));
 int range  = toInt(arg("range","100"));
 int values = toInt(arg("values","5"));

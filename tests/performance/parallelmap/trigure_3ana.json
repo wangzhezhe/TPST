@@ -1,0 +1,8 @@
+{
+    "type": "TRIGGER",
+    "eventList": ["T3SIM_FINISH"],
+    "driver": "local",
+    "actionList": [
+       "/bin/bash ./app/analysis.sh sim3.out > ana3.out"
+     ]
+}
