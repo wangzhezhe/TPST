@@ -11,4 +11,8 @@ void recordIPPort(string &ipstr, string port);
 
 int loadIPPort(string configpath,string &ipstr,string &port);
 
+void recordIPPortWithoutFile(string &ipstr, string port);
+
+string parseIP(string peerURL);
+
 #endif

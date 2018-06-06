@@ -26,6 +26,8 @@ service Greeter {
   rpc Publish (PubSubRequest) returns (PubSubReply) {}
 
   rpc GetSubscribedNumber (SubNumRequest) returns (SubNumReply) {}
+
+  rpc Notify (NotifyRequest) returns (NotifyReply) {}
 }
 
 // The request message containing the user's name.
@@ -42,6 +44,7 @@ message HelloReply {
 message PubSubRequest {
   //string array
   repeated string pubsubmessage = 1;
+  string clientid = 2;
 }
 
 message PubSubReply {
@@ -57,4 +60,14 @@ message SubNumRequest {
 
 message SubNumReply {
   int32 clientnumber = 1;
+}
+
+// workflow server send request back to eventNotify worker
+message NotifyRequest {
+  string clientid = 1;
+}
+
+//eventNotify worker return this reply message to workflow server
+message NotifyReply {
+  string returnmessage = 1;
 }

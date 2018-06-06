@@ -39,8 +39,11 @@ using workflowserver::HelloRequest;
 using workflowserver::PubSubReply;
 using workflowserver::PubSubRequest;
 
-using workflowserver::SubNumRequest;
 using workflowserver::SubNumReply;
+using workflowserver::SubNumRequest;
+
+using workflowserver::NotifyReply;
+using workflowserver::NotifyRequest;
 
 using namespace std;
 
@@ -49,6 +52,25 @@ using namespace std;
 //string socketaddr=string("10.211.55.5:50051");
 //GreeterClient greeter = (grpc::CreateChannel(
 //        socketaddr.data(), grpc::InsecureChannelCredentials()));
+
+/*
+GreeterClient *getClientFromAddr(string peerURL)
+{
+    //if string contain ipv4: delete it
+
+    printf("notify address %s\n", peerURL.data());
+
+    string socketaddr = peerURL;
+    //printf("server socket addr %s\n", socketaddr.data());
+    //singleton mode
+    //GreeterClient *newlient = new GreeterClient(grpc::CreateChannel(
+    //    socketaddr.data(), grpc::InsecureChannelCredentials()));
+
+    GreeterClient greeter(grpc::CreateChannel(
+        socketaddr.data(), grpc::InsecureChannelCredentials()));
+    return &greeter;
+}
+*/
 
 GreeterClient *GreeterClient::getClient()
 {
@@ -70,6 +92,35 @@ GreeterClient *GreeterClient::getClient()
     static GreeterClient *singleClient = new GreeterClient(grpc::CreateChannel(
         socketaddr.data(), grpc::InsecureChannelCredentials()));
     return singleClient;
+}
+
+string GreeterClient::Notify(string clientId)
+{
+
+    NotifyRequest request;
+    request.set_clientid(clientId);
+
+    // Container for the data we expect from the server.
+    NotifyReply reply;
+
+    // Context for the client. It could be used to convey extra information to
+    // the server and/or tweak certain RPC behaviors.
+    ClientContext context;
+
+    // The actual RPC.
+    Status status = stub_->Notify(&context, request, &reply);
+
+    // Act upon its status.
+    if (status.ok())
+    {
+        return reply.returnmessage();
+    }
+    else
+    {
+        cout << status.error_code() << ": " << status.error_message()
+             << endl;
+        return "RPC failed";
+    }
 }
 
 // Assembles the client's payload, sends it and presents the response back
@@ -103,7 +154,7 @@ string GreeterClient::SayHello(const string &user)
     }
 }
 
-string GreeterClient::Subscribe(vector<string> eventList)
+string GreeterClient::Subscribe(vector<string> eventList, string clientID)
 {
 
     // Container for the data we expect from the server.
@@ -117,8 +168,9 @@ string GreeterClient::Subscribe(vector<string> eventList)
         request.add_pubsubmessage(eventList[i]);
         //printf("add %s into request \n",eventList[i].data());
     }
-    
-    
+
+    request.set_clientid(clientID);
+
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
     ClientContext context;
@@ -172,17 +224,14 @@ string GreeterClient::Publish(vector<string> eventList)
     }
 }
 
-
-
 int GreeterClient::GetSubscribedNumber(string eventStr)
 {
     SubNumRequest request;
-    
-   // Data we are sending to the server.
-    SubNumReply reply;
-    
-    request.set_subevent(eventStr);
 
+    // Data we are sending to the server.
+    SubNumReply reply;
+
+    request.set_subevent(eventStr);
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
@@ -202,6 +251,4 @@ int GreeterClient::GetSubscribedNumber(string eventStr)
              << endl;
         return -1;
     }
-
 }
-

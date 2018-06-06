@@ -42,10 +42,12 @@ int getSubscribedClientsNumber(string subEvent)
     return subtoClient[subEvent].size();
 }
 
-void addNewClient(string clientid)
+void addNewClient(string clientid,string notifyAddr, vector<string>eventList)
 {
     pubsubWrapper *psw = new (pubsubWrapper);
     psw->iftrigure = false;
+    psw->peerURL=notifyAddr;
+    psw->eventList=eventList;
     clientidtoWrapperMtx.lock();
     clientidtoWrapper[clientid] = psw;
     clientidtoWrapperMtx.unlock();

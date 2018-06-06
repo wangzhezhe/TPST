@@ -9,6 +9,7 @@
 #include <string>
 #include <pthread.h>
 #include <mutex>
+#include <map>
 
 using namespace rapidjson;
 using namespace std;
@@ -28,10 +29,8 @@ typedef struct EventTriggure
 
 typedef struct EventTriggure
 {
-    unsigned int eventLen;
     vector<string> eventList;
     string driver;
-    unsigned int actionLen;
     vector<string> actionList;
 
 } EventTriggure;
@@ -43,9 +42,12 @@ void waitthreadFinish();
 void jsonParsingTrigger(Document &d);
 
 void initOperator(int jsonNum);
+string addNewConfig(string jsonbuffer);
+void eventSubscribe(EventTriggure *etrigger,string clientID);
 
 extern mutex subscribedMutex;
 extern int SubscribedClient;
 extern vector<string> operatorList;
+extern map<string, EventTriggure *> clientIdtoConfig;
 
 #endif

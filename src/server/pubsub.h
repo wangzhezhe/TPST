@@ -28,7 +28,8 @@ typedef struct pubsubEvent{
 }pubsubEvent;
 
 typedef struct pubsubWrapper{
-    //string clientid;
+    string peerURL;
+    vector<string> eventList;
     //int trigureNum; this value should be maintained in innermap of clienttoSub
     //PubSubReply *reply;
     bool iftrigure;
@@ -58,7 +59,7 @@ void pubsubSubscribe(vector<string> eventList, string clientId);
 
 void pubsubPublish(vector<string> eventList);
 
-void addNewClient(string clientid);
+void addNewClient(string clientid,string peerURL, vector<string>eventList);
 
 void addNewEvent(string str, int num);
 

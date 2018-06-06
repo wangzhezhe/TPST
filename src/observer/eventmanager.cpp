@@ -6,7 +6,6 @@
 #include "pthread.h"
 
 #include "eventmanager.h"
-//#include "../redisclient/redisclient.h"
 #include "../runtime/slurm.h"
 #include "../runtime/local.h"
 #include "../publishclient/pubsubclient.h"
@@ -17,6 +16,7 @@
 #include <stdlib.h> /* for exit() definition */
 #include <time.h>   /* for clock_gettime */
 #include <pthread.h>
+#include <uuid/uuid.h>
 #define BILLION 1000000000L
 
 using namespace std;
@@ -44,6 +44,10 @@ mutex subscribedMutex;
 int SubscribedClient = 0;
 vector<string> operatorList;
 
+//from client id to the config file that is needed to be excuted when there is notify request
+mutex clientIdtoConfigMtx;
+map<string, EventTriggure *> clientIdtoConfig;
+
 void initOperator(int jsonNum)
 {
 
@@ -61,7 +65,9 @@ void initOperator(int jsonNum)
         if (reply < jsonNum)
         {
             usleep(100);
-        }else{
+        }
+        else
+        {
             break;
         }
     }
@@ -86,10 +92,10 @@ void initOperator(int jsonNum)
     }
 }
 
-void *eventSubscribe(void *arguments)
+void eventSubscribe(EventTriggure *etrigger, string clientID)
 {
     //only could be transfered by this way if original pointed is initiallises by malloc instead on new
-    EventTriggure *etrigger = (EventTriggure *)arguments;
+    //EventTriggure *etrigger = (EventTriggure *)arguments;
 #ifdef DEBUG
     printf("start new thread\n");
     printf("event len %d\n", etrigger->eventList.size());
@@ -99,7 +105,7 @@ void *eventSubscribe(void *arguments)
     if (greeter == NULL)
     {
         printf("failed to get initialised greeter\n");
-        return NULL;
+        return;
     }
 
     //debug how long should be used to go get the subscribed event
@@ -108,22 +114,22 @@ void *eventSubscribe(void *arguments)
     struct timespec start, end;
 
     /* measure monotonic time */
-    clock_gettime(CLOCK_MONOTONIC, &start); /* mark start time */
+    clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
 
     subscribedMutex.lock();
     SubscribedClient++;
     subscribedMutex.unlock();
 
-    string reply = greeter->Subscribe(etrigger->eventList);
+    string reply = greeter->Subscribe(etrigger->eventList, clientID);
     //cout << "Subscribe return value: " << reply << endl;
 
-    clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
+    clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
 
     diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
     //printf("debug time get (%s) response time = (%lf) second\n", etrigger->eventList[0].data(), (float)diff / BILLION);
 
     int i = 0;
-    if (reply.compare("TRIGGERED") != 0)
+    if (reply.compare("SUBSCRIBED") != 0)
     {
         printf("rpc failed, don't execute command:\n");
         int actionSize = etrigger->actionList.size();
@@ -131,56 +137,11 @@ void *eventSubscribe(void *arguments)
         {
             printf("%s\n", etrigger->actionList[i].data());
         }
-
-        return 0;
     }
 
-    //TODO
-    //when trigureed, call the runtime function
-    //(runtimeFunc)slurmTaskStart(path)
-
-    int actionSize = etrigger->actionList.size();
-    for (i = 0; i < actionSize; i++)
-    {
-        //TODO use different runtime according to the driver type
-        //slurmTaskStart(etrigger->actionList[i].data());
-        if (etrigger->driver.compare("local") == 0)
-        {
-            localTaskStart(etrigger->actionList[i].data());
-        }
-    }
-
-    //send rpc request to back end
-
-    /*
-    //char subscribeList[500];
-    for (int i = 0; i < etrigger->eventLen; i++)
-    {
-        sprintf(subscribeList, "%s %s", subscribeList, etrigger->eventList[i]);
-    }
-
-    //send subscribe to pubsub backend
-    redisContext *redisc = redisInit();
-    if (redisc == NULL)
-    {
-        printf("failed to start connection to redis backend\n");
-        return NULL;
-    }
-
-    //register the triggered function when recieve the respond from subscribe api
-    runtimeAction *ra = (runtimeAction *)malloc(sizeof(runtimeAction));
-    ra->actionLen = etrigger->actionLen;
-    for (int i = 0; i < ra->actionLen; i++)
-    {
-        strcpy(ra->actionList[i], etrigger->actionList[i]);
-    }
-    redisSubscribe(ra, redisc, subscribeList, (runtimeFunc)slurmTaskStart);
-
-    //TODO finish this function when all the events have been unsubscribed
-*/
-    return NULL;
+    return;
 }
-
+/*
 void jsonParsingTrigger(Document &d)
 {
     //#ifdef DEBUG
@@ -250,6 +211,7 @@ void jsonParsingTrigger(Document &d)
 
     return;
 }
+*/
 
 int jsonIfTriggerorOperator(Document &d, char *jsonbuffer)
 {
@@ -285,4 +247,121 @@ void waitthreadFinish()
         //printf("thread id %ld return %d\n", currpid, joinReturn);
         threadIdQueue.pop();
     }
+}
+
+//controle when to start operator
+
+/*
+{
+    "type": "TRIGGER",
+    "eventList": ["INIT"],
+    "driver": "local",
+    "actionList": [
+       "/bin/bash ./app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim1.out",
+       "./operator T1SIM_FINISH 3 publish T1SIM_FINISH"
+     ]
+}
+*/
+
+/*
+typedef struct EventTriggure
+{
+    vector<string> eventList;
+    string driver;
+    vector<string> actionList;
+
+} EventTriggure;
+*/
+
+void outputTriggure(string clientId)
+{
+    EventTriggure *et = clientIdtoConfig[clientId];
+    printf("driver %s\n", et->driver.data());
+    int size = et->eventList.size();
+    int i;
+    for (i = 0; i < size; i++)
+    {
+        printf("event %s\n", et->eventList[i].data());
+    }
+
+    size = et->actionList.size();
+    for (i = 0; i < size; i++)
+    {
+        printf("action %s\n", et->actionList[i].data());
+    }
+
+    return;
+}
+
+string addNewConfig(string jsonbuffer)
+{
+    //parse json buffer
+    Document d;
+    //printf("current file data %s\n",jsonbuffer.data());
+    d.Parse(const_cast<char *>(jsonbuffer.data()));
+    //printf("jsonIfTriggerorOperator (%s)\n",jsonbuffer);
+    const char *type = d["type"].GetString();
+    EventTriggure *triggure = new (EventTriggure);
+
+    //get client id
+    uuid_t uuid;
+    char idstr[50];
+
+    uuid_generate(uuid);
+    uuid_unparse(uuid, idstr);
+    if (strcmp(type, "TRIGGER") == 0)
+    {
+        const char *driver = d["driver"].GetString();
+        triggure->driver = string(driver);
+
+#ifdef DEBUG
+        printf("process event trigure\n");
+#endif
+        //register trigure and send subscribe call to pub-sub backend
+        const Value &eventList = d["eventList"];
+        SizeType i;
+
+        for (i = 0; i < eventList.Size(); i++)
+        {
+            const char *tempstr = eventList[i].GetString();
+            string str = string(tempstr);
+            triggure->eventList.push_back(str);
+#ifdef DEBUG
+            printf("eventList[%d] = %s\n", i, str.data());
+#endif
+        }
+
+        const Value &actionList = d["actionList"];
+
+        for (i = 0; i < actionList.Size(); i++)
+        {
+            const char *tempstr = actionList[i].GetString();
+            triggure->actionList.push_back(string(tempstr));
+
+#ifdef DEBUG
+            printf("actionList[%d] = %s\n", i, tempstr);
+#endif
+        }
+
+        string clientId(idstr);
+        clientIdtoConfigMtx.lock();
+        clientIdtoConfig[clientId] = triggure;
+        printf("add clientid %s\n", clientId.data());
+        clientIdtoConfigMtx.unlock();
+
+        //outputTriggure(clientId);
+        return clientId;
+    }
+    else if (strcmp(type, "OPERATOR") == 0)
+    {
+        printf("unsupported operator now %s\n", type);
+        return "";
+    }
+    else
+    {
+        printf("unsupported type %s\n", type);
+        return "";
+    }
+
+
 }

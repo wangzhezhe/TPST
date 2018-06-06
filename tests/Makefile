@@ -24,11 +24,11 @@ CXXFLAGS += -std=c++11 -I../deps/ -I/home1/zw241/Software/grpc/third_party/proto
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += -L/usr/local/lib -L/home1/zw241/Software/protoinstall/lib -L/home1/zw241/Software/grpc/libs/opt/protobuf -L/home1/zw241/Software/grpcinstall/lib `pkg-config --libs protobuf grpc++ grpc`\
            -lgrpc++_reflection\
-           -ldl -lpthread -lgpr
+           -ldl -lpthread -lgpr -luuid
 else
 LDFLAGS += -L/usr/local/lib -L/home1/zw241/Software/protoinstall/lib -L/home1/zw241/Software/grpc/libs/opt/protobuf -L/home1/zw241/Software/grpcinstall/lib `pkg-config --libs protobuf grpc++ grpc`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
-           -ldl -lpthread -lgpr
+           -ldl -lpthread -lgpr -luuid
 endif
 PROTOC = protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
@@ -39,6 +39,9 @@ PROTOS_PATH = ../src/proto
 vpath %.proto $(PROTOS_PATH)
 
 all: eventNotify
+
+notifyserver.o:
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/server/notifyserver.cc -o notifyserver.o
 
 getip.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/utils/getip/getip.cpp -o getip.o
@@ -58,7 +61,7 @@ local.o:
 pubsubclient.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/publishclient/pubsubclient.cc -o pubsubclient.o
 
-eventNotify: workflowserver.pb.o workflowserver.grpc.pb.o eventNotify.o loaddata.o eventmanager.o slurm.o local.o pubsubclient.o getip.o
+eventNotify: workflowserver.pb.o notifyserver.o workflowserver.grpc.pb.o eventNotify.o loaddata.o eventmanager.o slurm.o local.o pubsubclient.o getip.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc

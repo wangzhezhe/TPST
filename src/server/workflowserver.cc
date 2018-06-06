@@ -27,7 +27,7 @@
 #include "unistd.h"
 #include <mutex>
 #include "../utils/getip/getip.h"
-
+#include "../publishclient/pubsubclient.h"
 #include <stdint.h> /* for uint64 definition */
 #include <stdlib.h> /* for exit() definition */
 #include <time.h>   /* for clock_gettime */
@@ -47,13 +47,90 @@ using workflowserver::HelloReply;
 using workflowserver::HelloRequest;
 using workflowserver::PubSubReply;
 using workflowserver::PubSubRequest;
-using workflowserver::SubNumRequest;
 using workflowserver::SubNumReply;
+using workflowserver::SubNumRequest;
 
+#define NOTIFYPORT 50052
 
 using namespace std;
 
 int waitTime;
+
+void *checkNotify(void *arguments)
+{
+
+  char *clientid = (char *)arguments;
+  string clientidstr = string(clientid);
+  int clientsize = 0;
+  printf("start checkNotify for clientid %s\n", clientidstr.data());
+  while (1)
+  {
+
+    bool notifyFlag = checkIfTriggure(clientidstr);
+
+    //printf("notifyflag for client id %s (%d)\n",clientId.data(),notifyFlag);
+    if (notifyFlag == true)
+    {
+
+      map<string, int>::iterator itsetsub;
+      map<string, int> dynamicEventPushMap = clienttoSub[clientidstr];
+      for (itsetsub = dynamicEventPushMap.begin(); itsetsub != dynamicEventPushMap.end(); ++itsetsub)
+      {
+
+        string eventkey = itsetsub->first;
+        clienttoSubMtx.lock();
+        clienttoSub[clientidstr][eventkey] = 0;
+        clienttoSubMtx.unlock();
+      }
+      break;
+    }
+    else
+    {
+      //sleep(timestep);
+      //clientsize = subtoClient[debugevents].size();
+      //printf("stage wait for event %s number %d clientSize %d\n",debugevents.data(),timestep, clientsize);
+      //printf("sleep event %s\n", clientidstr.data());
+      usleep(1 * waitTime);
+    }
+  }
+
+  //traverse clientList again, delete subtoClient
+
+  if (clientidtoWrapper.find(clientidstr) == clientidtoWrapper.end())
+  {
+    // not found, event is already deleted
+    printf("failed to get %s in clientidtoWrapper\n", clientidstr.data());
+    return NULL;
+  }
+
+  pubsubWrapper *psw = clientidtoWrapper[clientidstr];
+
+  vector<string> eventList = psw->eventList;
+
+  //get the ip:port of event Notify
+
+  string peerURL = clientidtoWrapper[clientidstr]->peerURL;
+
+  //example: ipv4:192.168.11.4:59488
+  //printf("use peerurl %s\n", peerURL.data());
+  //GreeterClient *greeter = getClientFromAddr(peerURL);
+  GreeterClient greeter(grpc::CreateChannel(
+      peerURL.data(), grpc::InsecureChannelCredentials()));
+
+
+  string reply = greeter.Notify(clientidstr);
+
+  //delete subscribed info
+
+  deleteClient(clientidstr);
+
+  int size = eventList.size();
+  int i;
+  for (i = 0; i < size; i++)
+  {
+    deleteClientFromSTC(clientidstr, eventList[i]);
+  }
+}
 
 // Logic and data behind the server's behavior.
 class GreeterServiceImpl final : public Greeter::Service
@@ -83,27 +160,24 @@ class GreeterServiceImpl final : public Greeter::Service
 
   Status Subscribe(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
   {
-    
+
     struct timespec start, end;
     double diff;
 
     clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
-    //create the uuid
 
-    uuid_t uuid;
-    char str[50];
+    string peerURL = context->peer();
 
-    uuid_generate(uuid);
-    uuid_unparse(uuid, str);
+    //replace the port here the server port for notify is 50052
+    string clientIP = parseIP(peerURL);
 
-    string clientId(str);
-
-    pubsubWrapper *psw = new (pubsubWrapper);
-    psw->iftrigure = false;
-    //put clientId into global map TODO add lock
-    clientidtoWrapperMtx.lock();
-    clientidtoWrapper[clientId] = psw;
-    clientidtoWrapperMtx.unlock();
+    string notifyAddr = clientIP + ":" + to_string(NOTIFYPORT);
+    string clientId = request->clientid();
+    if (clientId == "")
+    {
+      printf("client id is not supposed to be \"\"\n");
+      return Status::OK;
+    }
 
     //clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
     //diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
@@ -141,89 +215,22 @@ class GreeterServiceImpl final : public Greeter::Service
     //diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
     //printf("debug for subevent stage2 response time = (%llu) second\n", (long long unsigned int)diff);
 
+    addNewClient(clientId, notifyAddr, eventList);
+
     pubsubSubscribe(eventList, clientId);
 
-    //printf("clientid (%s) call subscribe func, waiting to be notified\n", clientId.data());
+    //TODO control thread number here
+    //start new thread to execute the checking logic
 
-    //clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
-    //diff = BILLION * (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec)/BILLION;
-    //printf("debug for subevent stage3 response time = (%lf) second\n", diff);
-    //request should be a event list
+    pthread_t tid;
 
-    //put event list into vector and call subscribe function
+    printf("create thread for %s\n", clientId.data());
+    pthread_create(&tid, NULL, &checkNotify, (void *)clientId.data());
 
-    //naive implementation
-    //use while loop to check a variable if satisfied value is true
-    //satisfied value is controled by publish function
-
-    //get reply
-    //TODO use openmp to do parallel checking
-    //int timestep = 1;
-    int clientsize = 0;
-    while (1)
-    {
-
-      bool notifyFlag = checkIfTriggure(clientId);
-
-      //printf("notifyflag for client id %s (%d)\n",clientId.data(),notifyFlag);
-      if (notifyFlag == true)
-      {
-        //printf("trigure/notify curr id (%s)\n", clientId.data());
-
-        //modify the global satisfied label to true
-        //clientidtoWrapperMtx.lock();
-
-        //clientidtoWrapper[clientid]->iftrigure = true;
-
-        //clientidtoWrapperMtx.unlock();
-        //the value should be zero after trigguring operation
-
-        //put dynamic area of associated events into zero
-        map<string, int>::iterator itsetsub;
-        map<string, int> dynamicEventPushMap = clienttoSub[clientId];
-        for (itsetsub = dynamicEventPushMap.begin(); itsetsub != dynamicEventPushMap.end(); ++itsetsub)
-        {
-
-          string eventkey = itsetsub->first;
-          //add lock here??
-          clienttoSubMtx.lock();
-          clienttoSub[clientId][eventkey] = 0;
-          clienttoSubMtx.unlock();
-        }
-        break;
-      }
-      else
-      {
-        //sleep(timestep);
-        clientsize = subtoClient[debugevents].size();
-        //printf("stage wait for event %s number %d clientSize %d\n",debugevents.data(),timestep, clientsize);
-
-        usleep(1 * waitTime);
-        //timestep++;
-      }
-    }
-
-    //generate uid on server end
-
-    //send message subscribe function
-
-    //delete the clientid in the global map
-    reply->set_returnmessage("TRIGGERED");
-
-
-    //delete clientID
-    deleteClient(clientId);
-
-    //traverse clientList again, delete subtoClient
-
-    size = eventList.size();
-    for (i = 0; i < size; i++)
-    {
-      deleteClientFromSTC(clientId, eventList[i]);
-    }
+    reply->set_returnmessage("SUBSCRIBED");
 
     clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
-    diff = (end.tv_sec - start.tv_sec)*1.0 + (end.tv_nsec - start.tv_nsec)*1.0/BILLION;
+    diff = (end.tv_sec - start.tv_sec) * 1.0 + (end.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
     printf("debug for subevent stage4 (%s) response time = (%lf) second\n", debugevents.data(), diff);
 
     return Status::OK;
@@ -258,8 +265,8 @@ class GreeterServiceImpl final : public Greeter::Service
     reply->set_returnmessage("OK");
 
     clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
-    diff = (end.tv_sec - start.tv_sec)*1.0 + (end.tv_nsec - start.tv_nsec)*1.0/BILLION;
-    printf("debug for publish (%s) response time = (%lf) second\n", debugeventspub.data(),diff);
+    diff = (end.tv_sec - start.tv_sec) * 1.0 + (end.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
+    printf("debug for publish (%s) response time = (%lf) second\n", debugeventspub.data(), diff);
     return Status::OK;
   }
 };
@@ -313,7 +320,7 @@ int main(int argc, char **argv)
   if (argc == 2)
   {
     waitTime = atoi(argv[1]);
-    printf("subscribe wait period %d\n", waitTime);
+    printf("chechNotify wait period %d\n", waitTime);
   }
   else
   {

@@ -17,6 +17,7 @@
 //#include "../observer/taskmanager.h"
 //#include "../eventstore/eventStore.h"
 //#include "../storage/memcache.h"
+#include "../src/server/notifyserver.h"
 
 #include "../src/utils/getip/getip.h"
 
@@ -49,11 +50,6 @@ char projectPath[100] = "/home1/zw241/observerchain/tests";
 //char tmDir[50] = "TrigureFiles";
 char tmDir[50] = "TrigureFiles";
 
-
-
-//controle when to start operator
-pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-
 //go through the Trigurefile folder and register the .json file with type=trigure into the system
 void gothroughFolderRegister(const char *watchdir)
 {
@@ -65,7 +61,7 @@ void gothroughFolderRegister(const char *watchdir)
     char taskPath[100];
     for (int i = 0; i < count; i++)
     {
-        Document d;
+
         // if it is not json file
         if (strstr(fileList[i].data(), ".json") == NULL)
         {
@@ -98,6 +94,19 @@ void gothroughFolderRegister(const char *watchdir)
         //printf("dir path original %s after deletion %s\n", watchdir, watchdirstr.data());
         printf("taskPath %s\n", taskPath);
 
+        //create new client id and new event triggure
+
+        string clientID = addNewConfig(jsonbuffer);
+
+        //send subscribe request (unblocked with id) send eventlist and the client id
+        if (clientID != "")
+        {
+            eventSubscribe(clientIdtoConfig[clientID], clientID);
+        }
+
+        // don't need to start a new thread because the subscribed api will return immediately
+
+        /*
         //printf("original json buffer after file loading\n (%s)\n", jsonbuffer.data());
         int typelabel = jsonIfTriggerorOperator(d, const_cast<char *>(jsonbuffer.data()));
         if (typelabel == 1)
@@ -116,12 +125,11 @@ void gothroughFolderRegister(const char *watchdir)
             string operatorStr = jsonbuffer;
             operatorList.push_back(operatorStr);
         }
+*/
     }
 
     return;
 }
-
-
 
 void *tempStartOperator(void *arg)
 {
@@ -146,21 +154,44 @@ int main(int argc, char **argv)
 
     if (argc != 3)
     {
-        printf("<binary> <watchpath> <requred client number to send the INIT>\n");
+        printf("<binary> <watchpath> <number to finish the excution>\n");
         return 0;
     }
+
+    //start a new thread to run notify server
+
+    //parse the json file and create the clientid and put them in a map
+
+    pthread_t notifyserverid;
+    int status;
+    pthread_create(&notifyserverid, NULL, &RunNotifyServer, NULL);
+    printf("waiting the terminal of threads id %ld\n", notifyserverid);
+
+    //traverse the map and send the subscribe request
 
     // write ip port of current nodes into config files
     // the load operation is defined at pubsubclient
 
     gothroughFolderRegister(argv[1]);
 
-    int jsonFileinFolder = atoi(argv[2]);
+    int requiredNotifiedNum = atoi(argv[2]);
 
     //do this in operator
     //initOperator(jsonFileinFolder);
 
-    waitthreadFinish();
+    //waitthreadFinish();
+
+    //if notified number equals to specific number, kill notifyserverid
+
+    while(1){
+        if(NotifiedNum==requiredNotifiedNum){
+            break;
+        }else{
+           usleep(1000);
+        }
+    }
+    //pthread_join(notifyserverid, (void **)&status);
+    //printf("notify server return %d\n", status);
 }
 
 //use pthread_join to wait all the thread finish

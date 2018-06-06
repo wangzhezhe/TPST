@@ -8,10 +8,10 @@ os.system("rm *.out")
 dirIndex=sys.argv[1]
 if int(dirIndex)==0:
     dirName=' ./broadcaster/'
-    command = './eventNotify'+ dirName + ' 128'
+    command = './eventNotify'+ dirName + ' 1024'
 else:
     dirName=' ./broadcaster'+dirIndex+'/'
-    command = './eventNotify'+ dirName + ' 128'
+    command = './eventNotify'+ dirName + ' 1024'
 print command
 
 current_time1 = datetime.datetime.now()

@@ -26,14 +26,15 @@ using workflowserver::PubSubRequest;
 using workflowserver::SubNumRequest;
 using workflowserver::SubNumReply;
 
+using workflowserver::NotifyReply;
+using workflowserver::NotifyRequest;
+
 
 using namespace std;
 
 class GreeterClient
 {
 
-private: GreeterClient(std::shared_ptr<Channel> channel)
-      : stub_(Greeter::NewStub(channel)) {}
 
 private:
   unique_ptr<Greeter::Stub> stub_;
@@ -42,16 +43,21 @@ private:
 
 public:
   static GreeterClient *getClient();
+ 
+ GreeterClient(std::shared_ptr<Channel> channel)
+      : stub_(Greeter::NewStub(channel)) {}
 
   //GreeterClient(std::shared_ptr<Channel> channel)
   //    : stub_(Greeter::NewStub(channel)) {}
 
   string SayHello(const string &user);
 
-  string Subscribe(vector<string> eventList);
+  string Subscribe(vector<string> eventList, string clientID);
 
   string Publish(vector<string> eventList);
 
+  string Notify(string clientId);
+ 
   int GetSubscribedNumber(string eventStr);
 };
 
@@ -59,5 +65,7 @@ public:
 //extern GreeterClient greeter;
 
 //GreeterClient& intiSocketAddr();
+
+ //GreeterClient *getClientFromAddr(string peerURL);
 
 #endif

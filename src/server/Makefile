@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# TIPS pubsubclient will use the proto files in different folder, build that firstly if the proto files are modified
+
 HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
 CXX = g++ -fopenmp
@@ -48,7 +50,10 @@ getip.o:
 pubsub.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o pubsub.o pubsub.cc
 
-workflowserver: workflowserver.pb.o workflowserver.grpc.pb.o workflowserver.o pubsub.o getip.o split.o
+pubsubclient.o:
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o pubsubclient.o ../publishclient/pubsubclient.cc
+
+workflowserver: workflowserver.pb.o workflowserver.grpc.pb.o workflowserver.o pubsub.o getip.o split.o pubsubclient.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc
