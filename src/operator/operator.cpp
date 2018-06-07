@@ -32,22 +32,22 @@
 #include "../publishclient/pubsubclient.h"
 #include "../utils/split/split.h"
 
-
 void initOperator(string queryEvent, int jsonNum)
 {
 
     GreeterClient *greeter = GreeterClient::getClient();
     if (greeter == NULL)
     {
-        printf("failed to get initialised greeter\n");
+        //printf("failed to get initialised greeter\n");
         return;
     }
-
+    //printf("init greeter\n");
+    int replyNum;
     while (1)
     {
-        int reply = greeter->GetSubscribedNumber(queryEvent.data());
-        printf("there are %d clients subscribe %s event\n", queryEvent.data(), reply);
-        if (reply < jsonNum)
+        replyNum = greeter->GetSubscribedNumber(queryEvent);
+        //printf("there are %d clients subscribe %s event\n", replyNum, queryEvent.data());
+        if (replyNum < jsonNum)
         {
             usleep(500);
         }
@@ -85,16 +85,19 @@ int main(int argc, char **argv)
     string eventStr = string(argv[4]);
     string seprater = string(",");
 
-    printf("operation %s event list %s\n", operation.data(), eventStr.data());
+    //printf("operation %s event list %s\n", operation.data(), eventStr.data());
 
     //check third parameter
 
     vector<string> eventList;
     eventList = split(eventStr, seprater);
 
-    initOperator(queryEvent,requiredNum);
-
+  
+    //printf("query event %s require num %d\n", queryEvent.data(), requiredNum);
+    initOperator(queryEvent, requiredNum);
+    
     GreeterClient *greeter = GreeterClient::getClient();
+   
     if (greeter == NULL)
     {
         printf("failed to get initialised greeter\n");
@@ -103,12 +106,16 @@ int main(int argc, char **argv)
     if (operation.compare("publish") == 0)
     {
         string reply = greeter->Publish(eventList);
-        cout << "Publish return value: " << reply << endl;
+        //cout << "Publish return value: " << reply << endl;
     }
-    else
-    {
-        //subscribe
-        string reply = greeter->Subscribe(eventList);
-        cout << "Subscribe return value: " << reply << endl;
-    }
+
+    //printf("debug 4\n");
+    //else
+    //{
+    //TODO
+    //subscribe
+    //string reply = greeter->Subscribe(eventList);
+    //cout << "Subscribe return value: " << reply << endl;
+    //}
+    return 0;
 }

@@ -56,7 +56,7 @@ public:
 
   string Publish(vector<string> eventList);
 
-  string Notify(string clientId);
+  string NotifyBack(string clientId);
  
   int GetSubscribedNumber(string eventStr);
 };

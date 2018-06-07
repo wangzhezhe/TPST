@@ -118,8 +118,15 @@ void *checkNotify(void *arguments)
       peerURL.data(), grpc::InsecureChannelCredentials()));
 
 
-  string reply = greeter.Notify(clientidstr);
 
+  string user("world");
+  string helloreply = greeter.SayHello(user);
+
+
+
+  string reply = greeter.NotifyBack(clientidstr);
+
+  //printf("send peerurl %s\n", peerURL.data());
   //delete subscribed info
 
   deleteClient(clientidstr);

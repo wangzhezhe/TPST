@@ -3,15 +3,18 @@ import time
 import os
 import sys
 
-os.system("rm *.out")
+#os.system("rm *.out")
 
 dirIndex=sys.argv[1]
+numtoStop=sys.argv[2]
+
+
 if int(dirIndex)==0:
     dirName=' ./broadcaster/'
-    command = './eventNotify'+ dirName + ' 1024'
+    command = './eventNotify'+ dirName + ' ' + str(numtoStop)
 else:
     dirName=' ./broadcaster'+dirIndex+'/'
-    command = './eventNotify'+ dirName + ' 1024'
+    command = './eventNotify'+ dirName + ' '+str(numtoStop)
 print command
 
 current_time1 = datetime.datetime.now()

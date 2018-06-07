@@ -91,7 +91,8 @@ int main(int argc, char **argv)
     }
     */
     //intiSocketAddr();
-    reply = greeter->Subscribe(subeventList);
+    string clientid("testid");
+    reply = greeter->Subscribe(subeventList,clientid);
     cout << "Subscribe return value: " << reply << endl;
 
     //start a new thread to do the push operation

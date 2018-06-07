@@ -12,9 +12,9 @@
 
 #include "getip.h"
 
-//#define INTERFACE "eno1"
+#define INTERFACE "eno1"
 
-#define INTERFACE "lo"
+//#define INTERFACE "lo"
 
 using namespace std;
 

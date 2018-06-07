@@ -87,14 +87,14 @@ GreeterClient *GreeterClient::getClient()
         return NULL;
     }
     string socketaddr = ip + ":" + port;
-    //printf("server socket addr %s\n", socketaddr.data());
+    printf("server socket addr %s\n", socketaddr.data());
     //singleton mode
     static GreeterClient *singleClient = new GreeterClient(grpc::CreateChannel(
         socketaddr.data(), grpc::InsecureChannelCredentials()));
     return singleClient;
 }
 
-string GreeterClient::Notify(string clientId)
+string GreeterClient::NotifyBack(string clientId)
 {
 
     NotifyRequest request;
@@ -108,6 +108,7 @@ string GreeterClient::Notify(string clientId)
     ClientContext context;
 
     // The actual RPC.
+    //printf("send rpc request for %s\n",clientId.data());
     Status status = stub_->Notify(&context, request, &reply);
 
     // Act upon its status.
@@ -239,11 +240,12 @@ int GreeterClient::GetSubscribedNumber(string eventStr)
 
     // The actual RPC.
     Status status = stub_->GetSubscribedNumber(&context, request, &reply);
-
     // Act upon its status.
     if (status.ok())
     {
-        return reply.clientnumber();
+
+        int replyNum = reply.clientnumber();
+        return replyNum;
     }
     else
     {
