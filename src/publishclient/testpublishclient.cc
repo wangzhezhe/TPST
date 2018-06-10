@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     // are created. This channel models a connection to an endpoint (in this case,
     // localhost at port 50051). We indicate that the channel isn't authenticated
     // (use of InsecureChannelCredentials()).
-
+    /*
     string user("world");
 
     //get greeter
@@ -81,21 +81,23 @@ int main(int argc, char **argv)
     subeventList.push_back("event1");
     //eventList.push_back("event2");
 
-    /*
-    RepeatedPtrField<string> tpf;
-    eventList.insert("event1");
-    int size=eventList.size();
-    int i=0;
-    for(i=0;i<size;i++){
-        tpf->set_pubsubmessage(i,eventList[i]);
-    }
-    */
+    
+    //RepeatedPtrField<string> tpf;
+    //eventList.insert("event1");
+    //int size=eventList.size();
+    //int i=0;
+    //for(i=0;i<size;i++){
+    //    tpf->set_pubsubmessage(i,eventList[i]);
+    //}
+    
     //intiSocketAddr();
     string clientid("testid");
     reply = greeter->Subscribe(subeventList,clientid);
     cout << "Subscribe return value: " << reply << endl;
-
+    */
     //start a new thread to do the push operation
+
+    initMultiClients();
 
     return 0;
 }

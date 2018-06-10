@@ -72,6 +72,8 @@ GreeterClient *getClientFromAddr(string peerURL)
 }
 */
 
+map<string, GreeterClient *> multiClients;
+
 GreeterClient *GreeterClient::getClient()
 {
 
@@ -253,4 +255,25 @@ int GreeterClient::GetSubscribedNumber(string eventStr)
              << endl;
         return -1;
     }
+}
+
+//every clients should finish the record operation before doing this
+void initMultiClients()
+{
+    //get addr vector from getip
+    vector<string> multiaddr = loadMultiNodeIPPort();
+    int size = 0, i = 0;
+    size = multiaddr.size();
+
+    //traverse the addr vector
+    //create the client and put it into the map
+    for (i = 0; i < size; i++)
+    {
+        printf("node (%d) addr (%s)\n", i, multiaddr[i].data());
+        GreeterClient greeter(grpc::CreateChannel(
+            multiaddr[i].data(), grpc::InsecureChannelCredentials()));
+        multiClients[multiaddr[i]] = &greeter;
+    }
+
+    return;
 }

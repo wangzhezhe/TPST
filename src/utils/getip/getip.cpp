@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -9,12 +8,17 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string>
-
+#include <fstream>
+#include <sys/stat.h>
+#include <vector>
 #include "getip.h"
+#include <dirent.h>
 
-#define INTERFACE "eno1"
+//#define INTERFACE "eno1"
 
 //#define INTERFACE "lo"
+
+#define INTERFACE "en0"
 
 using namespace std;
 
@@ -36,6 +40,89 @@ string parseIP(string peerURL)
     peerURL.erase(startPosition, len - startPosition);
 
     return peerURL;
+}
+
+vector<string> loadMultiNodeIPPort()
+{
+    //the string in vector is ip:port
+    string dir = string("./multinodeip");
+    DIR *dp;
+    vector<string> multiNodeAddr;
+    struct dirent *entry;
+    struct stat statbuf;
+
+    if ((dp = opendir(dir.data())) == NULL)
+    {
+        printf("Can`t open directory %s\n", dir.data());
+    }
+    //change current work dir to the dir
+    //same to the cd comand
+    while ((entry = readdir(dp)) != NULL)
+    {
+        lstat(entry->d_name, &statbuf);
+        if (S_ISDIR(statbuf.st_mode))
+        {
+            if (strcmp(entry->d_name, ".") == 0 ||
+                strcmp(entry->d_name, "..") == 0)
+                continue;
+            printf("name %s\n", entry->d_name);
+            multiNodeAddr.push_back(string(entry->d_name));
+        }
+        else
+            printf("name %s\n", entry->d_name);
+    }
+    //change to the upper dir
+    closedir(dp);
+    return multiNodeAddr;
+}
+
+void recordIPortForMultiNode(string &ipstr, string port)
+{
+    int n;
+    struct ifreq ifr;
+    //assume the network interface exist
+    //char array[] = "eth5";
+    char array[] = INTERFACE;
+
+    n = socket(AF_INET, SOCK_DGRAM, 0);
+    //Type of address to retrieve - IPv4 IP address
+    ifr.ifr_addr.sa_family = AF_INET;
+    //Copy the interface name in the ifreq structure
+    strncpy(ifr.ifr_name, array, IFNAMSIZ - 1);
+    ioctl(n, SIOCGIFADDR, &ifr);
+    close(n);
+    //display result
+    char *ip = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
+
+    string dir = string("./multinodeip");
+
+    //if dir is created
+
+    fstream dirfile;
+    dirfile.open(dir.data(), ios::in);
+    if (!dirfile)
+    {
+        const int dir_err = mkdir(dir.data(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        if (-1 == dir_err)
+        {
+            printf("Error creating directory");
+            return;
+        }
+    }
+
+    char addrFile[100];
+    sprintf(addrFile, "%s/%s:%s", dir.data(), ip, port.data());
+
+    FILE *fpt = fopen(addrFile, "w");
+
+    if (fpt == NULL)
+    {
+        printf("failed to create %s\n", addrFile);
+        return;
+    }
+
+    fclose(fpt);
+    ipstr = string(ip);
 }
 
 void recordIPPortWithoutFile(string &ipstr, string port)
@@ -65,7 +152,7 @@ void recordIPPort(string &ipstr, string port)
     struct ifreq ifr;
     //assume the network interface exist
     //char array[] = "eth5";
-    char array[] =INTERFACE;
+    char array[] = INTERFACE;
     FILE *fpt = fopen("./ipconfig", "w");
 
     if (fpt == NULL)
@@ -119,9 +206,9 @@ int loadIPPort(string configpath, string &ipstr, string &port)
     return 0;
 }
 
-/*
 int main()
 {
+    /*
     string ipstr;
     string port=string("12345");
     recordIPPort(ipstr,port);
@@ -144,7 +231,19 @@ int main()
     string clientip=parseIP(peerurl);
 
     printf("clientip (%s)\n",clientip.data());
+    */
+    string ipstr;
+    string port = string("12345");
+    recordIPortForMultiNode(ipstr, port);
+
+
+    vector<string> multiaddr=loadMultiNodeIPPort();
+    int size=0,i=0;
+    size=multiaddr.size();
+
+    for(i=0;i<size;i++){
+        printf("node (%d) addr (%s)\n",i,multiaddr[i].data());
+    }
 
     return 0;
 }
-*/

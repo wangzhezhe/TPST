@@ -59,6 +59,8 @@ public:
   string NotifyBack(string clientId);
  
   int GetSubscribedNumber(string eventStr);
+
+  void initMultiClients();
 };
 
 //define as singleton global variable

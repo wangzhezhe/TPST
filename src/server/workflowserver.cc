@@ -55,6 +55,7 @@ using workflowserver::SubNumRequest;
 using namespace std;
 
 int waitTime;
+int nodeNumber;
 
 void *checkNotify(void *arguments)
 {
@@ -73,12 +74,14 @@ void *checkNotify(void *arguments)
     {
 
       map<string, int>::iterator itsetsub;
+      //problem here, every one in associated map should be satisfied
       map<string, int> dynamicEventPushMap = clienttoSub[clientidstr];
       for (itsetsub = dynamicEventPushMap.begin(); itsetsub != dynamicEventPushMap.end(); ++itsetsub)
       {
 
         string eventkey = itsetsub->first;
         clienttoSubMtx.lock();
+        //if there is no subscription for one of specific event
         clienttoSub[clientidstr][eventkey] = 0;
         clienttoSubMtx.unlock();
       }
@@ -117,12 +120,8 @@ void *checkNotify(void *arguments)
   GreeterClient greeter(grpc::CreateChannel(
       peerURL.data(), grpc::InsecureChannelCredentials()));
 
-
-
   string user("world");
   string helloreply = greeter.SayHello(user);
-
-
 
   string reply = greeter.NotifyBack(clientidstr);
 
@@ -278,6 +277,26 @@ class GreeterServiceImpl final : public Greeter::Service
   }
 };
 
+void MultiClient()
+{
+  vector<string> multiAddr;
+  int size;
+  while (1)
+  {
+    multiAddr = loadMultiNodeIPPort();
+    size = multiAddr.size();
+    if (size == nodeNumber)
+    {
+      break;
+    }
+
+    usleep(50000);
+    printf("there are %d clients record their ip in the multinode dir\n",size);
+  }
+
+  initMultiClients();
+}
+
 void RunServer()
 {
 
@@ -324,14 +343,16 @@ int main(int argc, char **argv)
 
   //get wait time ./workflowserver 1000
   printf("parameter length %d\n", argc);
-  if (argc == 2)
+  if (argc == 3)
   {
     waitTime = atoi(argv[1]);
     printf("chechNotify wait period %d\n", waitTime);
+    nodeNumber = atoi(argv[2]);
+    printf("instance number of the backend is %d\n", nodeNumber);
   }
   else
   {
-    printf("./workflowserver <subscribe period time>\n");
+    printf("./workflowserver <subscribe period time> <number of the nodes>\n");
     return 0;
   }
 
