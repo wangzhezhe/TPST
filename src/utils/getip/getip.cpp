@@ -205,10 +205,10 @@ int loadIPPort(string configpath, string &ipstr, string &port)
 
     return 0;
 }
-
+ /*
 int main()
 {
-    /*
+   
     string ipstr;
     string port=string("12345");
     recordIPPort(ipstr,port);
@@ -231,7 +231,7 @@ int main()
     string clientip=parseIP(peerurl);
 
     printf("clientip (%s)\n",clientip.data());
-    */
+  
     string ipstr;
     string port = string("12345");
     recordIPortForMultiNode(ipstr, port);
@@ -247,3 +247,4 @@ int main()
 
     return 0;
 }
+  */

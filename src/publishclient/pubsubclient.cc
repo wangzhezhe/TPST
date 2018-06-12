@@ -157,6 +157,9 @@ string GreeterClient::SayHello(const string &user)
     }
 }
 
+
+
+
 string GreeterClient::Subscribe(vector<string> eventList, string clientID)
 {
 

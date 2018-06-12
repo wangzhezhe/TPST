@@ -28,6 +28,7 @@
 #include <mutex>
 #include "../utils/getip/getip.h"
 #include "../observer/eventmanager.h"
+
 #include "../runtime/local.h"
 
 #include <stdint.h> /* for uint64 definition */

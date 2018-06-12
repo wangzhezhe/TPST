@@ -16,7 +16,7 @@
 
 HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
-CXX = g++
+CXX = g++ -fopenmp
 CPPFLAGS += `pkg-config --cflags protobuf grpc`
 #CXXFLAGS += -std=c++11 -I../deps/ -I/home1/zw241/Software/grpc/third_party/protobuf/src -DTIME -DDEBUG
 #CXXFLAGS += -std=c++11 -I../deps/  -I../deps/hiredis/ -DDEBUG
@@ -40,8 +40,8 @@ vpath %.proto $(PROTOS_PATH)
 
 all: eventNotify
 
-notifyserver.o:
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/server/notifyserver.cc -o notifyserver.o
+split.o:
+	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) ../src/utils/split/split.cc -o split.o
 
 getip.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/utils/getip/getip.cpp -o getip.o
@@ -61,7 +61,10 @@ local.o:
 pubsubclient.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/publishclient/pubsubclient.cc -o pubsubclient.o
 
-eventNotify: workflowserver.pb.o notifyserver.o workflowserver.grpc.pb.o eventNotify.o loaddata.o eventmanager.o slurm.o local.o pubsubclient.o getip.o
+pubsub.o:
+	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) ../src/server/pubsub.cc -o pubsub.o
+
+eventNotify: workflowserver.pb.o workflowserver.grpc.pb.o eventNotify.o pubsub.o loaddata.o eventmanager.o slurm.o local.o pubsubclient.o getip.o split.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc

@@ -7,14 +7,15 @@ import sys
 
 dirIndex=sys.argv[1]
 numtoStop=sys.argv[2]
+numforINITSub=sys.argv[3]
 
 
 if int(dirIndex)==0:
     dirName=' ./broadcaster/'
-    command = './eventNotify'+ dirName + ' ' + str(numtoStop)
+    command = './eventNotify'+ dirName + ' ' + str(numtoStop) + ' ' + str(numforINITSub)
 else:
     dirName=' ./broadcaster'+dirIndex+'/'
-    command = './eventNotify'+ dirName + ' '+str(numtoStop)
+    command = './eventNotify'+ dirName + ' '+str(numtoStop) + ' ' + str(numforINITSub)
 print command
 
 current_time1 = datetime.datetime.now()

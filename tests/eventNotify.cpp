@@ -14,16 +14,15 @@
 #include <string>
 #include <algorithm>
 
-//#include "../observer/taskmanager.h"
-//#include "../eventstore/eventStore.h"
-//#include "../storage/memcache.h"
-#include "../src/server/notifyserver.h"
+#include "../src/server/localserver.h"
 
 #include "../src/utils/getip/getip.h"
 
 #include "../src/utils/file/loaddata.h"
 
 #include "../src/observer/eventmanager.h"
+
+#include "../src/server/pubsub.h"
 
 #include "../deps/rapidjson/include/rapidjson/document.h"
 #include "../deps/rapidjson/include/rapidjson/writer.h"
@@ -33,6 +32,7 @@
 #define LEN_NAME 16                                    /*Assuming that the length of the filename won't exceed 16 bytes*/
 #define EVENT_SIZE (sizeof(struct inotify_event))      /*size of one event*/
 #define BUF_LEN (MAX_EVENTS * (EVENT_SIZE + LEN_NAME)) /*buffer to store the data of events*/
+#define BILLION 1000000000L
 
 using namespace rapidjson;
 using namespace std;
@@ -101,31 +101,11 @@ void gothroughFolderRegister(const char *watchdir)
         //send subscribe request (unblocked with id) send eventlist and the client id
         if (clientID != "")
         {
-            eventSubscribe(clientIdtoConfig[clientID], clientID);
+            //eventSubscribe(clientIdtoConfig[clientID], clientID);
+            localSubscribe(clientID, clientIdtoConfig[clientID]->eventList);
         }
 
         // don't need to start a new thread because the subscribed api will return immediately
-
-        /*
-        //printf("original json buffer after file loading\n (%s)\n", jsonbuffer.data());
-        int typelabel = jsonIfTriggerorOperator(d, const_cast<char *>(jsonbuffer.data()));
-        if (typelabel == 1)
-        {
-
-#ifdef DEBUG
-            //do the register operation
-            printf("register the file:(%s)\n", fileList[i].data());
-#endif
-            //subscribe the specific file
-            jsonParsingTrigger(d);
-        }
-        else if (typelabel == 2)
-        {
-            //put operator into the list
-            string operatorStr = jsonbuffer;
-            operatorList.push_back(operatorStr);
-        }
-*/
     }
 
     return;
@@ -134,9 +114,41 @@ void gothroughFolderRegister(const char *watchdir)
 void *tempStartOperator(void *arg)
 {
     printf("execute the init operator\n");
+    int requiredNum = *((int *)arg);
+    printf("required INIT subscription is %d\n", requiredNum);
+    string requestEvent = string("INIT");
+    int clientsNumber = getSubscribedClientsNumber(requestEvent);
 
-    //system("/home1/zw241/observerchain/src/operator/operator");
-    //system("/home/parallels/Documents/cworkspace/observerchain/src/operator");
+    while (1)
+    {
+        clientsNumber = getSubscribedClientsNumber(requestEvent);
+        if (clientsNumber < requiredNum)
+        {
+            usleep(1000);
+        }
+        else
+        {
+            break;
+        }
+        printf("current INIT subscribed number is %d\n", clientsNumber);
+    }
+
+    printf("Publish INIT event\n");
+
+    vector<string> eventList;
+    eventList.push_back(requestEvent);
+    struct timespec start, end;
+    double diff;
+
+    clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
+
+    localPublish(eventList);
+
+    clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
+    diff = (end.tv_sec - start.tv_sec) * 1.0 + (end.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
+    printf("debug for publish (%s) response time = (%lf) second\n", requestEvent.data(), diff);
+    //only for testing
+    //startNotifySequence();
     return NULL;
 }
 
@@ -152,9 +164,9 @@ int main(int argc, char **argv)
 
     EVENTTYPE eventType;
 
-    if (argc != 3)
+    if (argc != 4)
     {
-        printf("<binary> <watchpath> <number to finish the excution>\n");
+        printf("<binary> <watchpath> <number of notify to finish the excution> <INIT subscribed number>\n");
         return 0;
     }
 
@@ -162,14 +174,12 @@ int main(int argc, char **argv)
 
     //parse the json file and create the clientid and put them in a map
 
-    pthread_t notifyserverid;
-    int status;
-    pthread_create(&notifyserverid, NULL, &RunNotifyServer, NULL);
-    printf("waiting the terminal of threads id %ld\n", notifyserverid);
+    int requiredInitNum = atoi(argv[3]);
 
-    //traverse the map and send the subscribe request
+    pthread_t operatorid;
 
-    // write ip port of current nodes into config files
+    pthread_create(&operatorid, NULL, &tempStartOperator, (void *)&requiredInitNum);
+
     // the load operation is defined at pubsubclient
 
     gothroughFolderRegister(argv[1]);
@@ -183,150 +193,19 @@ int main(int argc, char **argv)
 
     //if notified number equals to specific number, kill notifyserverid
 
-    while(1){
-        if(NotifiedNum==requiredNotifiedNum){
-            break;
-        }else{
-           usleep(1000);
-        }
-    }
-    //pthread_join(notifyserverid, (void **)&status);
-    //printf("notify server return %d\n", status);
-}
-
-//use pthread_join to wait all the thread finish
-
-/* 
-    don't do this during test
-
-    // TODO If put the Document d in the while loop/
-    // it will crash when load the data for second time???
-
-    // Initialize Inotify
-    fd = inotify_init();
-    //void *funcHandleAction;
-    //void *funcHandleFilter;
-    //void *funcHandleAggreFilter;
-    if (fd < 0)
-    {
-        perror("Couldn't initialize inotify");
-    }
-
-    //init operation create event store
-    //TODO add lock operation for underlying part of es
-    //es = initEventStore();
-
-    //storage simulator
-    //TODO change it into interface to support multiple storage end
-    //map<int, vector<float> > memcache = initMemCache();
-
-    //TODO scan the dir before watch to register all the .json files automatically
-    // add watch to starting directory 
-
-    wd = inotify_add_watch(fd, argv[1], IN_CREATE | IN_MODIFY | IN_DELETE);
-    //use the dynamic link load the function back
-    void *funcHandle;
-    if (wd == -1)
-    {
-        printf("Couldn't add watch to %s\n", argv[1]);
-    }
-    else
-    {
-        printf("Watching:: %s\n", argv[1]);
-    }
-
-    //create another thread to create the test data for every time step
-    //add lock for the underlaying datastructure
-    //pthread_t id;
-    //pthread_create(&id, NULL, createData, &es);
-
-    //use new one for every document
-    //Document d;
-
     while (1)
     {
-        i = 0;
-        length = read(fd, buffer, BUF_LEN);
-
-        if (length < 0)
+        if (localNotifiedNum == requiredNotifiedNum)
         {
-            perror("read");
+            break;
+        }
+        else
+        {
+            usleep(1000);
         }
 
-        while (i < length)
-        {
-            struct inotify_event *event = (struct inotify_event *)&buffer[i];
-
-            if (event->len)
-            {
-                if (event->mask & IN_CREATE)
-                {
-                    eventType = created;
-                }
-
-                if (event->mask & IN_MODIFY)
-                {
-                    eventType = modified;
-                }
-
-                if (event->mask & IN_DELETE)
-                {
-                    eventType = deleted;
-                }
-
-                i += EVENT_SIZE + event->len;
-
-                //if the file contains the  .json
-                //printf("ename %s\n", event->name);
-                int rcode = ifjson(event->name);
-                if (rcode == 1)
-                {
-
-                    //detect if the file exist
-                    //if exist, update relevent info and update the event store
-
-                    //if not exist, create and push to event store
-                    //json file path
-                    char taskPath[100];
-                    snprintf(taskPath, sizeof taskPath, "%s/%s/%s", projectPath, tmDir, event->name);
-                    printf("trigure file path %s\n", taskPath);
-                    if (eventType == modified)
-                    {
-                        //create the task manager by file name
-                        //load the tm json file
-                        printf("test modified\n");
-                        char *jsonbuffer = NULL;
-                        jsonbuffer = loadFile(taskPath);
-                        //there will be some weird characters at the end of file leading to the parsing fail some times
-                        printf("json buffer\n%s\n", jsonbuffer);
-                        jsonParsingTrigger(d, jsonbuffer);
-                        //jsonParsingTrigger(jsonbuffer);
-                    }
-                    else if (eventType == deleted)
-                    {
-                        printf("TODO: process delete cases\n");
-                    }
-                    else
-                    {
-                        printf("TODO: process eventtype %s case\n", event->name);
-                    }
-                }
-                //than load the relavent  json  file, create the task manager
-                //extract the dynamic func and build into .c file
-                //get the path of the .so file
-                //load it into the object
-            }
-        }
+        //printf("localNotifiedNum %d requiredNotifiedNum %d\n",localNotifiedNum,requiredNotifiedNum);
     }
-
-    //if handler is closed, the function could not be excuted!
-    //TODO use a new handler for the new function
-    dlclose(funcHandle);
-    //TODO else ,modify the old one
-    inotify_rm_watch(fd, wd);
-    close(fd);
-    
-        return 0;
+    //pthread_join(notifyserverid, (void **)&status);
+    //printf("notify server return %d\n", status)
 }
-
-*/
