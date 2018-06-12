@@ -261,27 +261,27 @@ void pubsubPublish(vector<string> eventList)
 
             //#pragma omp single nowait private(tid)
             //{
-                //test if specific element in set exist in clientidtoWrapper
-                string clientId = itmap->first;
-                pubsubWrapper *clientWrapper = itmap->second;
-                //printf("debug push clientid %s\n", clientId.data());
-                //tid = omp_get_thread_num();
-                //this eventmap is a small one
-                map<string, int> publishedEvent = clientWrapper->publishedEvent;
+            //test if specific element in set exist in clientidtoWrapper
+            string clientId = itmap->first;
+            pubsubWrapper *clientWrapper = itmap->second;
+            //printf("debug push clientid %s\n", clientId.data());
+            //tid = omp_get_thread_num();
+            //this eventmap is a small one
+            map<string, int> publishedEvent = clientWrapper->publishedEvent;
 
-                if (publishedEvent.find(eventwithoutNum) == publishedEvent.end())
-                {
-                    publishedEvent[eventwithoutNum] = 0;
-                }
-
-                publishedEvent[eventwithoutNum]++;
-
-                clientWrapper->publishedEvent = publishedEvent;
+            if (publishedEvent.find(eventwithoutNum) == publishedEvent.end())
+            {
+                publishedEvent[eventwithoutNum] = 0;
             }
-            //           }
-            //        }
+
+            publishedEvent[eventwithoutNum]++;
+
+            clientWrapper->publishedEvent = publishedEvent;
         }
-        clock_gettime(CLOCK_REALTIME, &end2);
-        diff = (end2.tv_sec - start.tv_sec) * 1.0 + (end2.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-        printf("debug for publish end2 response time = (%lf) second\n", diff);
+        //           }
+        //        }
     }
+    clock_gettime(CLOCK_REALTIME, &end2);
+    diff = (end2.tv_sec - start.tv_sec) * 1.0 + (end2.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
+    printf("debug for publish end2 response time = (%lf) second\n", diff);
+}

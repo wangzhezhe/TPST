@@ -1,22 +1,28 @@
-CC=g++
+CC=g++ -pthread -Wl,--no-as-needed
 CPPFLAGS= -std=c++11 -I../../deps/
-TARGETS = test
+TARGETS = test largetest
 
 all: $(TARGETS)
 
+largetest.o: largetest.cc
+	$(CC) -c $(CPPFLAGS) ./largetest.cc
+
+local.o: local.cc
+	$(CC) -c $(CPPFLAGS) ./local.cc
+
 slurm.o: slurm.c
-	$(CC) -c $(CPPFLAGS) ./slurm.c 
+	$(CC) -c $(CPPFLAGS) ./slurm.c
 
 test.o: test.c
 	$(CC) -c $(CPPFLAGS) ./test.c
 
-log.o: 
-	$(CC) -c $(CPPFLAGS) ../../src/utils/log/log.cpp
-
-test: test.o slurm.o log.o
+test: test.o slurm.o 
 	$(CC) $(CPPFLAGS) ./test.o ./slurm.o  -o test
 
+largetest: largetest.o local.o 
+	$(CC) $(CPPFLAGS) ./largetest.o ./local.o  -o largetest
+
 clean:
-	rm test.o slurm.o
-	rm test 
+	rm *.o
+	rm test largetest
 	

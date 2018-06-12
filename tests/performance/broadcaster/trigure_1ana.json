@@ -1,6 +1,7 @@
 {
     "type": "TRIGGER",
-    "eventList": ["T1SIM_FINISH"],
+    "eventSubList": ["SIMFINISH"],
+    "eventPubList": [],
     "driver": "local",
     "actionList": [
        "/bin/bash ./app/analysis.sh sim1.out > ana1.out"

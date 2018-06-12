@@ -43,6 +43,9 @@ all: eventNotify
 split.o:
 	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) ../src/utils/split/split.cc -o split.o
 
+localserver.o:
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/server/localserver.cc -o localserver.o
+
 getip.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/utils/getip/getip.cpp -o getip.o
 
@@ -56,7 +59,7 @@ slurm.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/runtime/slurm.c -o slurm.o
 
 local.o:
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/runtime/local.c -o local.o
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/runtime/local.cc -o local.o
 
 pubsubclient.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/publishclient/pubsubclient.cc -o pubsubclient.o
@@ -64,7 +67,7 @@ pubsubclient.o:
 pubsub.o:
 	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) ../src/server/pubsub.cc -o pubsub.o
 
-eventNotify: workflowserver.pb.o workflowserver.grpc.pb.o eventNotify.o pubsub.o loaddata.o eventmanager.o slurm.o local.o pubsubclient.o getip.o split.o
+eventNotify: workflowserver.pb.o localserver.o workflowserver.grpc.pb.o eventNotify.o pubsub.o loaddata.o eventmanager.o slurm.o local.o pubsubclient.o getip.o split.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc

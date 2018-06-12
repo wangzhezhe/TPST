@@ -2,9 +2,15 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "local.h"
+#include <string>
+#include <mutex>
 
+using namespace std;
 
-int localTaskStart(const char *batchPath)
+mutex testNotifiedNumMtx;
+int localFinishNum = 0;
+
+int localTaskStart(string batchPath)
 {
     //call sbtch command
     //printf("test output\n");
@@ -16,7 +22,7 @@ int localTaskStart(const char *batchPath)
     //printf("finish sec:(%ld),finish nsec:(%ld)\n",finish.tv_sec,finish.tv_nsec);
 
     //#endif
-    sprintf(command, "%s", batchPath);
+    sprintf(command, "%s", batchPath.data());
 #ifdef DEBUG
     printf("execute command by local way:(%s)\n", command);
 #endif
@@ -24,10 +30,13 @@ int localTaskStart(const char *batchPath)
     //test using
     system(command);
 
-    struct timespec finish;
-    clock_gettime(CLOCK_MONOTONIC, &finish);
+    //struct timespec finish;
     //auto console = spd::stdout_color_mt("console");
     //spdconsole->info("finish sec:({:d}),finish nsec:({:d})", finish.tv_sec, finish.tv_nsec);
 
+    //testNotifiedNumMtx.lock();
+    //localFinishNum++;
+    //testNotifiedNumMtx.unlock();
+    
     return 0;
 }

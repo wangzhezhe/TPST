@@ -124,7 +124,7 @@ void *tempStartOperator(void *arg)
         clientsNumber = getSubscribedClientsNumber(requestEvent);
         if (clientsNumber < requiredNum)
         {
-            usleep(1000);
+            usleep(10000);
         }
         else
         {

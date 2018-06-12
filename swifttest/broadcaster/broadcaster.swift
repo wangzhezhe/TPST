@@ -2,7 +2,7 @@ type file;
 
 app (file o) simulation (int sim_steps, int sim_range, int sim_values)
 {
-  simulate "--timesteps" sim_steps "--range" sim_range "--nvalues" sim_values stdout=filename(o);
+  simulate "--timesteps" sim_steps "--range" sim_range "--nvalues" sim_values "--log off" stdout=filename(o);
 }
 
 app (file o) analyze (file s)
@@ -14,7 +14,6 @@ int nsim   = toInt(arg("nsim","1024"));
 int steps  = toInt(arg("steps","1"));
 int range  = toInt(arg("range","100"));
 int values = toInt(arg("values","5"));
-
 
 file simout <single_file_mapper; file=strcat("output/sim.out")>;
 simout = simulation(steps,range,values);
