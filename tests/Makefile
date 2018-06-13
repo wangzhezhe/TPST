@@ -56,7 +56,7 @@ slurm.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/runtime/slurm.c -o slurm.o
 
 local.o:
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/runtime/local.c -o local.o
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/runtime/local.cc -o local.o
 
 pubsubclient.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/publishclient/pubsubclient.cc -o pubsubclient.o

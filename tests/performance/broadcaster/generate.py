@@ -1,4 +1,3 @@
-
 #generate series of coupling task pairs based on chanin.mf
 
 #pairnum=3
@@ -16,8 +15,8 @@ os.system("rm *_*")
 
 # copy trigure1sim.json
 
-with open ("simtemplate", "r") as mysim:
-    sim=mysim.read()
+with open ("trigureanatemplate", "r") as myana:
+    ana=myana.read()
 
 #newsim=sim.replace("NUM",str(pairnum))
 
@@ -35,17 +34,15 @@ with open ("simtemplate", "r") as mysim:
 
 for x in range(1,pairnum+1):
 
-    simout="sim"+str(x)+".out"
+    anaout="ana"+str(x)+".out"
     
-    newsim=sim.replace("sim1.out",simout)
+    newana=ana.replace("ana1.out",anaout)
     
 
-    filenamesim="trigure_"+str(x)+"sim.json"
+    filenameana="trigure_"+str(x)+"ana.json"
 
-    fsim= open(filenamesim,"w+")
+    fsim= open(filenameana,"w+")
  
-    fsim.write(newsim)
+    fsim.write(newana)
 
     fsim.close()
-
-

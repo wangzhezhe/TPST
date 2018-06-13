@@ -29,50 +29,41 @@ typedef struct pubsubEvent{
 
 typedef struct pubsubWrapper{
     string peerURL;
-    vector<string> eventList;
+    string clientID;
     //int trigureNum; this value should be maintained in innermap of clienttoSub
     //PubSubReply *reply;
-    bool iftrigure;
+    //bool iftrigure;
+    map<string, int> publishedEvent;
+    map<string, set<int>> requiredeventMap; //transfer eventList into this format
 }pubsubWrapper;
 
 
+extern map<string, set<int>> strtoEvent;
 
-extern map<string, map<int, bool>> strtoEvent;
+extern map<string, map<string, pubsubWrapper *> > subtoClient;
 
-//client id to pubsubWrapper(value is real element with memory) from clientid to clientStructure
-
-extern mutex clientidtoWrapperMtx;
-
-extern map<string, pubsubWrapper *> clientidtoWrapper;
-
-// to pubsubWrapperid (value is pointer) from subeventstring to set of clientid
-extern map<string, set<string>> subtoClient;
-
-// clientid to pubsubEvent (value is pointer) from clientid to map of subscribedEvent
-// in the inner map, the integer represent the time that the event have been pushed
-
-extern mutex clienttoSubMtx;
-
-extern map<string, map<string, int>> clienttoSub;
-
-void pubsubSubscribe(vector<string> eventList, string clientId);
+void pubsubSubscribe(vector<string> eventList, string clientId, string notifyAddr);
 
 void pubsubPublish(vector<string> eventList);
 
-void addNewClient(string clientid,string peerURL, vector<string>eventList);
+//void addNewClientLocal(string clientid, vector<string> eventList);
 
-void addNewEvent(string str, int num);
+//void addNewEvent(string str, int num);
 
 void output();
 
 void ParseEvent(string fullEvent, string & eventMessage, int & num);
 
-void deleteClient(string clientid);
+//void deleteClient(string subevent, string clientid);
 
-void deleteClientFromSTC(string clientid, string substr);
+//void deleteClientFromSTC(string clientid, string substr);
 
-bool checkIfTriggure(string clientid);
+bool checkIfTriggure(pubsubWrapper *psw);
 
 int getSubscribedClientsNumber(string subEvent);
+
+void deletePubEvent(pubsubWrapper *psw);
+
+//void *checkNotify(void *arguments);
 
 #endif

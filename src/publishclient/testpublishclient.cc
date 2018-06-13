@@ -51,7 +51,7 @@ void *PublishOperation(void *ptr)
         printf("failed to get initialised greeter\n");
         return NULL;
     }
-    string reply = greeter->Publish(publisheventList);
+    string reply = greeter->Publish(publisheventList,"CLIENT");
     cout << "Publish return value: " << reply << endl;
 }
 
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     // are created. This channel models a connection to an endpoint (in this case,
     // localhost at port 50051). We indicate that the channel isn't authenticated
     // (use of InsecureChannelCredentials()).
-    /*
+    
     string user("world");
 
     //get greeter
@@ -74,8 +74,9 @@ int main(int argc, char **argv)
     string reply = greeter->SayHello(user);
     cout << "Greeter received: " << reply << endl;
 
-    pthread_t id;
-    pthread_create(&id, NULL, PublishOperation, NULL);
+
+    //pthread_t id;
+    //pthread_create(&id, NULL, PublishOperation, NULL);
 
     vector<string> subeventList;
     subeventList.push_back("event1");
@@ -92,12 +93,12 @@ int main(int argc, char **argv)
     
     //intiSocketAddr();
     string clientid("testid");
-    reply = greeter->Subscribe(subeventList,clientid);
+     reply = greeter->Subscribe(subeventList,clientid);
     cout << "Subscribe return value: " << reply << endl;
-    */
+
     //start a new thread to do the push operation
 
-    initMultiClients();
+ //   initMultiClients();
 
-    return 0;
+ //   return 0;
 }

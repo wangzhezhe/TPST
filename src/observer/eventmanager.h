@@ -29,8 +29,9 @@ typedef struct EventTriggure
 
 typedef struct EventTriggure
 {
-    vector<string> eventList;
     string driver;
+    vector<string> eventSubList;
+    vector<string> eventPubList;
     vector<string> actionList;
 
 } EventTriggure;
@@ -42,7 +43,7 @@ void waitthreadFinish();
 void jsonParsingTrigger(Document &d);
 
 void initOperator(int jsonNum);
-string addNewConfig(string jsonbuffer);
+EventTriggure* addNewConfig(string jsonbuffer,string &clientID);
 void eventSubscribe(EventTriggure *etrigger,string clientID);
 
 extern mutex subscribedMutex;

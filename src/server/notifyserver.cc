@@ -29,6 +29,7 @@
 #include "../utils/getip/getip.h"
 #include "../observer/eventmanager.h"
 #include "../runtime/local.h"
+#include "../../src/publishclient/pubsubclient.h"
 
 #include <stdint.h> /* for uint64 definition */
 #include <stdlib.h> /* for exit() definition */
@@ -71,11 +72,29 @@ void startAction(string clientID)
     int i;
     for (i = 0; i < actionSize; i++)
     {
+        //TODO for execute the operator option in memory to decrease the number of system call
         if (etrigger->driver.compare("local") == 0)
         {
             localTaskStart(etrigger->actionList[i].data());
         }
+        //get the publishEvent from configure and call the publish operation
     }
+
+    //when all action finish, push the events in files
+
+    int pubSize = etrigger->eventPubList.size();
+
+    //get a client
+    GreeterClient *greeter = roundrobinGetClient(clientID);
+
+    if (greeter == NULL)
+    {
+        printf("failed to get greeter for event publish\n");
+        return;
+    }
+
+    greeter->Publish(etrigger->eventPubList, "CLIENT");
+
     return;
 }
 
@@ -97,7 +116,7 @@ class GreeterServiceImpl final : public Greeter::Service
 
         string clientID = request->clientid();
 
-        //printf("get client id %s\n", clientID.data());
+        printf("get client id %s\n", clientID.data());
 
         //TODO get the json from the configID and use runtime to star this
         //it's better to put the mapping relation here

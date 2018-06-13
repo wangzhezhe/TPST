@@ -73,6 +73,27 @@ GreeterClient *getClientFromAddr(string peerURL)
 */
 
 map<string, GreeterClient *> multiClients;
+vector<string> multiaddr;
+
+GreeterClient *roundrobinGetClient(string clientId)
+{
+    //get last 3 digit of client id idNum
+
+    int clientSize = multiClients.size();
+    if (clientSize == 0)
+    {
+        printf("failed to get init client\n");
+        return NULL;
+    }
+    //get the index of client idNum%clientSize
+    string tempstr = clientId.substr(clientId.size() - 3);
+    int tempData = atoi(tempstr.data());
+    printf("init index is %d size of clientSize %d\n", tempData, clientSize);
+    int tmpindex = tempData % clientSize;
+    string addr = multiaddr[tmpindex];
+    printf("get server socket addr %s\n", addr.data());
+    return multiClients[addr];
+}
 
 GreeterClient *GreeterClient::getClient()
 {
@@ -157,21 +178,22 @@ string GreeterClient::SayHello(const string &user)
     }
 }
 
-string GreeterClient::Subscribe(vector<string> eventList, string clientID)
+string GreeterClient::Subscribe(vector<string> eventSubList, string clientID)
 {
 
     // Container for the data we expect from the server.
+    //printf("debug sub part1\n");
     PubSubRequest request;
     PubSubReply reply;
-    int size = eventList.size();
+    int size = eventSubList.size();
     int i = 0;
     for (i = 0; i < size; i++)
     {
         //attention the use here, the request could be transfered into a specific type with specific function
-        request.add_pubsubmessage(eventList[i]);
+        request.add_pubsubmessage(eventSubList[i]);
         //printf("add %s into request \n",eventList[i].data());
     }
-
+    //printf("debug sub part2\n");
     request.set_clientid(clientID);
 
     // Context for the client. It could be used to convey extra information to
@@ -180,7 +202,7 @@ string GreeterClient::Subscribe(vector<string> eventList, string clientID)
 
     // The actual RPC.
     Status status = stub_->Subscribe(&context, request, &reply);
-
+    //printf("debug sub part3\n");
     // Act upon its status.
     if (status.ok())
     {
@@ -194,7 +216,7 @@ string GreeterClient::Subscribe(vector<string> eventList, string clientID)
     }
 }
 
-string GreeterClient::Publish(vector<string> eventList)
+string GreeterClient::Publish(vector<string> eventList,string source)
 {
     // Container for the data we expect from the server.
     PubSubRequest request;
@@ -206,6 +228,8 @@ string GreeterClient::Publish(vector<string> eventList)
         //attention the use here, the request could be transfered into a specific type with specific function
         request.add_pubsubmessage(eventList[i]);
     }
+
+    request.set_source(source);
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
@@ -261,7 +285,7 @@ int GreeterClient::GetSubscribedNumber(string eventStr)
 void initMultiClients()
 {
     //get addr vector from getip
-    vector<string> multiaddr = loadMultiNodeIPPort();
+    multiaddr = loadMultiNodeIPPort();
     int size = 0, i = 0;
     size = multiaddr.size();
 
@@ -270,9 +294,9 @@ void initMultiClients()
     for (i = 0; i < size; i++)
     {
         printf("node (%d) addr (%s)\n", i, multiaddr[i].data());
-        GreeterClient greeter(grpc::CreateChannel(
+        GreeterClient *greeter = new GreeterClient (grpc::CreateChannel(
             multiaddr[i].data(), grpc::InsecureChannelCredentials()));
-        multiClients[multiaddr[i]] = &greeter;
+        multiClients[multiaddr[i]] = greeter;
     }
 
     return;

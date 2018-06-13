@@ -54,88 +54,100 @@ using workflowserver::SubNumRequest;
 
 using namespace std;
 
-int waitTime;
+int waitTime = 1000;
 int nodeNumber;
+string ServerIP;
+string ServerPort;
+
+//broadcaster this event to nodes in
+void publishMultiServer(vector<string> eventList)
+{
+
+  //get self ip:port
+  string serverSocket = ServerIP + ":" + ServerPort;
+
+  //get the multiserver ip
+  int size = multiaddr.size();
+  printf("addr size %d\n", size);
+  int i;
+  string reply;
+  for (i = 0; i < size; i++)
+  {
+    if (serverSocket.compare(multiaddr[i]) != 0)
+    {
+      //set publish request
+      //TODO the fault tolerant for propagation
+      reply = multiClients[multiaddr[i]]->Publish(eventList, "SERVER");
+      if (reply.compare("OK") != 0)
+      {
+        printf("failed to propagate event to server %s\n", multiaddr[i].data());
+        return;
+      }
+
+      printf("propagate to server %s ok\n", multiaddr[i].data());
+    }
+  }
+}
 
 void *checkNotify(void *arguments)
 {
 
-  char *clientid = (char *)arguments;
-  string clientidstr = string(clientid);
+  struct timespec start1, end1;
+  double diff;
+
+  clock_gettime(CLOCK_REALTIME, &start1); /* mark start time */
+
+  pubsubWrapper *psw = (pubsubWrapper *)arguments;
+  string clientidstr = psw->clientID;
   int clientsize = 0;
-  printf("start checkNotify for clientid %s\n", clientidstr.data());
+  printf("start checkNotify for clientid (%s)\n", clientidstr.data());
+  int times = 0;
   while (1)
   {
+    //clock_gettime(CLOCK_REALTIME, &start2); /* mark start time */
 
-    bool notifyFlag = checkIfTriggure(clientidstr);
+    bool notifyFlag = checkIfTriggure(psw);
 
     //printf("notifyflag for client id %s (%d)\n",clientId.data(),notifyFlag);
     if (notifyFlag == true)
     {
-
-      map<string, int>::iterator itsetsub;
-      //problem here, every one in associated map should be satisfied
-      map<string, int> dynamicEventPushMap = clienttoSub[clientidstr];
-      for (itsetsub = dynamicEventPushMap.begin(); itsetsub != dynamicEventPushMap.end(); ++itsetsub)
-      {
-
-        string eventkey = itsetsub->first;
-        clienttoSubMtx.lock();
-        //if there is no subscription for one of specific event
-        clienttoSub[clientidstr][eventkey] = 0;
-        clienttoSubMtx.unlock();
-      }
       break;
     }
     else
     {
-      //sleep(timestep);
-      //clientsize = subtoClient[debugevents].size();
-      //printf("stage wait for event %s number %d clientSize %d\n",debugevents.data(),timestep, clientsize);
-      //printf("sleep event %s\n", clientidstr.data());
-      usleep(1 * waitTime);
+
+      srand((unsigned)time(0));
+
+      usleep(1 * (waitTime));
+      times++;
+      //printf("checknotify %s sleep time %d\n", clientidstr.data(), times);
     }
   }
 
-  //traverse clientList again, delete subtoClient
-
-  if (clientidtoWrapper.find(clientidstr) == clientidtoWrapper.end())
-  {
-    // not found, event is already deleted
-    printf("failed to get %s in clientidtoWrapper\n", clientidstr.data());
-    return NULL;
-  }
-
-  pubsubWrapper *psw = clientidtoWrapper[clientidstr];
-
-  vector<string> eventList = psw->eventList;
-
-  //get the ip:port of event Notify
-
-  string peerURL = clientidtoWrapper[clientidstr]->peerURL;
+  string peerURL = psw->peerURL;
 
   //example: ipv4:192.168.11.4:59488
   //printf("use peerurl %s\n", peerURL.data());
   //GreeterClient *greeter = getClientFromAddr(peerURL);
+  printf("----notify back peer url %s\n", peerURL.data());
   GreeterClient greeter(grpc::CreateChannel(
       peerURL.data(), grpc::InsecureChannelCredentials()));
 
-  string user("world");
-  string helloreply = greeter.SayHello(user);
-
   string reply = greeter.NotifyBack(clientidstr);
 
-  //printf("send peerurl %s\n", peerURL.data());
-  //delete subscribed info
+  //TODO delete the published event in this pubsub wrapper
+  deletePubEvent(psw);
 
-  deleteClient(clientidstr);
+  clock_gettime(CLOCK_REALTIME, &end1); /* mark the end time */
+  diff = (end1.tv_sec - start1.tv_sec) * 1.0 + (end1.tv_nsec - start1.tv_nsec) * 1.0 / BILLION;
+  printf("debug for checknotify %s response time = (%lf) second\n", clientidstr.data(), diff);
+}
 
-  int size = eventList.size();
-  int i;
-  for (i = 0; i < size; i++)
-  {
-    deleteClientFromSTC(clientidstr, eventList[i]);
-  }
+void startNotify(string eventwithoutNum, string clientID)
+{
+  pthread_t id;
+  pubsubWrapper *psw = subtoClient[eventwithoutNum][clientID];
+  pthread_create(&id, NULL, checkNotify, (void *)psw);
 }
 
 // Logic and data behind the server's behavior.
@@ -202,42 +214,33 @@ class GreeterServiceImpl final : public Greeter::Service
     //test respond time
     string debugevents;
 
+    //extract event and create event List
     for (i = 0; i < size; i++)
     {
       eventStr = request->pubsubmessage(i);
-      //for debug
-      debugevents = eventStr;
       //printf("get events (%s)\n", eventStr.data());
       eventList.push_back(eventStr);
       //default number is 1
-      int trinum = 1;
-      string eventMessage;
-      ParseEvent(eventStr, eventMessage, trinum);
-      //printf("after parsing %s %d\n", eventMessage.data(), trinum);
-      addNewEvent(eventMessage, trinum);
     }
 
-    //clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
-    //diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
-    //printf("debug for subevent stage2 response time = (%llu) second\n", (long long unsigned int)diff);
+    pubsubSubscribe(eventList, clientId, notifyAddr);
 
-    addNewClient(clientId, notifyAddr, eventList);
-
-    pubsubSubscribe(eventList, clientId);
-
-    //TODO control thread number here
-    //start new thread to execute the checking logic
-
-    pthread_t tid;
-
-    printf("create thread for %s\n", clientId.data());
-    pthread_create(&tid, NULL, &checkNotify, (void *)clientId.data());
+    //start notification
+    size = eventList.size();
+    int trinum = 1;
+    string eventMessage;
+    for (i = 0; i < size; i++)
+    {
+      eventMessage = eventList[i];
+      ParseEvent(eventStr, eventMessage, trinum);
+      startNotify(eventMessage, clientId);
+    }
 
     reply->set_returnmessage("SUBSCRIBED");
 
     clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
     diff = (end.tv_sec - start.tv_sec) * 1.0 + (end.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-    printf("debug for subevent stage4 (%s) response time = (%lf) second\n", debugevents.data(), diff);
+    printf("debug for subevent (%s) response time = (%lf) second\n", eventMessage.data(), diff);
 
     return Status::OK;
   }
@@ -266,13 +269,28 @@ class GreeterServiceImpl final : public Greeter::Service
       printf("server publish event (%s)\n", eventStr.data());
       eventList.push_back(eventStr);
     }
-    //publish
+
+    //publish on one server
     pubsubPublish(eventList);
     reply->set_returnmessage("OK");
 
     clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
     diff = (end.tv_sec - start.tv_sec) * 1.0 + (end.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
     printf("debug for publish (%s) response time = (%lf) second\n", debugeventspub.data(), diff);
+
+    //TODO add a string in request to label if the publish request is from client or server
+    //if the request is from server return directly
+    //if the request is from client, broadcaster eventList to multi server nodes
+
+    //CLIENT or SERVER
+
+    string source = request->source();
+
+    if (source.compare("CLIENT") == 0)
+    {
+      publishMultiServer(eventList);
+    }
+
     return Status::OK;
   }
 };
@@ -291,35 +309,17 @@ void MultiClient()
     }
 
     usleep(50000);
-    printf("there are %d clients record their ip in the multinode dir\n",size);
+    printf("there are %d clients record their ip in the multinode dir\n", size);
   }
 
   initMultiClients();
 }
 
-void RunServer()
+void RunServer(string serverIP, string serverPort)
 {
 
-  string serverPort = string("50051");
-  string ip;
-  printf("record ip\n");
-  recordIPPort(ip, serverPort);
-  //get the server ip from the config file
-  /*
-  string ipconfigfilepath = string("./ipconfig");
-
-  //load the file
-  string ip;
-  string port;
-  int r = loadIPPort(ipconfigfilepath, ip, port);
-  if (r == 1)
-  {
-    printf("failed to open the ip port config file (%s)\n", ipconfigfilepath.data());
-  }
-  */
-
-  string socketAddr = ip + ":" + serverPort;
-
+  string socketAddr = serverIP + ":" + serverPort;
+  printf("server socket addr %s\n", socketAddr.data());
   std::string server_address(socketAddr);
   GreeterServiceImpl service;
 
@@ -343,19 +343,26 @@ int main(int argc, char **argv)
 
   //get wait time ./workflowserver 1000
   printf("parameter length %d\n", argc);
-  if (argc == 3)
+  if (argc == 4)
   {
     waitTime = atoi(argv[1]);
     printf("chechNotify wait period %d\n", waitTime);
     nodeNumber = atoi(argv[2]);
     printf("instance number of the backend is %d\n", nodeNumber);
+    string interfaces = string(argv[3]);
+
+    INTERFACE = interfaces;
+
+    printf("network interfaces is %s\n", interfaces.data());
   }
   else
   {
-    printf("./workflowserver <subscribe period time> <number of the nodes>\n");
+    printf("./workflowserver <subscribe period time> <number of the nodes> <network interfaces>\n");
     return 0;
   }
-
-  RunServer();
+  ServerPort = string("50051");
+  recordIPortForMultiNode(ServerIP, ServerPort);
+  MultiClient();
+  RunServer(ServerIP, ServerPort);
   return 0;
 }

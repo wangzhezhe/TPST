@@ -33,5 +33,6 @@ void recordIPortForMultiNode(string &ipstr, string port);
 string parseIP(string peerURL);
 
 vector<string> loadMultiNodeIPPort();
+extern string INTERFACE;
 
 #endif

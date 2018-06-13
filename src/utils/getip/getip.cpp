@@ -14,11 +14,11 @@
 #include "getip.h"
 #include <dirent.h>
 
-//#define INTERFACE "eno1"
-
 //#define INTERFACE "lo"
 
-#define INTERFACE "en0"
+//#define INTERFACE "en0"
+
+string INTERFACE("eno1");
 
 using namespace std;
 
@@ -54,6 +54,7 @@ vector<string> loadMultiNodeIPPort()
     if ((dp = opendir(dir.data())) == NULL)
     {
         printf("Can`t open directory %s\n", dir.data());
+        exit(0);
     }
     //change current work dir to the dir
     //same to the cd comand
@@ -76,19 +77,19 @@ vector<string> loadMultiNodeIPPort()
     return multiNodeAddr;
 }
 
+// put ip:port into multinodeip dir
+// send the ip to ipstr
 void recordIPortForMultiNode(string &ipstr, string port)
 {
     int n;
     struct ifreq ifr;
     //assume the network interface exist
-    //char array[] = "eth5";
-    char array[] = INTERFACE;
 
     n = socket(AF_INET, SOCK_DGRAM, 0);
     //Type of address to retrieve - IPv4 IP address
     ifr.ifr_addr.sa_family = AF_INET;
     //Copy the interface name in the ifreq structure
-    strncpy(ifr.ifr_name, array, IFNAMSIZ - 1);
+    strncpy(ifr.ifr_name, INTERFACE.data(), IFNAMSIZ - 1);
     ioctl(n, SIOCGIFADDR, &ifr);
     close(n);
     //display result
@@ -123,6 +124,7 @@ void recordIPortForMultiNode(string &ipstr, string port)
 
     fclose(fpt);
     ipstr = string(ip);
+    return;
 }
 
 void recordIPPortWithoutFile(string &ipstr, string port)
@@ -130,20 +132,19 @@ void recordIPPortWithoutFile(string &ipstr, string port)
     int n;
     struct ifreq ifr;
     //assume the network interface exist
-    //char array[] = "eth5";
-    char array[] = INTERFACE;
 
     n = socket(AF_INET, SOCK_DGRAM, 0);
     //Type of address to retrieve - IPv4 IP address
     ifr.ifr_addr.sa_family = AF_INET;
     //Copy the interface name in the ifreq structure
-    strncpy(ifr.ifr_name, array, IFNAMSIZ - 1);
+    strncpy(ifr.ifr_name, INTERFACE.data(), IFNAMSIZ - 1);
     ioctl(n, SIOCGIFADDR, &ifr);
     close(n);
     //display result
     char *ip = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 
     ipstr = string(ip);
+    return;
 }
 
 void recordIPPort(string &ipstr, string port)
@@ -151,8 +152,6 @@ void recordIPPort(string &ipstr, string port)
     int n;
     struct ifreq ifr;
     //assume the network interface exist
-    //char array[] = "eth5";
-    char array[] = INTERFACE;
     FILE *fpt = fopen("./ipconfig", "w");
 
     if (fpt == NULL)
@@ -165,7 +164,7 @@ void recordIPPort(string &ipstr, string port)
     //Type of address to retrieve - IPv4 IP address
     ifr.ifr_addr.sa_family = AF_INET;
     //Copy the interface name in the ifreq structure
-    strncpy(ifr.ifr_name, array, IFNAMSIZ - 1);
+    strncpy(ifr.ifr_name, INTERFACE.data(), IFNAMSIZ - 1);
     ioctl(n, SIOCGIFADDR, &ifr);
     close(n);
     //display result
@@ -206,6 +205,7 @@ int loadIPPort(string configpath, string &ipstr, string &port)
     return 0;
 }
 
+/*
 int main()
 {
     /*
@@ -231,7 +231,7 @@ int main()
     string clientip=parseIP(peerurl);
 
     printf("clientip (%s)\n",clientip.data());
-    */
+
     string ipstr;
     string port = string("12345");
     recordIPortForMultiNode(ipstr, port);
@@ -247,3 +247,4 @@ int main()
 
     return 0;
 }
+*/

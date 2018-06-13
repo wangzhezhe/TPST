@@ -54,8 +54,8 @@ public:
 
   string Subscribe(vector<string> eventList, string clientID);
 
-  string Publish(vector<string> eventList);
-
+  string Publish(vector<string> eventList,string source);
+  
   string NotifyBack(string clientId);
  
   int GetSubscribedNumber(string eventStr);
@@ -68,6 +68,14 @@ public:
 
 //GreeterClient& intiSocketAddr();
 
- //GreeterClient *getClientFromAddr(string peerURL);
+//GreeterClient *getClientFromAddr(string peerURL);
+
+GreeterClient *roundrobinGetClient(string clientId);
+
+void initMultiClients();
+
+//TODO don't extern those two in future
+extern map<string, GreeterClient *> multiClients;
+extern vector<string> multiaddr;
 
 #endif

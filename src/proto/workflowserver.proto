@@ -45,6 +45,8 @@ message PubSubRequest {
   //string array
   repeated string pubsubmessage = 1;
   string clientid = 2;
+  //CLIENT or SERVER
+  string source = 3;
 }
 
 message PubSubReply {
