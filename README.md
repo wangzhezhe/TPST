@@ -1,44 +1,62 @@
-[TODO]
+If run build and run it on Titan, jump to login node to use inactive mode
 
-change grreter into dynamic way (load ip itself)
+```
+qsub -I -X -l walltime=00:30:00 -A CSC103 -l nodes=1
+module unload PrgEnv-pgi
+module load PrgEnv-gnu
+```
 
-make it run on caliburn (source ~/.grpc before compilling)
+For titan, modifing the link path (the stdgcc in cray/gcc-libs satisfy the requirements)
+the dir in root path is grpc  grpcinstall  sharedlib, grpc is the source file of original grpc repo, grpcinstall is the relative files after executing make install for grpc, sharedlib is the dynamic library satisfy the requirements of grpc, on Titan, the library /opt/cray/gcc-libs/libstdc++.so.6 satisfy the requiremnts
 
-workflow server subscribe parameter times, should be loaded by request
+execute following command to set the environment
 
-[depedencies]:
-protobuf
-(https://blog.jeffli.me/blog/2016/12/08/install-protocol-buffer-from-source-in-centos-7/)
-https://blog.csdn.net/Programmer_H/article/details/8890800
+```
+export ROOT_PATH=/lustre/atlas/scratch/zw241/csc103/Software
+export PATH=$PATH:$ROOT_PATH/grpc/bins/opt
+export PATH=$PATH:$ROOT_PATH/grpc/third_party/protobuf/src
 
-grpc(for protobuf of grpc, use **inner version** of grpc by 3.4.0)
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$ROOT_PATH/grpc/third_party/protobuf
 
-add the directory containing `grpc.pc'
-to the PKG_CONFIG_PATH environment variable
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$ROOT_PATH/grpc/libs/opt/pkgconfig
 
+export LD_LIBRARY_PATH=$ROOT_PATH/grpc/third_party/protobuf/src
 
-sudo apt-get install uuid-dev
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/lustre/atlas/scratch/zw241/csc103/Software/grpc/libs/opt
 
-make the pubsub part thread safety
-(https://www.linkedin.com/pulse/simple-way-implement-concurrent-mapset-c-huan-xia/)
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/lustre/atlas/scratch/zw241/csc103/Software/sharedlib/gcc-libs
+```
+then modify the Makefile lightly
 
-integrate pubsub part with rpc server (ok for testpublishsubscribe)
+sample Makefile to compile helloword example
 
-[experiments]
+```
+ROOT_PATH = /lustre/atlas/scratch/zw241/csc103/Software
+LD_PATH_PROTO = $(ROOT_PATH)/grpc/third_party/protobuf/src
+LD_PATH_GRPC = $(ROOT_PATH)/grpcinstall/include
+HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
+SYSTEM ?= $(HOST_SYSTEM)
+CXX = g++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC)
+CPPFLAGS += `pkg-config --cflags protobuf grpc`
+CXXFLAGS += -std=c++11
+ifeq ($(SYSTEM),Darwin)
+LDFLAGS += -L/usr/local/lib -I$(LD_PATH) `pkg-config --libs protobuf grpc++ grpc`\
+           -lgrpc++_reflection\
+           -ldl
+else
+LDFLAGS += -L/usr/local/lib -L$(ROOT_PATH)/grpcinstall/lib -L$(ROOT_PATH)/grpc/libs/opt/protobuf -I$(LD_PATH) `pkg-config --libs protobuf grpc++ grpc`\
+           -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
+           -ldl
+endif
+PROTOC = protoc
+GRPC_CPP_PLUGIN = grpc_cpp_plugin
+GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
+```
 
-1> ok finish registering .json file automatically and then calculate the time 
-by defining extra compile parameter to control this
+then load the warprun to execute the excutable file
 
-2> add a python script to create any number of event triggure files
-
-3> add a python script to calculate the time (learn how to draw the whiskers plot client number: 10 20 30 ...)
-
-[bugs]
-
-when publish before subscribe, do nothing
-
-event1 register e1 e2 than start, if modify trigure, and add e3, the obvious client is still listening to the redisclient
-if there are event published, the command will be started moutiple times
-
-when doing the scale testing, it's ok to output the data into terminal but faile to output it by using redirect 2>&1 ???
-some log may lose in multi thread cases
+```
+module load dynamic-link
+module load python wraprun
+wraprun -n 1 <executable>
+```
