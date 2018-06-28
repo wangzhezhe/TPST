@@ -51,6 +51,8 @@ endif
 PROTOC = protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
+......
+
 ```
 
 then load the warprun to execute the excutable file
@@ -60,3 +62,11 @@ module load dynamic-link
 module load python wraprun
 wraprun -n 1 <executable>
 ```
+
+//set the env of the grpc
+source ~/.grpc
+
+//set the color of the dir
+source ~/.bashrc
+
+On titan, if you want to use multimode, you should subscribe those nodes firstly, the number of nodes should be modified here `qsub -I -X -l walltime=00:30:00 -A CSC103 -l nodes=1`
