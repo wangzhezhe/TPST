@@ -74,8 +74,9 @@ GreeterClient *getClientFromAddr(string peerURL)
 
 map<string, GreeterClient *> multiClients;
 vector<string> multiaddr;
+int robincount = 0;
 
-GreeterClient *roundrobinGetClient(string clientId)
+GreeterClient *randomGetClient(string clientId)
 {
     //get last 3 digit of client id idNum
 
@@ -88,10 +89,33 @@ GreeterClient *roundrobinGetClient(string clientId)
     //get the index of client idNum%clientSize
     string tempstr = clientId.substr(clientId.size() - 3);
     int tempData = atoi(tempstr.data());
-    printf("init index is %d size of clientSize %d\n", tempData, clientSize);
+    //printf("init index is %d size of clientSize %d\n", tempData, clientSize);
     int tmpindex = tempData % clientSize;
     string addr = multiaddr[tmpindex];
-    printf("get server socket addr %s\n", addr.data());
+    //printf("get server socket addr %s\n", addr.data());
+    return multiClients[addr];
+}
+
+GreeterClient *roundrobinGetClient(string clientId)
+{
+    //get last 3 digit of client id idNum
+
+    int clientSize = multiClients.size();
+    if (clientSize == 0)
+    {
+        printf("failed to get init client\n");
+        return NULL;
+    }
+
+    //get the tmpindex by round robin way
+    int tmpindex;
+    robincount++;
+
+    //avoid the overflow of large number
+    robincount = robincount % clientSize;
+    tmpindex = robincount;
+    string addr = multiaddr[tmpindex];
+    //printf("index %d get server socket addr %s\n", tmpindex, addr.data());
     return multiClients[addr];
 }
 
@@ -216,7 +240,7 @@ string GreeterClient::Subscribe(vector<string> eventSubList, string clientID)
     }
 }
 
-string GreeterClient::Publish(vector<string> eventList,string source)
+string GreeterClient::Publish(vector<string> eventList, string source)
 {
     // Container for the data we expect from the server.
     PubSubRequest request;
@@ -294,7 +318,7 @@ void initMultiClients()
     for (i = 0; i < size; i++)
     {
         printf("node (%d) addr (%s)\n", i, multiaddr[i].data());
-        GreeterClient *greeter = new GreeterClient (grpc::CreateChannel(
+        GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
             multiaddr[i].data(), grpc::InsecureChannelCredentials()));
         multiClients[multiaddr[i]] = greeter;
     }

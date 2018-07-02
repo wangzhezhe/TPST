@@ -1,0 +1,29 @@
+#!/bin/bash
+#PBS -A CSC103
+#PBS -N wfclient
+#PBS -l walltime=00:20:00
+#PBS -l nodes=2
+
+cd /lustre/atlas/scratch/zw241/csc103/Software/eventDrivenWorkflow/tests/performance
+
+sleep 1
+
+## Load env
+source ~/.grpc
+module load dynamic-link
+module load python wraprun
+
+## Run workflow servers
+## <binary> <watchpath> <required number of notification> <notifyserver interfaces><notify server port> <required INIT Number>
+## ./eventNotify ./broadcaster1 10 ipogif0 50052 1
+
+wraprun -n 1 ./eventNotify 512 10 ipogif0 50052 1 : -n 1 ./eventNotify 512 10 ipogif0 50052 1
+
+DSPID=$
+
+## Run clients
+
+## Kill wf clients 
+sleep 5
+kill ${DSPID}
+

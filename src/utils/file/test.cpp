@@ -25,7 +25,7 @@ int main()
         cout << strList[i] << endl;
     }
     */
-   char *file="./testfolder/trigureana.json";
+   char *file="./broadcaster/trigure_3ana.json";
    string filecontent;
    filecontent=loadFile(file);
    printf("load data (%s)\n",filecontent.data());

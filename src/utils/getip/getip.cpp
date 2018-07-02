@@ -9,10 +9,12 @@
 #include <arpa/inet.h>
 #include <string>
 #include <fstream>
+#include <iostream>
 #include <sys/stat.h>
 #include <vector>
 #include "getip.h"
 #include <dirent.h>
+#include <system_error>
 
 //#define INTERFACE "lo"
 
@@ -35,7 +37,7 @@ string parseIP(string peerURL)
 
     startPosition = peerURL.find(":");
 
-    printf("start position of : (%d) original str %s\n", startPosition, peerURL.data());
+    //printf("start position of : (%d) original str %s\n", startPosition, peerURL.data());
 
     peerURL.erase(startPosition, len - startPosition);
 
@@ -50,30 +52,35 @@ vector<string> loadMultiNodeIPPort()
     vector<string> multiNodeAddr;
     struct dirent *entry;
     struct stat statbuf;
-
-    if ((dp = opendir(dir.data())) == NULL)
+    try
     {
-        printf("Can`t open directory %s\n", dir.data());
-        exit(0);
-    }
-    //change current work dir to the dir
-    //same to the cd comand
-    while ((entry = readdir(dp)) != NULL)
-    {
-        lstat(entry->d_name, &statbuf);
-        if (S_ISDIR(statbuf.st_mode))
+        if ((dp = opendir(dir.data())) == NULL)
         {
-            if (strcmp(entry->d_name, ".") == 0 ||
-                strcmp(entry->d_name, "..") == 0)
+            printf("Can`t open directory %s\n", dir.data());
+            exit(0);
+        }
+
+        while ((entry = readdir(dp)) != NULL)
+        {
+
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            {
                 continue;
-            printf("name %s\n", entry->d_name);
+            }
+
+            printf("load addr name %s\n", entry->d_name);
             multiNodeAddr.push_back(string(entry->d_name));
         }
-        else
-            printf("name %s\n", entry->d_name);
+        //change to the upper dir
+        closedir(dp);
     }
-    //change to the upper dir
-    closedir(dp);
+    catch (const std::system_error &e)
+    {
+        std::cout << "getip Caught system_error with code " << e.code()
+                  << " meaning " << e.what() << '\n';
+        exit(1);
+    }
+
     return multiNodeAddr;
 }
 
@@ -103,11 +110,18 @@ void recordIPortForMultiNode(string &ipstr, string port)
     dirfile.open(dir.data(), ios::in);
     if (!dirfile)
     {
-        const int dir_err = mkdir(dir.data(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-        if (-1 == dir_err)
+        while (1)
         {
-            printf("Error creating directory");
-            return;
+            const int dir_err = mkdir(dir.data(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            if (-1 == dir_err)
+            {
+                printf("Error creating directory, retry...");
+                usleep(10000);
+            }
+            else
+            {
+                break;
+            }
         }
     }
 

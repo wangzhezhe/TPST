@@ -45,6 +45,11 @@ void jsonParsingTrigger(Document &d);
 void initOperator(int jsonNum);
 EventTriggure* addNewConfig(string jsonbuffer,string &clientID);
 void eventSubscribe(EventTriggure *etrigger,string clientID);
+EventTriggure *fakeaddNewConfig(string driver,
+                                vector<string> eventSubList,
+                                vector<string> eventPubList,
+                                vector<string> actionList,
+                                string &clientID);
 
 extern mutex subscribedMutex;
 extern int SubscribedClient;

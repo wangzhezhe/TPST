@@ -17,5 +17,5 @@ using namespace std;
 
 void* RunNotifyServer(void *arg);
 extern int NotifiedNum ;
-
+extern string NOTIFYPORT;
 #endif

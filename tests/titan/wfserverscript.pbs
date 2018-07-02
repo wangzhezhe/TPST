@@ -1,0 +1,30 @@
+#!/bin/bash
+#PBS -A CSC103
+#PBS -N wfserver
+#PBS -l walltime=00:20:00
+#PBS -l nodes=2
+
+cd /lustre/atlas/scratch/zw241/csc103/Software/eventDrivenWorkflow/tests/performance
+rm -rf multinodeip
+
+sleep 1
+
+## Load env
+source ~/.grpc
+
+## Run workflow servers
+## ./workflowserver <subscribe period time> <number of the nodes> <network interfaces>
+module load dynamic-link
+module load python wraprun
+## wraprun -n 1 ./workflowserver 1500 3 ipogif0 : -n 1 ./workflowserver 1500 3 ipogif0 : -n 1 ./workflowserver 1500 3 ipogif0
+## wraprun -n 1 ./workflowserver 1500 1 ipogif0
+wraprun -n 1 ./workflowserver 1500 2 ipogif0 : -n 1 ./workflowserver 1500 2 ipogif0
+
+DSPID=$
+
+## Run clients
+
+## Kill wf Server 
+sleep 10
+kill ${DSPID}
+

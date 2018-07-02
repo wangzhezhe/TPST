@@ -92,10 +92,58 @@ void *tempStartOperator(void *arg)
     //publish INIT event
     vector<string> eventList;
     eventList.push_back(INITEvent);
-    string reply = greeter->Publish(eventList,"CLIENT");
+    string reply = greeter->Publish(eventList, "CLIENT");
     printf("publish INIT event return (%s)\n", reply.data());
 
     return NULL;
+}
+
+void fakegothroughFolderRegister(int subSize)
+{
+    //the json buffer shouled be load from memory
+    /*
+{
+    "type": "TRIGGER",
+    "eventSubList": ["INIT"],
+    "eventPubList": ["SIMFINISH"],
+    "driver": "local",
+    "actionList": [
+       "/bin/bash ./app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim1.out"
+     ]
+}
+
+    */
+
+    //TODO using distributed lock to get the id from the shared file system
+    int i = 0;
+    string TRIGGURETYPE = "TRIGGER";
+    string driver = "local";
+
+    for (i = 0; i < subSize; i++)
+    {
+        vector<string> pubeventList;
+        vector<string> subeventList;
+        vector<string> actionList;
+        
+        string fakeSub = "fakeSub" + to_string(i);
+        string fakePub = "fakePub" + to_string(i);
+        string fakeaction = "fakeaction" + to_string(i);
+
+        subeventList.push_back(fakeSub);
+        pubeventList.push_back(fakePub);
+        actionList.push_back(fakeaction);
+
+        string clientID;
+
+        EventTriggure *etrigger = fakeaddNewConfig(driver, subeventList, pubeventList, actionList, clientID);
+
+        if (clientID != "")
+        {
+            eventSubscribe(etrigger, clientID);
+        }
+    }
+
+    return;
 }
 
 //go through the Trigurefile folder and register the .json file with type=trigure into the system
@@ -104,9 +152,9 @@ void gothroughFolderRegister(const char *watchdir)
 
     vector<string> fileList;
     fileList = scanFolder(watchdir);
-
     int count = fileList.size();
-    char taskPath[100];
+    char taskPath[1000];
+
     for (int i = 0; i < count; i++)
     {
 
@@ -136,11 +184,10 @@ void gothroughFolderRegister(const char *watchdir)
         watchdirstr.erase(std::remove(watchdirstr.begin(), watchdirstr.end(), '.'), watchdirstr.end());
         watchdirstr.erase(std::remove(watchdirstr.begin(), watchdirstr.end(), '/'), watchdirstr.end());
 
-        snprintf(taskPath, sizeof taskPath, "%s/%s/%s", cwd, watchdirstr.data(), fileList[i].data());
+        snprintf(taskPath, sizeof(taskPath), "%s/%s/%s", cwd, watchdirstr.data(), fileList[i].data());
 
         string jsonbuffer = loadFile(taskPath);
         //printf("dir path original %s after deletion %s\n", watchdir, watchdirstr.data());
-        printf("taskPath %s\n", taskPath);
 
         //create new client id and new event triggure
 
@@ -171,36 +218,41 @@ int main(int argc, char **argv)
 
     EVENTTYPE eventType;
 
-    if (argc != 5)
+    if (argc != 6)
     {
-        printf("<binary> <watchpath> <required number of notification> <notifyserver interfaces> <required INIT Number>\n");
+        //printf("<binary> <watchpath> <required number of notification> <notifyserver interfaces><notify server port> <required INIT Number>\n");
+        printf("<binary> <sub number> <required number of notification> <notifyserver interfaces><notify server port> <required INIT Number>\n");
         return 0;
     }
 
-    //start a new thread to run notify server
-
-    //parse the json file and create the clientid and put them in a map
-
-    pthread_t notifyserverid;
-    int status;
-    pthread_create(&notifyserverid, NULL, &RunNotifyServer, NULL);
-    printf("waiting the termination of threads id %ld\n", notifyserverid);
-
-    //traverse the map and send the subscribe request
-
-    // write ip port of current nodes into config files
-    // the load operation is defined at pubsubclient
     initMultiClients();
 
-    gothroughFolderRegister(argv[1]);
+    //use this if the watchpath is used(this will load the config file from the disk)
+    //gothroughFolderRegister(argv[1]);
+
+    int subSize = atoi(argv[1]);
+
+    printf("subsize is %d\n", subSize);
+
+    fakegothroughFolderRegister(subSize);
 
     int requiredNotifiedNum = atoi(argv[2]);
 
     INTERFACE = string(argv[3]);
-
     printf("notify server listen to interface %s\n", INTERFACE.data());
 
-    int requiredInitNum = atoi(argv[4]);
+    NOTIFYPORT = string(argv[4]);
+    printf("notify server listen to port %s\n", NOTIFYPORT.data());
+
+    //start a new thread to run notify server
+    //parse the json file and create the clientid and put them in a map
+    pthread_t notifyserverid;
+    int status;
+    pthread_create(&notifyserverid, NULL, &RunNotifyServer, NULL);
+    //printf("waiting the termination of threads id %ld\n", notifyserverid);
+
+    // send the init request when there are specific number of clients subscribe the init event
+    int requiredInitNum = atoi(argv[5]);
 
     pthread_t operatorid;
 

@@ -56,6 +56,9 @@ using namespace std;
 mutex NotifiedNumMtx;
 int NotifiedNum = 0;
 
+//default value
+string NOTIFYPORT ("50552");
+
 void startAction(string clientID)
 {
 
@@ -137,16 +140,19 @@ class GreeterServiceImpl final : public Greeter::Service
 
 void runNotifyServer()
 {
-
-    string serverPort = string("50052");
+    //TODO +1 is the port is occupied
+    //int port=50052;
+    //os will assign a free port
+    
+    string serverPort = NOTIFYPORT;
     string ip;
-    printf("record ip\n");
+    //printf("record ip\n");
 
     recordIPPortWithoutFile(ip, serverPort);
     //TODO send ip:port to workflowserver
 
     string socketAddr = ip + ":" + serverPort;
-
+    printf("notify server addr %s\n",socketAddr.data());
     std::string server_address(socketAddr);
     GreeterServiceImpl service;
 

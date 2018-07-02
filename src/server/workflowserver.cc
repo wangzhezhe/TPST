@@ -59,6 +59,12 @@ int nodeNumber;
 string ServerIP;
 string ServerPort;
 
+//for debugging
+double subavg = 0;
+
+mutex subtimesMtx;
+int subtimes = 0;
+
 //broadcaster this event to nodes in
 void publishMultiServer(vector<string> eventList)
 {
@@ -100,7 +106,7 @@ void *checkNotify(void *arguments)
   pubsubWrapper *psw = (pubsubWrapper *)arguments;
   string clientidstr = psw->clientID;
   int clientsize = 0;
-  printf("start checkNotify for clientid (%s)\n", clientidstr.data());
+  //printf("start checkNotify for clientid (%s)\n", clientidstr.data());
   int times = 0;
   while (1)
   {
@@ -168,6 +174,7 @@ class GreeterServiceImpl final : public Greeter::Service
     string requestEvent = request->subevent();
     //printf("search the clients number associated with %s\n", requestEvent.data());
     //search how many clients associated with this event
+
     int clientsNumber = getSubscribedClientsNumber(requestEvent);
 
     //return this number
@@ -206,7 +213,7 @@ class GreeterServiceImpl final : public Greeter::Service
 
     //parse the request events
     int size = request->pubsubmessage_size();
-    printf("server get (%d) subscribed events\n", size);
+    //printf("server get (%d) subscribed events\n", size);
     int i = 0;
     vector<string> eventList;
     string eventStr;
@@ -240,8 +247,16 @@ class GreeterServiceImpl final : public Greeter::Service
 
     clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
     diff = (end.tv_sec - start.tv_sec) * 1.0 + (end.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-    printf("debug for subevent (%s) response time = (%lf) second\n", eventMessage.data(), diff);
+    //TODO add lock here
+    subtimesMtx.lock();
+    subtimes++;
+    subtimesMtx.unlock();
+    subavg = (subavg * subtimes + diff) / (subtimes + 1);
 
+    if(subtimes%100==0){
+      printf("debug for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", eventMessage.data(), diff, subavg,subtimes);
+    }
+    
     return Status::OK;
   }
 

@@ -105,7 +105,7 @@ void eventSubscribe(EventTriggure *etrigger, string clientID)
         return;
     }
 
-    printf("success to get the greeter\n");
+    //printf("success to get the greeter\n");
 
     //debug how long should be used to go get the subscribed event
 
@@ -119,8 +119,14 @@ void eventSubscribe(EventTriggure *etrigger, string clientID)
     SubscribedClient++;
     subscribedMutex.unlock();
 
+    if (SubscribedClient % 100 == 0)
+    {
+        printf("sub times %d\n", SubscribedClient);
+    }
+
+    //printf("debug sub event %s\n",etrigger->eventSubList[0].data());
     string reply = greeter->Subscribe(etrigger->eventSubList, clientID);
-    cout << "Subscribe return value: " << reply << endl;
+    //cout << "Subscribe return value: " << reply << endl;
 
     clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
 
@@ -144,7 +150,6 @@ void eventSubscribe(EventTriggure *etrigger, string clientID)
 int jsonIfTriggerorOperator(Document &d, char *jsonbuffer)
 {
     d.Parse(jsonbuffer);
-    //printf("jsonIfTriggerorOperator (%s)\n",jsonbuffer);
     const char *type = d["type"].GetString();
     //printf("get type after parsing (%s)\n",type);
     if (strcmp(type, "TRIGGER") == 0)
@@ -221,13 +226,56 @@ void outputTriggure(string clientId)
     return;
 }
 
-EventTriggure* addNewConfig(string jsonbuffer,string &clientID)
+/*
+
+typedef struct EventTriggure
+{
+    string driver;
+    vector<string> eventSubList;
+    vector<string> eventPubList;
+    vector<string> actionList;
+
+} EventTriggure;
+
+*/
+//put key info into the configuration
+EventTriggure *fakeaddNewConfig(string driver,
+                                vector<string> eventSubList,
+                                vector<string> eventPubList,
+                                vector<string> actionList,
+                                string &clientID)
+{
+    EventTriggure *triggure = new (EventTriggure);
+
+    triggure->driver = driver;
+    triggure->eventSubList = eventSubList;
+    triggure->eventPubList = eventPubList;
+    triggure->actionList = actionList;
+
+    uuid_t uuid;
+    char idstr[50];
+
+    uuid_generate(uuid);
+    uuid_unparse(uuid, idstr);
+
+    string clientId(idstr);
+    clientIdtoConfigMtx.lock();
+    clientIdtoConfig[clientId] = triggure;
+    //printf("add clientid %s\n", clientId.data());
+    clientIdtoConfigMtx.unlock();
+
+    //outputTriggure(clientId);
+    clientID = clientId;
+    return triggure;
+}
+
+EventTriggure *addNewConfig(string jsonbuffer, string &clientID)
 {
     //parse json buffer
     Document d;
     //printf("current file data %s\n",jsonbuffer.data());
     d.Parse(const_cast<char *>(jsonbuffer.data()));
-    //printf("jsonIfTriggerorOperator (%s)\n",jsonbuffer);
+    //printf("jsonIfTriggerorOperator (%s)\n", jsonbuffer.data());
     const char *type = d["type"].GetString();
     EventTriggure *triggure = new (EventTriggure);
 
@@ -275,11 +323,11 @@ EventTriggure* addNewConfig(string jsonbuffer,string &clientID)
         string clientId(idstr);
         clientIdtoConfigMtx.lock();
         clientIdtoConfig[clientId] = triggure;
-        printf("add clientid %s\n", clientId.data());
+        //printf("add clientid %s\n", clientId.data());
         clientIdtoConfigMtx.unlock();
 
         //outputTriggure(clientId);
-        clientID=clientId;
+        clientID = clientId;
         return triggure;
     }
     else if (strcmp(type, "OPERATOR") == 0)

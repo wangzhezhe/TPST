@@ -24,18 +24,17 @@ mutex subtoClientMtx;
 //map<event, map<clientid,pubsubwrapper*>>
 map<string, map<string, pubsubWrapper *>> subtoClient;
 
-
 using namespace std;
 
 int getSubscribedClientsNumber(string subEvent)
 {
-    printf("subevent %s\n", subEvent.data());
+    //printf("subevent %s\n", subEvent.data());
     //printf("debug1 size of subtoClient[INIT] %d\n", subtoClient[subEvent].size());
     //printf("debug2 size of subtoClient[INIT] %d\n", subtoClient["INIT"].size());
     if (subtoClient.find(subEvent) == subtoClient.end())
     {
         // not found
-        return -1;
+        return 0;
     }
 
     //if client id exist

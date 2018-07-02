@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <exception>
+#include <iostream>
 using namespace std;
 
 /*
@@ -39,12 +41,20 @@ char *loadFile(char *filename)
 
 string loadFile(char *filename)
 {
-  ifstream ifs(filename);
-  string content( (std::istreambuf_iterator<char>(ifs)),
-                       (std::istreambuf_iterator<char>()));
-  return content;
-}
 
+    ifstream ifs;
+    ifs.open(filename);
+    if (ifs.fail())
+    {
+        printf("ifs fail\n");
+        exit(1);
+    }
+
+    string content((std::istreambuf_iterator<char>(ifs)),
+                   (std::istreambuf_iterator<char>()));
+
+    return content;
+}
 
 char *getTaskNameFromEventName(char *filename)
 {
@@ -121,7 +131,7 @@ vector<std::string> scanFolder(const char *dirpath)
 {
 
     DIR *dp;
-    vector <string> fileList;
+    vector<string> fileList;
     struct dirent *entry;
     struct stat statbuf;
 
@@ -130,25 +140,15 @@ vector<std::string> scanFolder(const char *dirpath)
         fprintf(stderr, "Can`t open directory %s\n", dirpath);
         return fileList;
     }
-    //change current work dir to the dir
-    //same to the cd comand
-    chdir(dirpath);
+
     while ((entry = readdir(dp)) != NULL)
     {
-        lstat(entry->d_name, &statbuf);
-        if (S_ISDIR(statbuf.st_mode))
-        {
-            continue;
-        }
-        else{
-            //printf("filename %s\n", entry->d_name);
-            string temps=entry->d_name;
-            fileList.push_back(temps);
-        }
+
+        string temps = entry->d_name;
+        fileList.push_back(temps);
     }
-    //change to the upper dir
-    chdir("..");
-    closedir(dp);
+
+    //printf("debug 3\n");
 
     return fileList;
 }
