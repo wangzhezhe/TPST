@@ -32,7 +32,7 @@ typedef struct pubsubWrapper{
     string clientID;
     //int trigureNum; this value should be maintained in innermap of clienttoSub
     //PubSubReply *reply;
-    //bool iftrigure;
+    bool iftrigure;
     map<string, int> publishedEvent;
     map<string, set<int>> requiredeventMap; //transfer eventList into this format
 }pubsubWrapper;
@@ -58,7 +58,9 @@ void ParseEvent(string fullEvent, string & eventMessage, int & num);
 
 //void deleteClientFromSTC(string clientid, string substr);
 
-bool checkIfTriggure(pubsubWrapper *psw);
+//bool checkIfTriggure(pubsubWrapper *psw);
+
+bool checkIfTriggure(pubsubWrapper *psw, string &satisfiedStr);
 
 int getSubscribedClientsNumber(string subEvent);
 

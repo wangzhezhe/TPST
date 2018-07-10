@@ -42,6 +42,10 @@ enum FILETYPE
 queue<pthread_t> threadIdQueue;
 mutex subscribedMutex;
 int SubscribedClient = 0;
+
+mutex publishMutex;
+int publishClient = 0;
+
 vector<string> operatorList;
 
 //from client id to the config file that is needed to be excuted when there is notify request
@@ -91,13 +95,40 @@ void initOperator(int jsonNum)
         system(action);
     }
 }
+void eventPublish(vector<string> pubList)
+{
+    GreeterClient *greeter = roundrobinGetClient();
 
+    if (greeter == NULL)
+    {
+        printf("failed to get greeter for event subscribe\n");
+        return;
+    }
+
+    publishMutex.lock();
+    publishClient++;
+    publishMutex.unlock();
+
+    if (publishClient % 100 == 0)
+    {
+        printf("publish times %d\n", publishClient);
+    }
+
+    string reply = greeter->Publish(pubList, "CLIENT");
+
+    if (reply.compare("OK") != 0)
+    {
+        printf("rpc failed, publish %s failed\n", pubList[0].data());
+    }
+
+    return;
+}
 void eventSubscribe(EventTriggure *etrigger, string clientID)
 {
     //only could be transfered by this way if original pointed is initiallises by malloc instead on new
     //EventTriggure *etrigger = (EventTriggure *)arguments;
 
-    GreeterClient *greeter = roundrobinGetClient(clientID);
+    GreeterClient *greeter = roundrobinGetClient();
 
     if (greeter == NULL)
     {

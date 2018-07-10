@@ -65,7 +65,7 @@ void *tempStartOperator(void *arg)
     uuid_unparse(uuid, idstr);
 
     string clientID(idstr);
-    GreeterClient *greeter = roundrobinGetClient(clientID);
+    GreeterClient *greeter = roundrobinGetClient();
 
     if (greeter == NULL)
     {
@@ -98,6 +98,27 @@ void *tempStartOperator(void *arg)
     return NULL;
 }
 
+//for test using, send multipublish request after subscribe
+void fakePublishTest(int pubSize)
+{
+    int i = 0;
+    //srand(time(0));
+    for (i = 0; i < pubSize; i++)
+    {
+        vector<string> pubeventList;
+
+        //int index = (rand() % (pubSize - 0 + 1));
+
+        string fakePub = COMPONENTID + "fakeSub" + to_string(i);
+
+        pubeventList.push_back(fakePub);
+
+        eventPublish(pubeventList);
+    }
+
+    return;
+}
+
 void fakegothroughFolderRegister(int subSize)
 {
     //the json buffer shouled be load from memory
@@ -118,19 +139,23 @@ void fakegothroughFolderRegister(int subSize)
     int i = 0;
     string TRIGGURETYPE = "TRIGGER";
     string driver = "local";
+    //for test using
+    string redundantPushEvent = "redundant";
 
     for (i = 0; i < subSize; i++)
     {
         vector<string> pubeventList;
         vector<string> subeventList;
         vector<string> actionList;
-        
-        string fakeSub = "fakeSub" + to_string(i);
-        string fakePub = "fakePub" + to_string(i);
+
+        //every component pub sub different event
+        string fakeSub = COMPONENTID + "fakeSub" + to_string(i);
+        string fakePub = COMPONENTID + "fakePub" + to_string(i);
         string fakeaction = "fakeaction" + to_string(i);
 
         subeventList.push_back(fakeSub);
         pubeventList.push_back(fakePub);
+        //pubeventList.push_back(redundantPushEvent);
         actionList.push_back(fakeaction);
 
         string clientID;
@@ -142,6 +167,8 @@ void fakegothroughFolderRegister(int subSize)
             eventSubscribe(etrigger, clientID);
         }
     }
+
+    fakePublishTest(subSize);
 
     return;
 }
@@ -218,10 +245,10 @@ int main(int argc, char **argv)
 
     EVENTTYPE eventType;
 
-    if (argc != 6)
+    if (argc != 7)
     {
         //printf("<binary> <watchpath> <required number of notification> <notifyserver interfaces><notify server port> <required INIT Number>\n");
-        printf("<binary> <sub number> <required number of notification> <notifyserver interfaces><notify server port> <required INIT Number>\n");
+        printf("<binary> <sub number> <required number of notification> <notifyserver interfaces><notify server port> <required INIT Number><id>\n");
         return 0;
     }
 
@@ -234,8 +261,6 @@ int main(int argc, char **argv)
 
     printf("subsize is %d\n", subSize);
 
-    fakegothroughFolderRegister(subSize);
-
     int requiredNotifiedNum = atoi(argv[2]);
 
     INTERFACE = string(argv[3]);
@@ -244,19 +269,35 @@ int main(int argc, char **argv)
     NOTIFYPORT = string(argv[4]);
     printf("notify server listen to port %s\n", NOTIFYPORT.data());
 
-    //start a new thread to run notify server
-    //parse the json file and create the clientid and put them in a map
-    pthread_t notifyserverid;
-    int status;
-    pthread_create(&notifyserverid, NULL, &RunNotifyServer, NULL);
     //printf("waiting the termination of threads id %ld\n", notifyserverid);
 
     // send the init request when there are specific number of clients subscribe the init event
     int requiredInitNum = atoi(argv[5]);
 
-    pthread_t operatorid;
+    int componentid = atoi(argv[6]);
 
-    pthread_create(&operatorid, NULL, &tempStartOperator, (void *)&requiredInitNum);
+    printf("curr component id %d\n", componentid);
+
+    COMPONENTID = componentid;
+
+    //start a new thread to run notify server
+    //parse the json file and create the clientid and put them in a map
+    pthread_t notifyserverid;
+    int status;
+    pthread_create(&notifyserverid, NULL, &RunNotifyServer, NULL);
+
+    //wait the notify server start
+    sleep(1);
+
+    struct timespec start;
+    clock_gettime(CLOCK_REALTIME, &start); /* mark the end time */
+    printf("start id %d start time = (%lld.%.9ld)\n", COMPONENTID, (long long)start.tv_sec, start.tv_nsec);
+
+    fakegothroughFolderRegister(subSize);
+
+    //pthread_t operatorid;
+
+    //pthread_create(&operatorid, NULL, &tempStartOperator, (void *)&requiredInitNum);
 
     while (1)
     {

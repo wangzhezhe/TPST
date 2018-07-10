@@ -113,10 +113,14 @@ void recordIPortForMultiNode(string &ipstr, string port)
         while (1)
         {
             const int dir_err = mkdir(dir.data(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-            if (-1 == dir_err)
+            if (dir_err < 0)
             {
-                printf("Error creating directory, retry...");
+                printf("Error creating directory %s, retry...", dir.data());
                 usleep(10000);
+                dirfile.open(dir.data(), ios::in);
+                if(dirfile){
+                    break;
+                }
             }
             else
             {

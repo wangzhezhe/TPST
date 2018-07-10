@@ -96,7 +96,7 @@ GreeterClient *randomGetClient(string clientId)
     return multiClients[addr];
 }
 
-GreeterClient *roundrobinGetClient(string clientId)
+GreeterClient *roundrobinGetClient()
 {
     //get last 3 digit of client id idNum
 

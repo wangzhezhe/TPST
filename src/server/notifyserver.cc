@@ -57,7 +57,8 @@ mutex NotifiedNumMtx;
 int NotifiedNum = 0;
 
 //default value
-string NOTIFYPORT ("50552");
+string NOTIFYPORT("50052");
+int COMPONENTID;
 
 void startAction(string clientID)
 {
@@ -88,7 +89,7 @@ void startAction(string clientID)
     int pubSize = etrigger->eventPubList.size();
 
     //get a client
-    GreeterClient *greeter = roundrobinGetClient(clientID);
+    GreeterClient *greeter = roundrobinGetClient();
 
     if (greeter == NULL)
     {
@@ -102,7 +103,7 @@ void startAction(string clientID)
 }
 
 // Logic and data behind the server's behavior.
-class GreeterServiceImpl final : public Greeter::Service
+class GreeterServiceImplNotify final : public Greeter::Service
 {
     //for test using
     Status SayHello(ServerContext *context, const HelloRequest *request, HelloReply *reply) override
@@ -119,7 +120,7 @@ class GreeterServiceImpl final : public Greeter::Service
 
         string clientID = request->clientid();
 
-        printf("get client id %s\n", clientID.data());
+        //printf("get client id %s\n", clientID.data());
 
         //TODO get the json from the configID and use runtime to star this
         //it's better to put the mapping relation here
@@ -127,23 +128,56 @@ class GreeterServiceImpl final : public Greeter::Service
 
         std::string message("OK");
         reply->set_returnmessage(message);
-        startAction(clientID);
+
+        //don't do this for testing
+        //startAction(clientID);
 
         NotifiedNumMtx.lock();
         NotifiedNum++;
         NotifiedNumMtx.unlock();
 
-        //printf("number which is notified %d\n", NotifiedNum);
+        struct timespec finish;
+        
+        if (NotifiedNum % 128 == 0)
+        {
+            clock_gettime(CLOCK_REALTIME, &finish); /* mark the end time */
+            printf("id %d notifynum %d finish time = (%lld.%.9ld)\n", COMPONENTID, NotifiedNum, (long long)finish.tv_sec, finish.tv_nsec);
+        }
         return Status::OK;
     }
 };
+
+/*
+void RunServer(string serverIP, string serverPort)
+{
+
+  string socketAddr = serverIP + ":" + serverPort;
+  printf("server socket addr %s\n", socketAddr.data());
+  std::string server_address(socketAddr);
+  GreeterServiceImpl service;
+
+  ServerBuilder builder;
+  // Listen on the given address without any authentication mechanism.
+  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+  // Register "service" as the instance through which we'll communicate with
+  // clients. In this case it corresponds to an *synchronous* service.
+  builder.RegisterService(&service);
+  // Finally assemble the server.
+  std::unique_ptr<Server> server(builder.BuildAndStart());
+  std::cout << "Server listening on " << server_address << std::endl;
+
+  // Wait for the server to shutdown. Note that some other thread must be
+  // responsible for shutting down the server for this call to ever return.
+  server->Wait();
+}
+*/
 
 void runNotifyServer()
 {
     //TODO +1 is the port is occupied
     //int port=50052;
     //os will assign a free port
-    
+
     string serverPort = NOTIFYPORT;
     string ip;
     //printf("record ip\n");
@@ -152,9 +186,9 @@ void runNotifyServer()
     //TODO send ip:port to workflowserver
 
     string socketAddr = ip + ":" + serverPort;
-    printf("notify server addr %s\n",socketAddr.data());
+    printf("notify server addr %s\n", socketAddr.data());
     std::string server_address(socketAddr);
-    GreeterServiceImpl service;
+    GreeterServiceImplNotify service;
 
     ServerBuilder builder;
     // Listen on the given address without any authentication mechanism.

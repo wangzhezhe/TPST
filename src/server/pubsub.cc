@@ -24,6 +24,8 @@ mutex subtoClientMtx;
 //map<event, map<clientid,pubsubwrapper*>>
 map<string, map<string, pubsubWrapper *>> subtoClient;
 
+mutex publishedEventMtx;
+
 using namespace std;
 
 int getSubscribedClientsNumber(string subEvent)
@@ -48,7 +50,7 @@ void addNewClientLocal(string clientid, vector<string> eventList)
     pubsubWrapper *psw = new (pubsubWrapper);
     psw->peerURL = "";
     psw->clientID = clientid;
-
+    psw->iftrigure = false;
     //publishedEvent is defaut value
     //range eventList
     psw->clientID = clientid;
@@ -74,6 +76,7 @@ void addNewClient(string clientid, string notifyAddr, vector<string> eventList)
     map<string, int> publishedEvent;
     psw->publishedEvent = publishedEvent;
     psw->clientID = clientid;
+    psw->iftrigure = false;
     int size = eventList.size();
 
     int i = 0;
@@ -99,8 +102,9 @@ void deleteClient(string subevent, string clientid)
 void deletePubEvent(pubsubWrapper *psw)
 {
 
+    publishedEventMtx.lock();
     psw->publishedEvent.clear();
-
+    publishedEventMtx.unlock();
     return;
 }
 
@@ -140,6 +144,9 @@ bool checkIfTriggure(pubsubWrapper *psw)
                 //event has not been published required times
                 return false;
             }
+
+            //for testing using
+            //satisfiedStr = eventkeywithoutNum;
         }
     }
 
@@ -235,26 +242,33 @@ void pubsubPublish(vector<string> eventList)
     struct timespec start, end1, end2;
     double diff;
 
-    clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
+    //clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
 
     int size = eventList.size();
     int i;
     //printf("eventList len %d\n", size);
-
+    string eventwithoutNum;
     for (i = 0; i < size; i++)
     {
         //this event should not in full format, for required number larger than 1, one event should only binding with one number
-        string eventwithoutNum = eventList[i];
+        eventwithoutNum = eventList[i];
+
+        //if there is no eventwithoutNum in map, return
+
+        if (subtoClient.find(eventwithoutNum) == subtoClient.end())
+        {
+            return;
+        }
 
         map<string, pubsubWrapper *> clientMap = subtoClient[eventwithoutNum];
         //traverse map
         map<string, pubsubWrapper *>::iterator itmap;
 
         //printf("number for clientset %d when publish event %s\n", setnum, eventwithoutNum.data());
-        printf("debug publish event %s map size %d\n", eventwithoutNum.data(), clientMap.size());
-        clock_gettime(CLOCK_REALTIME, &end1);
-        diff = (end1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-        printf("debug for publish end1 response time = (%lf) second\n", diff);
+        //printf("debug publish event %s map size %d\n", eventwithoutNum.data(), clientMap.size());
+        //clock_gettime(CLOCK_REALTIME, &end1);
+        //diff = (end1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
+        //printf("debug for publish end1 response time = (%lf) second\n", diff);
         //traverse the map and put publish into it
         for (itmap = clientMap.begin(); itmap != clientMap.end(); ++itmap)
         {
@@ -284,11 +298,19 @@ void pubsubPublish(vector<string> eventList)
             publishedEvent[eventwithoutNum]++;
 
             clientWrapper->publishedEvent = publishedEvent;
+
+            //check if notify here
+
+            bool tempiftrigure = checkIfTriggure(clientWrapper);
+            if (tempiftrigure == true)
+            {
+                clientMap[clientId]->iftrigure = tempiftrigure;
+                //printf("check iftrigure event %s bool %d\n", eventwithoutNum.data(), clientMap[clientId]->iftrigure);
+            }
         }
-        //           }
-        //        }
     }
-    clock_gettime(CLOCK_REALTIME, &end2);
-    diff = (end2.tv_sec - start.tv_sec) * 1.0 + (end2.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-    printf("debug for publish end2 response time = (%lf) second\n", diff);
+
+    //clock_gettime(CLOCK_REALTIME, &end2);
+    //diff = (end2.tv_sec - start.tv_sec) * 1.0 + (end2.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
+    //printf("debug for publish (%s) response time = (%lf) second\n", eventwithoutNum.data(), diff);
 }

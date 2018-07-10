@@ -70,3 +70,41 @@ source ~/.grpc
 source ~/.bashrc
 
 On titan, if you want to use multimode, you should subscribe those nodes firstly, the number of nodes should be modified here `qsub -I -X -l walltime=00:30:00 -A CSC103 -l nodes=1`
+
+
+
+This is the exmple of running one server one client case on Titan
+
+```
+## build publishclient firstly befor building other components
+
+## server
+
+cd /lustre/atlas/scratch/zw241/csc103/Software/eventDrivenWorkflow/tests/performance
+rm -rf multinodeip
+
+
+## Load env
+source ~/.grpc
+module load dynamic-link
+module load python wraprun
+
+
+## Run workflow servers
+## ./workflowserver <subscribe period time> <number of the nodes> <network interfaces>
+wraprun  -n 1 ./workflowserver 1500 1 ipogif0   > notify1s1c.txt 2>&1 &
+
+## client
+
+cd /lustre/atlas/scratch/zw241/csc103/Software/eventDrivenWorkflow/tests/performance
+
+## Load env
+source ~/.grpc
+module load dynamic-link
+module load python wraprun
+
+## Run workflow client
+wraprun -n 1 ./eventNotify 128 10 ipogif0 50052 1
+
+```
+

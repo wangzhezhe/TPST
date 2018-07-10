@@ -70,7 +70,7 @@ public:
 
 //GreeterClient *getClientFromAddr(string peerURL);
 
-GreeterClient *roundrobinGetClient(string clientId);
+GreeterClient *roundrobinGetClient();
 
 void initMultiClients();
 
