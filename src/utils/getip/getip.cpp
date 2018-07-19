@@ -22,7 +22,35 @@
 
 string INTERFACE("eno1");
 
+int GETIPCOMPONENTNUM;
+//default value is 8
+int GETIPNUMPERCLUSTER = 8;
+int GETIPCOMPONENTID;
+
+string multinodeip("./multinodeip");
+
 using namespace std;
+
+string getClusterDir()
+{
+
+    printf("component num is %d\n", GETIPCOMPONENTNUM);
+    printf("component num per cluster is %d\n", GETIPNUMPERCLUSTER);
+
+    int clusternum = GETIPCOMPONENTNUM / GETIPNUMPERCLUSTER;
+
+    if (clusternum==0){
+        clusternum++;
+    }
+
+    int clusterIndex = GETIPCOMPONENTID % clusternum;
+
+    string clusterDir = multinodeip + "/cluster" + to_string(clusterIndex);
+
+    printf("component id %d get dir %s\n", GETIPCOMPONENTID, clusterDir.data());
+
+    return clusterDir;
+}
 
 string parseIP(string peerURL)
 {
@@ -47,7 +75,8 @@ string parseIP(string peerURL)
 vector<string> loadMultiNodeIPPort()
 {
     //the string in vector is ip:port
-    string dir = string("./multinodeip");
+    //string dir = string("./multinodeip");
+    string dir = getClusterDir();
     DIR *dp;
     vector<string> multiNodeAddr;
     struct dirent *entry;
@@ -72,7 +101,9 @@ vector<string> loadMultiNodeIPPort()
             multiNodeAddr.push_back(string(entry->d_name));
         }
         //change to the upper dir
+        printf("debug id %d load finish\n",GETIPCOMPONENTID);
         closedir(dp);
+        return multiNodeAddr;
     }
     catch (const std::system_error &e)
     {
@@ -80,11 +111,9 @@ vector<string> loadMultiNodeIPPort()
                   << " meaning " << e.what() << '\n';
         exit(1);
     }
-
-    return multiNodeAddr;
 }
 
-// put ip:port into multinodeip dir
+// put ip:port into multinodeip/clusterid dir
 // send the ip to ipstr
 void recordIPortForMultiNode(string &ipstr, string port)
 {
@@ -102,23 +131,26 @@ void recordIPortForMultiNode(string &ipstr, string port)
     //display result
     char *ip = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 
-    string dir = string("./multinodeip");
+    string dirFirst = multinodeip;
+
+    string dirSecond = getClusterDir();
 
     //if dir is created
 
     fstream dirfile;
-    dirfile.open(dir.data(), ios::in);
+    dirfile.open(dirFirst.data(), ios::in);
     if (!dirfile)
     {
         while (1)
         {
-            const int dir_err = mkdir(dir.data(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            const int dir_err = mkdir(dirFirst.data(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             if (dir_err < 0)
             {
-                printf("Error creating directory %s, retry...", dir.data());
+                printf("Error creating directory %s, retry...", dirFirst.data());
                 usleep(10000);
-                dirfile.open(dir.data(), ios::in);
-                if(dirfile){
+                dirfile.open(dirFirst.data(), ios::in);
+                if (dirfile)
+                {
                     break;
                 }
             }
@@ -129,8 +161,35 @@ void recordIPortForMultiNode(string &ipstr, string port)
         }
     }
 
+    fstream dirfilesecond;
+    dirfilesecond.open(dirSecond.data(), ios::in);
+    if (!dirfilesecond)
+    {
+        while (1)
+        {
+            const int dir_err = mkdir(dirSecond.data(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            if (dir_err < 0)
+            {
+                printf("Error creating directory %s, retry...", dirSecond.data());
+                usleep(10000);
+                dirfilesecond.open(dirSecond.data(), ios::in);
+                if (dirfilesecond)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
+    dirfile.close();
+    dirfilesecond.close();
+
     char addrFile[100];
-    sprintf(addrFile, "%s/%s:%s", dir.data(), ip, port.data());
+    sprintf(addrFile, "%s/%s:%s", dirSecond.data(), ip, port.data());
 
     FILE *fpt = fopen(addrFile, "w");
 

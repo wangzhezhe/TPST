@@ -147,8 +147,8 @@ void *checkNotify(void *arguments)
       srand((unsigned)time(0));
       usleep(1 * (waitTime));
       //times++;
-     // printf("server %s checknotify %s satisfied %s sleep time %d iftrigure %d\n",
-     //       ServerIP.data(), eventkeywithoutNum.data(), satisfiedStr.data(), times, psw->iftrigure);
+      // printf("server %s checknotify %s satisfied %s sleep time %d iftrigure %d\n",
+      //       ServerIP.data(), eventkeywithoutNum.data(), satisfiedStr.data(), times, psw->iftrigure);
     }
   }
 
@@ -386,7 +386,9 @@ void MultiClient()
   {
     multiAddr = loadMultiNodeIPPort();
     size = multiAddr.size();
-    if (size == nodeNumber)
+    //if (size == nodeNumber)
+    //TODO change this into a parameter
+    if (size == GETIPNUMPERCLUSTER)
     {
       break;
     }
@@ -426,22 +428,24 @@ int main(int argc, char **argv)
 
   //get wait time ./workflowserver 1000
   printf("parameter length %d\n", argc);
-  if (argc == 5)
+  if (argc == 6)
   {
     waitTime = atoi(argv[1]);
     printf("chechNotify wait period %d\n", waitTime);
     nodeNumber = atoi(argv[2]);
     printf("instance number of the backend is %d\n", nodeNumber);
+    GETIPCOMPONENTNUM = nodeNumber;
     string interfaces = string(argv[3]);
 
     INTERFACE = interfaces;
     printf("network interfaces is %s\n", interfaces.data());
 
     NOTIFYPORT = string(argv[4]);
+    GETIPCOMPONENTID = atoi(argv[5]);
   }
   else
   {
-    printf("./workflowserver <subscribe period time> <number of the nodes> <network interfaces><notify server port>\n");
+    printf("./workflowserver <subscribe period time> <number of the nodes> <network interfaces><notify server port><component id>\n");
     return 0;
   }
   ServerPort = string("50051");

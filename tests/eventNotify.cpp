@@ -245,14 +245,14 @@ int main(int argc, char **argv)
 
     EVENTTYPE eventType;
 
-    if (argc != 7)
+    if (argc != 8)
     {
         //printf("<binary> <watchpath> <required number of notification> <notifyserver interfaces><notify server port> <required INIT Number>\n");
-        printf("<binary> <sub number> <required number of notification> <notifyserver interfaces><notify server port> <required INIT Number><id>\n");
+        printf("<binary> <sub number> <required number of notification> <notifyserver interfaces><notify server port> <required INIT Number><id><component total Num>\n");
         return 0;
     }
 
-    initMultiClients();
+
 
     //use this if the watchpath is used(this will load the config file from the disk)
     //gothroughFolderRegister(argv[1]);
@@ -279,6 +279,14 @@ int main(int argc, char **argv)
     printf("curr component id %d\n", componentid);
 
     COMPONENTID = componentid;
+    GETIPCOMPONENTID = componentid;
+
+    int totalNum=atoi(argv[7]);
+
+    GETIPCOMPONENTNUM=totalNum;
+
+
+    initMultiClients();
 
     //start a new thread to run notify server
     //parse the json file and create the clientid and put them in a map

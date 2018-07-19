@@ -34,5 +34,8 @@ string parseIP(string peerURL);
 
 vector<string> loadMultiNodeIPPort();
 extern string INTERFACE;
+extern int GETIPCOMPONENTNUM;
+extern int GETIPCOMPONENTID;
+extern int GETIPNUMPERCLUSTER ;
 
 #endif
