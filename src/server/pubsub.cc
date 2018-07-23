@@ -28,20 +28,32 @@ mutex publishedEventMtx;
 
 using namespace std;
 
-int getSubscribedClientsNumber(string subEvent)
+int getSubscribedClientsNumber(vector<string> subEventList)
 {
     //printf("subevent %s\n", subEvent.data());
     //printf("debug1 size of subtoClient[INIT] %d\n", subtoClient[subEvent].size());
     //printf("debug2 size of subtoClient[INIT] %d\n", subtoClient["INIT"].size());
-    if (subtoClient.find(subEvent) == subtoClient.end())
+
+    int size = subEventList.size();
+
+    int i;
+    int totalSubNum = 0;
+
+    for (i = 0; i < size; i++)
     {
-        // not found
-        return 0;
+        string subEvent = subEventList[i];
+        if (subtoClient.find(subEvent) == subtoClient.end())
+        {
+            // not found
+            continue;
+        }
+
+        //if client id exist
+        //there is a map associated with every event
+        totalSubNum = totalSubNum + subtoClient[subEvent].size();
     }
 
-    //if client id exist
-    //there is a map associated with every event
-    return subtoClient[subEvent].size();
+    return totalSubNum;
 }
 
 void addNewClientLocal(string clientid, vector<string> eventList)
@@ -236,7 +248,7 @@ void output()
     }
 }
 
-void pubsubPublish(vector<string> eventList)
+void pubsubPublish(vector<string> eventList, string metadata)
 {
 
     struct timespec start, end1, end2;
@@ -300,10 +312,12 @@ void pubsubPublish(vector<string> eventList)
             clientWrapper->publishedEvent = publishedEvent;
 
             //check if notify here
-
             bool tempiftrigure = checkIfTriggure(clientWrapper);
             if (tempiftrigure == true)
             {
+                //modify metadata only when need to notify
+                clientMap[clientId]->metadata = metadata;
+
                 clientMap[clientId]->iftrigure = tempiftrigure;
                 //printf("check iftrigure event %s bool %d\n", eventwithoutNum.data(), clientMap[clientId]->iftrigure);
             }

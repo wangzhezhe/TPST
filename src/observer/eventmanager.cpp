@@ -62,9 +62,12 @@ void initOperator(int jsonNum)
         return;
     }
 
+    vector<string> InitList;
+    InitList.push_back(string("INIT"));
+
     while (1)
     {
-        int reply = greeter->GetSubscribedNumber("INIT");
+        int reply = greeter->GetSubscribedNumber(InitList);
         //printf("there are %d clients subscribe INIT event\n", reply);
         if (reply < jsonNum)
         {
@@ -95,7 +98,7 @@ void initOperator(int jsonNum)
         system(action);
     }
 }
-void eventPublish(vector<string> pubList)
+void eventPublish(vector<string> pubList,string metadata)
 {
     GreeterClient *greeter = roundrobinGetClient();
 
@@ -114,7 +117,8 @@ void eventPublish(vector<string> pubList)
         printf("publish times %d\n", publishClient);
     }
 
-    string reply = greeter->Publish(pubList, "CLIENT");
+
+    string reply = greeter->Publish(pubList, "CLIENT", metadata);
 
     if (reply.compare("OK") != 0)
     {

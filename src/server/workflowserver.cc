@@ -72,29 +72,39 @@ mutex pubtimesMtx;
 int pubtimes = 0;
 
 //broadcaster this event to nodes in
-void publishMultiServer(vector<string> eventList)
+void publishMultiServer(vector<string> eventList, string metadata)
 {
 
+  printf("debug multi publish metadata %s\n", metadata.data());
   //get self ip:port
   string serverSocket = ServerIP + ":" + ServerPort;
 
   //get the multiserver ip
   int size = multiaddr.size();
   //printf("addr size %d\n", size);
-  int i;
-  string reply;
+  int i, subnum, replynum;
+  string reply, tempaddr;
   for (i = 0; i < size; i++)
   {
-    if (serverSocket.compare(multiaddr[i]) != 0)
+    tempaddr = multiaddr[i];
+    if (serverSocket.compare(tempaddr) != 0)
     {
-      //set publish request
-      //TODO the fault tolerant for propagation
-      reply = multiClients[multiaddr[i]]->Publish(eventList, "SERVER");
-      if (reply.compare("OK") != 0)
+
+      //ask if notified first, if number !=0 then propagate
+      replynum = multiClients[tempaddr]->GetSubscribedNumber(eventList);
+
+      //check the subtoclient in other nodes
+      if (replynum > 0)
       {
-        printf("failed to propagate event to server %s\n", multiaddr[i].data());
-        return;
+        reply = multiClients[tempaddr]->Publish(eventList, "SERVER", metadata);
+        if (reply.compare("OK") != 0)
+        {
+          printf("failed to propagate event to server %s\n", tempaddr.data());
+          return;
+        }
       }
+      //TODO the fault tolerant for propagation
+
       //printf("propagate to server %s ok\n", multiaddr[i].data());
     }
   }
@@ -110,6 +120,7 @@ void *checkNotify(void *arguments)
 
   pubsubWrapper *psw = (pubsubWrapper *)arguments;
   string clientidstr = psw->clientID;
+
   int clientsize = 0;
   //printf("start checkNotify for clientid (%s)\n", clientidstr.data());
   int times = 0;
@@ -158,8 +169,10 @@ void *checkNotify(void *arguments)
   GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
       peerURL.data(), grpc::InsecureChannelCredentials()));
 
-  //don't do this for testing
-  string reply = greeter->NotifyBack(clientidstr);
+  //get metadata when iftrigure is true
+  string metadata = psw->metadata;
+  printf("checknotify id %s meta %s\n", clientidstr.data(), metadata.data());
+  string reply = greeter->NotifyBack(clientidstr, metadata);
 
   //printf("notification get reply (%s)\n", reply.data());
   //TODO delete the published event in this pubsub wrapper
@@ -197,13 +210,27 @@ class GreeterServiceImpl final : public Greeter::Service
 
   Status GetSubscribedNumber(ServerContext *context, const SubNumRequest *request, SubNumReply *reply)
   {
+    vector<string> eventList;
+    //parse the request events
+    int size = request->subevent_size();
+    //printf("server get (%d) subscribed events\n", size);
+    int i = 0;
+    string eventStr;
+    //extract event and create event List
+    for (i = 0; i < size; i++)
+    {
+      eventStr = request->subevent(i);
+      //printf("get events (%s)\n", eventStr.data());
+      eventList.push_back(eventStr);
+      //default number is 1
+    }
 
     //get the request event
-    string requestEvent = request->subevent();
+    //string requestEvent = request->subevent();
     //printf("search the clients number associated with %s\n", requestEvent.data());
     //search how many clients associated with this event
 
-    int clientsNumber = getSubscribedClientsNumber(requestEvent);
+    int clientsNumber = getSubscribedClientsNumber(eventList);
 
     //return this number
     reply->set_clientnumber(clientsNumber);
@@ -303,13 +330,16 @@ class GreeterServiceImpl final : public Greeter::Service
     struct timespec start, end1, end2, end3, finish;
 
     string source = request->source();
+    string metadata = request->metadata();
 
+    printf("debug publish meta %s\n", metadata.data());
     //broadcaster to other servers
 
     clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
 
     //parse the request events
     int size = request->pubsubmessage_size();
+
     int i = 0;
     vector<string> eventList;
     string eventStr;
@@ -323,7 +353,7 @@ class GreeterServiceImpl final : public Greeter::Service
     }
 
     //publish on one server
-    pubsubPublish(eventList);
+    pubsubPublish(eventList, metadata);
 
     //TODO add a string in request to label if the publish request is from client or server
     //if the request is from server return directly
@@ -340,7 +370,7 @@ class GreeterServiceImpl final : public Greeter::Service
       //TODO create new thread here (use asnchronous way to do the communication)
       //publishMultiServer(eventList);
 
-      std::thread pubthread(publishMultiServer, eventList);
+      std::thread pubthread(publishMultiServer, eventList, metadata);
       pubthread.detach();
       //only caculate time when propagation is needed
       //don't calculate time for the propagation between servers
@@ -368,7 +398,7 @@ class GreeterServiceImpl final : public Greeter::Service
     //diff3 = (end3.tv_sec - start.tv_sec) * 1.0 + (end3.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
     //printf("debug for publish propagate (%s) response time = (%lf)\n", debugeventspub.data(), diff3);
 
-    //s}
+    //}
 
     //check if triggure
 

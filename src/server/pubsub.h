@@ -30,6 +30,8 @@ typedef struct pubsubEvent{
 typedef struct pubsubWrapper{
     string peerURL;
     string clientID;
+    //one clientid, one metadata
+    string metadata;
     //int trigureNum; this value should be maintained in innermap of clienttoSub
     //PubSubReply *reply;
     bool iftrigure;
@@ -44,7 +46,7 @@ extern map<string, map<string, pubsubWrapper *> > subtoClient;
 
 void pubsubSubscribe(vector<string> eventList, string clientId, string notifyAddr);
 
-void pubsubPublish(vector<string> eventList);
+void pubsubPublish(vector<string> eventList, string metadata);
 
 //void addNewClientLocal(string clientid, vector<string> eventList);
 
@@ -62,7 +64,7 @@ void ParseEvent(string fullEvent, string & eventMessage, int & num);
 
 bool checkIfTriggure(pubsubWrapper *psw, string &satisfiedStr);
 
-int getSubscribedClientsNumber(string subEvent);
+int getSubscribedClientsNumber(vector<string> subEventList);
 
 void deletePubEvent(pubsubWrapper *psw);
 

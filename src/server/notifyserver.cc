@@ -97,7 +97,8 @@ void startAction(string clientID)
         return;
     }
 
-    greeter->Publish(etrigger->eventPubList, "CLIENT");
+    string metadata("testmetadata");
+    greeter->Publish(etrigger->eventPubList, "CLIENT", metadata);
 
     return;
 }
@@ -119,8 +120,9 @@ class GreeterServiceImplNotify final : public Greeter::Service
         //get clientID
 
         string clientID = request->clientid();
+        string metadata = request->metadata();
 
-        //printf("get client id %s\n", clientID.data());
+        printf("get client id %s get metadata %s\n", clientID.data(), metadata.data());
 
         //TODO get the json from the configID and use runtime to star this
         //it's better to put the mapping relation here
@@ -137,7 +139,7 @@ class GreeterServiceImplNotify final : public Greeter::Service
         NotifiedNumMtx.unlock();
 
         struct timespec finish;
-        
+
         if (NotifiedNum % 128 == 0)
         {
             clock_gettime(CLOCK_REALTIME, &finish); /* mark the end time */

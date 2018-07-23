@@ -54,11 +54,11 @@ public:
 
   string Subscribe(vector<string> eventList, string clientID);
 
-  string Publish(vector<string> eventList,string source);
+  string Publish(vector<string> eventList,string source, string metadata);
   
-  string NotifyBack(string clientId);
+  string NotifyBack(string clientId,string metadata);
  
-  int GetSubscribedNumber(string eventStr);
+  int GetSubscribedNumber(vector<string> eventList);
 
   void initMultiClients();
 };

@@ -47,6 +47,7 @@ message PubSubRequest {
   string clientid = 2;
   //CLIENT or SERVER
   string source = 3;
+  string metadata = 4;
 }
 
 message PubSubReply {
@@ -57,7 +58,7 @@ message PubSubReply {
 //determine how many clients subscribe this event 
 //don't set the long name
 message SubNumRequest {
-  string subevent = 1;
+  repeated string subevent = 1;
 }
 
 message SubNumReply {
@@ -67,9 +68,11 @@ message SubNumReply {
 // workflow server send request back to eventNotify worker
 message NotifyRequest {
   string clientid = 1;
+  string metadata = 2;
 }
 
 //eventNotify worker return this reply message to workflow server
 message NotifyReply {
   string returnmessage = 1;
+  string metadata = 2;
 }

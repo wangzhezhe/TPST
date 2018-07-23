@@ -141,11 +141,12 @@ GreeterClient *GreeterClient::getClient()
     return singleClient;
 }
 
-string GreeterClient::NotifyBack(string clientId)
+string GreeterClient::NotifyBack(string clientId, string metadata)
 {
 
     NotifyRequest request;
     request.set_clientid(clientId);
+    request.set_metadata(metadata);
 
     // Container for the data we expect from the server.
     NotifyReply reply;
@@ -240,7 +241,7 @@ string GreeterClient::Subscribe(vector<string> eventSubList, string clientID)
     }
 }
 
-string GreeterClient::Publish(vector<string> eventList, string source)
+string GreeterClient::Publish(vector<string> eventList, string source, string metadata)
 {
     // Container for the data we expect from the server.
     PubSubRequest request;
@@ -254,6 +255,8 @@ string GreeterClient::Publish(vector<string> eventList, string source)
     }
 
     request.set_source(source);
+
+    request.set_metadata(metadata);
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
@@ -275,14 +278,21 @@ string GreeterClient::Publish(vector<string> eventList, string source)
     }
 }
 
-int GreeterClient::GetSubscribedNumber(string eventStr)
+int GreeterClient::GetSubscribedNumber(vector<string> eventList)
 {
     SubNumRequest request;
 
     // Data we are sending to the server.
     SubNumReply reply;
 
-    request.set_subevent(eventStr);
+    int i=0;
+    int size = eventList.size();
+
+    for (i = 0; i < size; i++)
+    {
+        //attention the use here, the request could be transfered into a specific type with specific function
+        request.add_subevent(eventList[i]);
+    }
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.

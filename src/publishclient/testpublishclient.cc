@@ -51,7 +51,8 @@ void *PublishOperation(void *ptr)
         printf("failed to get initialised greeter\n");
         return NULL;
     }
-    string reply = greeter->Publish(publisheventList,"CLIENT");
+    string metadata="testmeta";
+    string reply = greeter->Publish(publisheventList,"CLIENT",metadata);
     cout << "Publish return value: " << reply << endl;
 }
 

@@ -58,7 +58,8 @@ void *tempStartOperator(void *arg)
     int requiredNum = *((int *)arg);
     printf("required INIT subscription is %d\n", requiredNum);
     string INITEvent = string("INIT");
-
+    vector<string> InitList;
+    InitList.push_back(INITEvent);
     char idstr[50];
     uuid_t uuid;
     uuid_generate(uuid);
@@ -77,7 +78,7 @@ void *tempStartOperator(void *arg)
     int replyNum;
     while (1)
     {
-        replyNum = greeter->GetSubscribedNumber(INITEvent);
+        replyNum = greeter->GetSubscribedNumber(InitList);
         //printf("there are %d clients subscribe %s event\n", replyNum, queryEvent.data());
         if (replyNum < requiredNum)
         {
@@ -92,7 +93,8 @@ void *tempStartOperator(void *arg)
     //publish INIT event
     vector<string> eventList;
     eventList.push_back(INITEvent);
-    string reply = greeter->Publish(eventList, "CLIENT");
+    string metadata = "test init meta";
+    string reply = greeter->Publish(eventList, "CLIENT", metadata);
     printf("publish INIT event return (%s)\n", reply.data());
 
     return NULL;
@@ -107,13 +109,15 @@ void fakePublishTest(int pubSize)
     {
         vector<string> pubeventList;
 
+        string metadata = to_string(COMPONENTID) + "metadataTest" + to_string(i);
+
         //int index = (rand() % (pubSize - 0 + 1));
 
-        string fakePub = COMPONENTID + "fakeSub" + to_string(i);
+        string fakePub = to_string(COMPONENTID) + "fakeSub" + to_string(i);
 
         pubeventList.push_back(fakePub);
 
-        eventPublish(pubeventList);
+        eventPublish(pubeventList, metadata);
     }
 
     return;
@@ -149,8 +153,8 @@ void fakegothroughFolderRegister(int subSize)
         vector<string> actionList;
 
         //every component pub sub different event
-        string fakeSub = COMPONENTID + "fakeSub" + to_string(i);
-        string fakePub = COMPONENTID + "fakePub" + to_string(i);
+        string fakeSub = to_string(COMPONENTID) + "fakeSub" + to_string(i);
+        string fakePub = to_string(COMPONENTID) + "fakePub" + to_string(i);
         string fakeaction = "fakeaction" + to_string(i);
 
         subeventList.push_back(fakeSub);
@@ -252,8 +256,6 @@ int main(int argc, char **argv)
         return 0;
     }
 
-
-
     //use this if the watchpath is used(this will load the config file from the disk)
     //gothroughFolderRegister(argv[1]);
 
@@ -281,10 +283,9 @@ int main(int argc, char **argv)
     COMPONENTID = componentid;
     GETIPCOMPONENTID = componentid;
 
-    int totalNum=atoi(argv[7]);
+    int totalNum = atoi(argv[7]);
 
-    GETIPCOMPONENTNUM=totalNum;
-
+    GETIPCOMPONENTNUM = totalNum;
 
     initMultiClients();
 
