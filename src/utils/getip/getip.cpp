@@ -23,13 +23,69 @@
 string INTERFACE("eno1");
 
 int GETIPCOMPONENTNUM;
+
 //default value is 8
-int GETIPNUMPERCLUSTER = 8;
+//for testing 
+int GETIPNUMPERCLUSTER = 2;
 int GETIPCOMPONENTID;
 
 string multinodeip("./multinodeip");
 
 using namespace std;
+
+//get how many second level small cluster
+int getsubClientNum()
+{
+    //assume that all server component have been started properly
+    string dir = multinodeip;
+    int clusterNum = 0;
+    DIR *dp;
+    struct dirent *entry;
+    if ((dp = opendir(dir.data())) == NULL)
+    {
+        printf("Can`t open directory %s\n", dir.data());
+        exit(0);
+    }
+
+    while ((entry = readdir(dp)) != NULL)
+    {
+
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        {
+            continue;
+        }
+
+        clusterNum++;
+    }
+    //change to the upper dir
+    printf("there are %d second level cluster\n", clusterNum);
+    closedir(dp);
+
+    return clusterNum;
+}
+
+// input
+string getClusterDirByTopicId(int topicid)
+{
+
+    //get number of subcluster
+    int subclusterNum = getsubClientNum();
+    //get cluster id from the topicid
+    if (subclusterNum == 0)
+    {
+        printf("error, the subclusternum is 0\n");
+        exit(0);
+    }
+    int clusterId = topicid % subclusterNum;
+
+    //return clusterId
+
+    string clusterDir = multinodeip + "/cluster" + to_string(clusterId);
+
+    printf("get dir %s\n", GETIPCOMPONENTID, clusterDir.data());
+
+    return clusterDir;
+}
 
 string getClusterDir()
 {
@@ -39,7 +95,8 @@ string getClusterDir()
 
     int clusternum = GETIPCOMPONENTNUM / GETIPNUMPERCLUSTER;
 
-    if (clusternum==0){
+    if (clusternum == 0)
+    {
         clusternum++;
     }
 
@@ -72,6 +129,46 @@ string parseIP(string peerURL)
     return peerURL;
 }
 
+vector<string> loadMultiNodeIPPortByClusterDir(string clusterDir)
+{
+    // only init the client in clusterDir
+    string dir = clusterDir;
+    DIR *dp;
+    vector<string> multiNodeAddr;
+    struct dirent *entry;
+    struct stat statbuf;
+    try
+    {
+        if ((dp = opendir(dir.data())) == NULL)
+        {
+            printf("Can`t open directory %s\n", dir.data());
+            exit(0);
+        }
+
+        while ((entry = readdir(dp)) != NULL)
+        {
+
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            {
+                continue;
+            }
+
+            printf("load addr name %s\n", entry->d_name);
+            multiNodeAddr.push_back(string(entry->d_name));
+        }
+        //change to the upper dir
+        printf("debug id %d load finish\n", GETIPCOMPONENTID);
+        closedir(dp);
+        return multiNodeAddr;
+    }
+    catch (const std::system_error &e)
+    {
+        std::cout << "getip Caught system_error with code " << e.code()
+                  << " meaning " << e.what() << '\n';
+        exit(1);
+    }
+}
+
 vector<string> loadMultiNodeIPPort()
 {
     //the string in vector is ip:port
@@ -101,7 +198,7 @@ vector<string> loadMultiNodeIPPort()
             multiNodeAddr.push_back(string(entry->d_name));
         }
         //change to the upper dir
-        printf("debug id %d load finish\n",GETIPCOMPONENTID);
+        printf("debug id %d load finish\n", GETIPCOMPONENTID);
         closedir(dp);
         return multiNodeAddr;
     }

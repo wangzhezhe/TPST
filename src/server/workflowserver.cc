@@ -332,7 +332,7 @@ class GreeterServiceImpl final : public Greeter::Service
     string source = request->source();
     string metadata = request->metadata();
 
-    printf("debug publish meta %s\n", metadata.data());
+    printf("debug get publish event publish meta %s\n", source.data(), metadata.data());
     //broadcaster to other servers
 
     clock_gettime(CLOCK_REALTIME, &start); /* mark start time */

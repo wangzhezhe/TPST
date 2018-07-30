@@ -3,7 +3,7 @@
 import sys
 import os
 
-testnum=1
+testnum=2
 
 
 serverstr = "wraprun -n 1 ./workflowserver 1500 "+str(testnum)+" ipogif0 50052 0"

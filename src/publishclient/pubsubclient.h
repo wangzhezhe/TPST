@@ -60,6 +60,8 @@ public:
  
   int GetSubscribedNumber(vector<string> eventList);
 
+
+
   void initMultiClients();
 };
 
@@ -73,6 +75,8 @@ public:
 GreeterClient *roundrobinGetClient();
 
 void initMultiClients();
+
+void initMultiClientsByClusterDir(string clusterDir);
 
 //TODO don't extern those two in future
 extern map<string, GreeterClient *> multiClients;
