@@ -15,7 +15,7 @@
 #
 
 # build server firstly, than build the client
-ROOT_PATH = /lustre/atlas/scratch/zw241/csc103/Software
+ROOT_PATH = /home1/zw241/Software
 LD_PATH_PROTO = $(ROOT_PATH)/grpc/third_party/protobuf/src
 LD_PATH_GRPC = $(ROOT_PATH)/grpcinstall/include
 

@@ -1,3 +1,5 @@
+### running on titan
+
 If run build and run it on Titan, jump to login node to use inactive mode
 
 ```
@@ -107,4 +109,58 @@ module load python wraprun
 wraprun -n 1 ./eventNotify 128 10 ipogif0 50052 1
 
 ```
+
+
+
+### running on caliburn
+
+if run the server on caliburn
+
+load python and virtual env
+
+```
+module load python/3.6.3
+
+source /project1/parashar-001/zw241/GridMoving/gridsim/bin/activate
+```
+
+load the env for grpc 
+
+```
+source ~/.grpc
+```
+
+```
+#the path of the graph relevent binary
+export PATH=$PATH:/home1/zw241/Software/grpcinstall/bin
+
+#the path of the proton binary
+export PATH=$PATH:/home1/zw241/Software/grpc/third_party/protobuf/src
+
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/home1/zw241/Software/protoinstall/lib/pkgconfig
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/home1/zw241/Software/grpcinstall/lib/pkgconfig
+
+#set the path of the dynamic library
+export LD_LIBRARY_PATH=/home1/zw241/Software/grpc/libs/opt
+```
+
+get the code for caliburn env
+
+```
+git fetch --all
+git reset --hard origin/caliburnEnv
+git pull origin caliburnEnv:caliburnEnv
+```
+
+make the publishclient first 
+
+then make the server 
+
+then make the 
+
+
+
+
+
+
 

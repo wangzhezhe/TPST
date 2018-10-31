@@ -26,7 +26,7 @@ int GETIPCOMPONENTNUM;
 
 //default value is 8
 //for testing 
-int GETIPNUMPERCLUSTER = 2;
+int GETIPNUMPERCLUSTER = 1;
 int GETIPCOMPONENTID;
 
 string multinodeip("./multinodeip");

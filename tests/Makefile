@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-ROOT_PATH = /lustre/atlas/scratch/zw241/csc103/Software
+ROOT_PATH = /home1/zw241/Software
 LD_PATH_PROTO = $(ROOT_PATH)/grpc/third_party/protobuf/src
 LD_PATH_GRPC = $(ROOT_PATH)/grpcinstall/include
 
@@ -24,9 +24,9 @@ CXX = g++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC)
 CPPFLAGS += `pkg-config --cflags protobuf grpc`
 #CXXFLAGS += -std=c++11 -I../deps/ -I/home1/zw241/Software/grpc/third_party/protobuf/src -DTIME -DDEBUG
 #CXXFLAGS += -std=c++11 -I../deps/  -I../deps/hiredis/ -DDEBUG
-CXXFLAGS += -std=c++11 -I../deps/ -I/home1/zw241/Software/grpc/third_party/protobuf/src 
+CXXFLAGS += -std=c++11 -I../deps/ -I$(ROOT_PATH)/grpc/third_party/protobuf/src 
 ifeq ($(SYSTEM),Darwin)
-LDFLAGS += -L/usr/local/lib -L/home1/zw241/Software/protoinstall/lib -L/home1/zw241/Software/grpc/libs/opt/protobuf -L/home1/zw241/Software/grpcinstall/lib `pkg-config --libs protobuf grpc++ grpc`\
+LDFLAGS += -L/usr/local/lib -L/$(ROOT_PATH)/protoinstall/lib -L$(ROOT_PATH)/grpc/libs/opt/protobuf -L$(ROOT_PATH)/grpcinstall/lib `pkg-config --libs protobuf grpc++ grpc`\
            -lgrpc++_reflection\
            -ldl -lpthread -lgpr -luuid
 else

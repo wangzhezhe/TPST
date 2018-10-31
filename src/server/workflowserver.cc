@@ -331,25 +331,27 @@ class GreeterServiceImpl final : public Greeter::Service
 
     string source = request->source();
     string metadata = request->metadata();
-
-    printf("debug get publish event publish meta %s\n", source.data(), metadata.data());
+    
+    printf("debug source %s",source.data());
+    printf("debug get publish event source (%s) publish meta (%s)\n", source.data(), metadata.data());
     //broadcaster to other servers
 
     clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
 
     //parse the request events
     int size = request->pubsubmessage_size();
-
+    printf("debug msg size %d\n",size);
+    
     int i = 0;
     vector<string> eventList;
     string eventStr;
-
+    
     for (i = 0; i < size; i++)
     {
       eventStr = request->pubsubmessage(i);
-      debugeventspub = eventStr;
+      printf("debug published event %s\n",eventStr.data());
       eventList.push_back(eventStr);
-      //sprintf("server (%s) get (%s) published events\n", ServerIP.data(), eventStr.data());
+      //printf("server (%s) get (%s) published events\n", ServerIP.data(), );
     }
 
     //publish on one server
