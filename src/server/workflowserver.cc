@@ -171,7 +171,7 @@ void *checkNotify(void *arguments)
 
   //get metadata when iftrigure is true
   string metadata = psw->metadata;
-  printf("checknotify id %s meta %s\n", clientidstr.data(), metadata.data());
+  printf("CheckNotify id %s meta %s\n", clientidstr.data(), metadata.data());
   string reply = greeter->NotifyBack(clientidstr, metadata);
 
   //printf("notification get reply (%s)\n", reply.data());
@@ -280,7 +280,7 @@ class GreeterServiceImpl final : public Greeter::Service
     for (i = 0; i < size; i++)
     {
       eventStr = request->pubsubmessage(i);
-      //printf("get events (%s)\n", eventStr.data());
+      printf("get subscribed event (%s)\n", eventStr.data());
       eventList.push_back(eventStr);
       //default number is 1
     }

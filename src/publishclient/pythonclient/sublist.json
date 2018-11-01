@@ -1,0 +1,7 @@
+{
+    "clientid": "1",
+    "subeventList": ["CUBIC_DETECTED"],
+    "actionList": [
+       "cd /home1/zw241/GridMoving && python /home1/zw241/GridMoving/analysis.py"
+    ]
+}

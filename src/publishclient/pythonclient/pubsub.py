@@ -11,25 +11,56 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""The Python implementation of the GRPC helloworld.Greeter client."""
+"""The Python implementation of the GRPC workflowserver.Greeter client."""
 
 from __future__ import print_function
 
+from concurrent import futures
+import time
 import grpc
+import os 
 import netifaces as ni
+from threading import Thread
 
 import workflowserver_pb2
 import workflowserver_pb2_grpc
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
-class Greeter(helloworld_pb2_grpc.GreeterServicer):
+registerDic = []
+
+def getCommand():
+    # traverse map and get application id
+    print ("current dic list")
+    print (registerDic)
+    command = registerDic["actionList"]
+    return command
+
+def triggureTask(args):
+    print (args)
+    cmd = args[0]
+    failure=os.system(cmd)
+    if failure:
+        print ('Execution of "%s" failed!\n' % cmd)
+
+
+class Greeter(workflowserver_pb2_grpc.GreeterServicer):
 
     def SayHello(self, request, context):
-        return helloworld_pb2.HelloReply(message='Hello, %s!' % request.name)
+        return workflowserver_pb2.HelloReply(message='Hello, %s!' % request.name)
 
     def Notify(self, request, context):
-        return helloworld_pb2.Notify(returnmessage='notifyOk')
+        print ("get notify request id is %s"% request.clientid)
+        print ("get action list")
+        
+        # get the id and find the action list
+        commands = getCommand()
+        print (commands)
+        # start new thread to run command
+        thread = Thread(target = triggureTask,args=(commands,))
+        thread.start()
+        thread.join()
+        return workflowserver_pb2.NotifyReply(returnmessage='notifyOk')
 
 
 # start one notify server to recieve notification
@@ -38,6 +69,7 @@ def runNotifyServer(notifyAddr):
     workflowserver_pb2_grpc.add_GreeterServicer_to_server(Greeter(), server)
     server.add_insecure_port(notifyAddr)
     server.start()
+    print ("start notify server %s"%(notifyAddr))
     try:
         while True:
             time.sleep(_ONE_DAY_IN_SECONDS)
@@ -121,5 +153,6 @@ if __name__ == '__main__':
 
     # should print "192.168.100.37"
     # get the ip
-    eventList = ["eventA","eventB","eventC"]
-    publishEventList(addr,eventList)
+    eventList = ["CUBIC_DETECTED"]
+    clientid = '0'
+    publishEventList(addr,eventList,clientid)

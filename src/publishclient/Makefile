@@ -34,7 +34,7 @@ LDFLAGS += -L/usr/local/lib -L$(ROOT_PATH)/grpcinstall/lib -L$(ROOT_PATH)/grpc/l
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
            -ldl -lpthread -lgpr
 endif
-PROTOC = protoc
+PROTOC = /home1/zw241/Software/grpc/third_party/protobuf/src/protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
 
