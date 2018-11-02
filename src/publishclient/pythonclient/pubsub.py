@@ -37,7 +37,7 @@ def getCommand():
     return command
 
 def triggureTask(args):
-    print (args)
+
     cmd = args[0]
     failure=os.system(cmd)
     if failure:
@@ -117,7 +117,7 @@ def subscribeEventList(addr,eventList,clientId):
    
     print("Publish client received: " + response.returnmessage)    
 
-def publishEventList(addr,eventList,clientId):
+def publishEventList(addr,eventList,clientId,metaInfo):
     # NOTE(gRPC Python Team): .close() is possible on a channel and should be
     # used in circumstances in which the with statement does not fit the needs
     # of the code.
@@ -132,7 +132,7 @@ def publishEventList(addr,eventList,clientId):
         request.pubsubmessage.extend(eventList)
         request.clientid=clientId
         request.source="CLIENT"
-        request.metadata="testMeta"
+        request.metadata=metaInfo
 
         response = stub.Publish(request)
         #send the publish event
@@ -140,12 +140,9 @@ def publishEventList(addr,eventList,clientId):
     print("Publish client received: " + response.returnmessage)
 
 
-
-
-if __name__ == '__main__':
+def initAddrAndPublish(event,meta):
     
     port = 50051
-
     ni.ifaddresses('eno1')
     ip = ni.ifaddresses('eno1')[ni.AF_INET][0]['addr']
     addr = ip + ":" + str(port)
@@ -153,6 +150,11 @@ if __name__ == '__main__':
 
     # should print "192.168.100.37"
     # get the ip
-    eventList = ["CUBIC_DETECTED"]
+    eventList = [event]
     clientid = '0'
-    publishEventList(addr,eventList,clientid)
+    publishEventList(addr,eventList,clientid,meta)
+
+
+if __name__ == '__main__':
+
+    initAddrAndPublish()
