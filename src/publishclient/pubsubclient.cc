@@ -327,7 +327,7 @@ void initMultiClientsByClusterDir(string clusterDir)
     //create the client and put it into the map
     for (i = 0; i < size; i++)
     {
-        printf("node (%d) addr (%s)\n", i, multiaddr[i].data());
+        printf("server process (%d) in cluster (%s) listen addr (%s)\n", i, clusterDir.data(), multiaddr[i].data());
         GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
             multiaddr[i].data(), grpc::InsecureChannelCredentials()));
         multiClients[multiaddr[i]] = greeter;
@@ -350,7 +350,7 @@ void initMultiClients()
     //create the client and put it into the map
     for (i = 0; i < size; i++)
     {
-        printf("node (%d) addr (%s)\n", i, multiaddr[i].data());
+        printf("server process (%d) listen addr (%s)\n", i, multiaddr[i].data());
         GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
             multiaddr[i].data(), grpc::InsecureChannelCredentials()));
         multiClients[multiaddr[i]] = greeter;

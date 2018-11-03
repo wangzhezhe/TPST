@@ -130,6 +130,14 @@ load the env for grpc
 source ~/.grpc
 ```
 
+load mpi
+
+```
+module unload openmpi/1.10.1
+module load mpich
+```
+
+
 ```
 #the path of the graph relevent binary
 export PATH=$PATH:/home1/zw241/Software/grpcinstall/bin
@@ -146,7 +154,9 @@ export LD_LIBRARY_PATH=/home1/zw241/Software/grpc/libs/opt
 
 get the code for caliburn env
 
+
 ```
+cd /project1/parashar-001/zw241/software/eventDrivenWorkflow
 git fetch --all
 git reset --hard origin/caliburnEnv
 git pull origin caliburnEnv:caliburnEnv
@@ -158,7 +168,10 @@ then make the server
 
 then make the 
 
-
+```
+rm -rf multinodeip
+mpirun -n 1 ./workflowserver 1500 eno1 50052 1
+```
 
 
 

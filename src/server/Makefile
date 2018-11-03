@@ -23,9 +23,10 @@ LD_PATH_GRPC = $(ROOT_PATH)/grpcinstall/include
 
 HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
-CXX = g++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC) -fopenmp
+#CXX = g++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC) 
+CXX = mpic++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC) 
 CPPFLAGS += `pkg-config --cflags protobuf grpc` -I/home1/zw241/Software/grpc/third_party/protobuf/src
-CXXFLAGS += -std=c++11 -fopenmp
+CXXFLAGS += -std=c++11 
 #CXXFLAGS += -std=c++11 -I../deps/  -I../deps/hiredis/ -DDEBUG
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += -L/usr/local/lib -L/home1/zw241/Software/protoinstall/lib -L/home1/zw241/Software/grpc/libs/opt/protobuf -L/home1/zw241/Software/grpcinstall/lib `pkg-config --libs protobuf grpc++ grpc`\

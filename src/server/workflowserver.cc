@@ -24,6 +24,7 @@
 #include <grpc++/grpc++.h>
 #include <uuid/uuid.h>
 
+#include <mpi.h>
 #include "pubsub.h"
 #include "unistd.h"
 #include <mutex>
@@ -331,8 +332,8 @@ class GreeterServiceImpl final : public Greeter::Service
 
     string source = request->source();
     string metadata = request->metadata();
-    
-    printf("debug source %s",source.data());
+
+    printf("debug source %s", source.data());
     printf("debug get publish event source (%s) publish meta (%s)\n", source.data(), metadata.data());
     //broadcaster to other servers
 
@@ -340,16 +341,16 @@ class GreeterServiceImpl final : public Greeter::Service
 
     //parse the request events
     int size = request->pubsubmessage_size();
-    printf("debug msg size %d\n",size);
-    
+    printf("debug msg size %d\n", size);
+
     int i = 0;
     vector<string> eventList;
     string eventStr;
-    
+
     for (i = 0; i < size; i++)
     {
       eventStr = request->pubsubmessage(i);
-      printf("debug published event %s\n",eventStr.data());
+      printf("debug published event %s\n", eventStr.data());
       eventList.push_back(eventStr);
       //printf("server (%s) get (%s) published events\n", ServerIP.data(), );
     }
@@ -458,30 +459,52 @@ void RunServer(string serverIP, string serverPort)
 int main(int argc, char **argv)
 {
 
+  //MPI init
+  // Initialize the MPI environment
+  MPI_Init(NULL, NULL);
+
+  // Get the number of processes
+  int world_size;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+  // Get the rank of the process
+  int world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
   //get wait time ./workflowserver 1000
   printf("parameter length %d\n", argc);
-  if (argc == 6)
+  if (argc == 5)
   {
     waitTime = atoi(argv[1]);
     printf("chechNotify wait period %d\n", waitTime);
-    nodeNumber = atoi(argv[2]);
-    printf("instance number of the backend is %d\n", nodeNumber);
-    GETIPCOMPONENTNUM = nodeNumber;
-    string interfaces = string(argv[3]);
+    //nodeNumber = atoi(argv[2]);
+    
+    //GETIPCOMPONENTNUM = nodeNumber;
+    GETIPCOMPONENTNUM = world_size;
+    printf("total instance number of the backend is %d\n", GETIPCOMPONENTNUM);
+
+    string interfaces = string(argv[2]);
 
     INTERFACE = interfaces;
     printf("network interfaces is %s\n", interfaces.data());
 
-    NOTIFYPORT = string(argv[4]);
-    GETIPCOMPONENTID = atoi(argv[5]);
+    NOTIFYPORT = string(argv[3]);
+    //if running by mpi
+    //this parameter can assigned by mpi rank
+    //GETIPCOMPONENTID = atoi(argv[5]);
+    GETIPCOMPONENTID = world_rank;
+
+    int groupSize = atoi(argv[4]);
+    printf("group size is %d\n", groupSize);
+    GETIPNUMPERCLUSTER = groupSize;
   }
   else
   {
-    printf("./workflowserver <subscribe period time> <number of the nodes> <network interfaces><notify server port><component id>\n");
+    printf("./workflowserver <subscribe period time><network interfaces><notify server port><group size>\n");
     return 0;
   }
   //ServerPort = string("50051");
-  int freePort=getFreePortNum();
+  int freePort = getFreePortNum();
   //this option should be automic in multithread case
   ServerPort = to_string(freePort);
   recordIPortForMultiNode(ServerIP, ServerPort);
