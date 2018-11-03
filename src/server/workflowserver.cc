@@ -480,7 +480,10 @@ int main(int argc, char **argv)
     printf("./workflowserver <subscribe period time> <number of the nodes> <network interfaces><notify server port><component id>\n");
     return 0;
   }
-  ServerPort = string("50051");
+  //ServerPort = string("50051");
+  int freePort=getFreePortNum();
+  //this option should be automic in multithread case
+  ServerPort = to_string(freePort);
   recordIPortForMultiNode(ServerIP, ServerPort);
   MultiClient();
   RunServer(ServerIP, ServerPort);

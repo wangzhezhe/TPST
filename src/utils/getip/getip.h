@@ -38,6 +38,7 @@ vector<string> loadMultiNodeIPPort();
 
 vector<string> loadMultiNodeIPPortByClusterDir(string clusterDir);
 
+int getFreePortNum();
 
 
 extern string INTERFACE;
