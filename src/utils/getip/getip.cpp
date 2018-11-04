@@ -28,6 +28,7 @@ int GETIPCOMPONENTNUM;
 //default value is 8
 int GETIPNUMPERCLUSTER = 8;
 int GETIPCOMPONENTID;
+int SERVERCLUSTERNUM;
 
 string multinodeip("./multinodeip");
 
@@ -87,6 +88,28 @@ string getClusterDirByTopicId(int topicid)
     return clusterDir;
 }
 
+string clientClusterDir()
+{
+
+    printf("component num is %d\n", GETIPCOMPONENTNUM);
+    printf("component num per cluster is %d\n", SERVERCLUSTERNUM);
+
+    int clusternum = GETIPCOMPONENTNUM % SERVERCLUSTERNUM;
+
+    if (clusternum == 0)
+    {
+        clusternum++;
+    }
+
+    int clusterIndex = GETIPCOMPONENTID % clusternum;
+
+    string clusterDir = multinodeip + "/cluster" + to_string(clusterIndex);
+
+    printf("component id %d get dir %s\n", GETIPCOMPONENTID, clusterDir.data());
+
+    return clusterDir;
+}
+
 string getClusterDir()
 {
 
@@ -129,6 +152,27 @@ string parseIP(string peerURL)
     return peerURL;
 }
 
+string parsePort(string peerURL)
+{
+
+    int startPosition = peerURL.find("ipv4:");
+
+    //delete ipv4:
+    peerURL.erase(startPosition, 5);
+
+    //delete the port suffix
+    int len = peerURL.length();
+
+    int endPosition = peerURL.find(":");
+
+    //printf("start position of : (%d) original str %s\n", startPosition, peerURL.data());
+
+    peerURL.erase(0, endPosition+1);
+
+    return peerURL;
+}
+
+
 vector<string> loadMultiNodeIPPortByClusterDir(string clusterDir)
 {
     // only init the client in clusterDir
@@ -169,11 +213,20 @@ vector<string> loadMultiNodeIPPortByClusterDir(string clusterDir)
     }
 }
 
-vector<string> loadMultiNodeIPPort()
+vector<string> loadMultiNodeIPPort(string identity)
 {
     //the string in vector is ip:port
     //string dir = string("./multinodeip");
-    string dir = getClusterDir();
+    string dir;
+    if (identity.compare("client") == 0)
+    {
+        dir =clientClusterDir();
+    }
+    else
+    {
+        dir = getClusterDir();
+    }
+
     DIR *dp;
     vector<string> multiNodeAddr;
     struct dirent *entry;
@@ -315,9 +368,12 @@ void recordIPPortWithoutFile(string &ipstr, string port)
     ioctl(n, SIOCGIFADDR, &ifr);
     close(n);
     //display result
+    
     char *ip = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 
     ipstr = string(ip);
+
+    printf("debug ipstr %s",ipstr.data());
     return;
 }
 
@@ -379,7 +435,8 @@ int loadIPPort(string configpath, string &ipstr, string &port)
     return 0;
 }
 
-int getFreePortNum(){
+int getFreePortNum()
+{
 
     int socket_desc, new_socket, c;
     struct sockaddr_in server;
@@ -409,24 +466,25 @@ int getFreePortNum(){
 
     socklen_t len = sizeof(server);
 
-    if (getsockname(socket_desc, (struct sockaddr *)&server, &len) != -1){
-        
+    if (getsockname(socket_desc, (struct sockaddr *)&server, &len) != -1)
+    {
+
         printf("port number %d\n", ntohs(server.sin_port));
         close(socket_desc);
         return int(ntohs(server.sin_port));
-
-    }else{
+    }
+    else
+    {
 
         printf("failed to get port");
         return -1;
     }
-
 }
 
 /*
 int main()
 {
-    /*
+    
     string ipstr;
     string port=string("12345");
     recordIPPort(ipstr,port);
@@ -443,13 +501,20 @@ int main()
     printf("socket addr (%s)\n",socketAddr.data());
 
     printf("-----test peerurl-----\n");
+
     
-    string peerurl=string("ipv4:123.123.123.123:2");
+    
+    string peerurl=string("ipv4:123.123.123.123:2345543");
 
     string clientip=parseIP(peerurl);
 
     printf("clientip (%s)\n",clientip.data());
 
+    string clientPort=parsePort(peerurl);
+
+    printf("clientPort (%s)\n",clientPort.data());
+
+    
     string ipstr;
     string port = string("12345");
     recordIPortForMultiNode(ipstr, port);
@@ -462,6 +527,7 @@ int main()
     for(i=0;i<size;i++){
         printf("node (%d) addr (%s)\n",i,multiaddr[i].data());
     }
+    
 
     return 0;
 }

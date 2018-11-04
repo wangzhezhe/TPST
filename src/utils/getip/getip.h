@@ -32,18 +32,22 @@ void recordIPortForMultiNode(string &ipstr, string port);
 
 string parseIP(string peerURL);
 
+string parsePort(string peerURL);
+
 string getClusterDirByTopicId(int topicid);
 
-vector<string> loadMultiNodeIPPort();
+vector<string> loadMultiNodeIPPort(string identity);
 
 vector<string> loadMultiNodeIPPortByClusterDir(string clusterDir);
 
 int getFreePortNum();
 
+string clientClusterDir();
 
 extern string INTERFACE;
 extern int GETIPCOMPONENTNUM;
 extern int GETIPCOMPONENTID;
-extern int GETIPNUMPERCLUSTER ;
+extern int GETIPNUMPERCLUSTER;
+extern int SERVERCLUSTERNUM;
 
 #endif

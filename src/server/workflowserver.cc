@@ -52,7 +52,8 @@ using workflowserver::PubSubRequest;
 using workflowserver::SubNumReply;
 using workflowserver::SubNumRequest;
 
-string NOTIFYPORT("50055");
+//parse the port automatically
+//string NOTIFYPORT("50055");
 
 using namespace std;
 
@@ -76,7 +77,7 @@ int pubtimes = 0;
 void publishMultiServer(vector<string> eventList, string metadata)
 {
 
-  printf("debug multi publish metadata %s\n", metadata.data());
+  //printf("debug multi publish metadata %s\n", metadata.data());
   //get self ip:port
   string serverSocket = ServerIP + ":" + ServerPort;
 
@@ -172,7 +173,7 @@ void *checkNotify(void *arguments)
 
   //get metadata when iftrigure is true
   string metadata = psw->metadata;
-  printf("CheckNotify id %s meta %s\n", clientidstr.data(), metadata.data());
+  //printf("CheckNotify id %s meta %s\n", clientidstr.data(), metadata.data());
   string reply = greeter->NotifyBack(clientidstr, metadata);
 
   //printf("notification get reply (%s)\n", reply.data());
@@ -251,8 +252,9 @@ class GreeterServiceImpl final : public Greeter::Service
 
     //replace the port here the server port for notify is 50052
     string clientIP = parseIP(peerURL);
+    string clientPort = parsePort(peerURL);
 
-    string notifyAddr = clientIP + ":" + NOTIFYPORT;
+    string notifyAddr = clientIP + ":" + clientPort;
     string clientId = request->clientid();
     if (clientId == "")
     {
@@ -281,7 +283,7 @@ class GreeterServiceImpl final : public Greeter::Service
     for (i = 0; i < size; i++)
     {
       eventStr = request->pubsubmessage(i);
-      printf("get subscribed event (%s)\n", eventStr.data());
+      //printf("get subscribed event (%s)\n", eventStr.data());
       eventList.push_back(eventStr);
       //default number is 1
     }
@@ -314,7 +316,7 @@ class GreeterServiceImpl final : public Greeter::Service
     subtimes++;
     subtimesMtx.unlock();
 
-    if (subtimes % 60 == 0)
+    if (subtimes % 128 == 0)
     {
       printf("debug for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", eventMessage.data(), diff, subavg, subtimes);
     }
@@ -333,15 +335,15 @@ class GreeterServiceImpl final : public Greeter::Service
     string source = request->source();
     string metadata = request->metadata();
 
-    printf("debug source %s", source.data());
-    printf("debug get publish event source (%s) publish meta (%s)\n", source.data(), metadata.data());
+    //printf("debug source %s", source.data());
+    //printf("debug get publish event source (%s) publish meta (%s)\n", source.data(), metadata.data());
     //broadcaster to other servers
 
     clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
 
     //parse the request events
     int size = request->pubsubmessage_size();
-    printf("debug msg size %d\n", size);
+    //printf("debug msg size %d\n", size);
 
     int i = 0;
     vector<string> eventList;
@@ -350,7 +352,7 @@ class GreeterServiceImpl final : public Greeter::Service
     for (i = 0; i < size; i++)
     {
       eventStr = request->pubsubmessage(i);
-      printf("debug published event %s\n", eventStr.data());
+      //printf("debug published event %s\n", eventStr.data());
       eventList.push_back(eventStr);
       //printf("server (%s) get (%s) published events\n", ServerIP.data(), );
     }
@@ -385,9 +387,9 @@ class GreeterServiceImpl final : public Greeter::Service
       pubtimes++;
       pubtimesMtx.unlock();
 
-      if (pubtimes % 60 == 0)
+      if (pubtimes % 128 == 0)
       {
-        printf("debug for publish (%s) response time = (%lf) avg time = (%lf) pubtimes (%d)\n", debugeventspub.data(), pubavg, diff, pubtimes);
+        printf("debug for publish response time = (%lf) avg time = (%lf) pubtimes (%d)\n", pubavg, diff, pubtimes);
       }
 
       //for test using, only test one event case triggureing
@@ -417,7 +419,7 @@ void MultiClient()
   int size;
   while (1)
   {
-    multiAddr = loadMultiNodeIPPort();
+    multiAddr = loadMultiNodeIPPort("server");
     size = multiAddr.size();
     //if (size == nodeNumber)
     //TODO change this into a parameter
@@ -430,7 +432,7 @@ void MultiClient()
     printf("there are %d clients record their ip in the multinode dir\n", size);
   }
 
-  initMultiClients();
+  initMultiClients("server");
 }
 
 void RunServer(string serverIP, string serverPort)
@@ -473,7 +475,7 @@ int main(int argc, char **argv)
 
   //get wait time ./workflowserver 1000
   printf("parameter length %d\n", argc);
-  if (argc == 5)
+  if (argc == 4)
   {
     waitTime = atoi(argv[1]);
     printf("chechNotify wait period %d\n", waitTime);
@@ -488,19 +490,19 @@ int main(int argc, char **argv)
     INTERFACE = interfaces;
     printf("network interfaces is %s\n", interfaces.data());
 
-    NOTIFYPORT = string(argv[3]);
+    //NOTIFYPORT = string(argv[3]);
     //if running by mpi
     //this parameter can assigned by mpi rank
     //GETIPCOMPONENTID = atoi(argv[5]);
     GETIPCOMPONENTID = world_rank;
 
-    int groupSize = atoi(argv[4]);
+    int groupSize = atoi(argv[3]);
     printf("group size is %d\n", groupSize);
     GETIPNUMPERCLUSTER = groupSize;
   }
   else
   {
-    printf("./workflowserver <subscribe period time><network interfaces><notify server port><group size>\n");
+    printf("./workflowserver <subscribe period time><network interfaces><group size>\n");
     return 0;
   }
   //ServerPort = string("50051");

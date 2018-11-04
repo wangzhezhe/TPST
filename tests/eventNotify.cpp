@@ -14,6 +14,7 @@
 #include <string>
 #include <algorithm>
 #include <uuid/uuid.h>
+#include <mpi.h>
 
 //#include "../observer/taskmanager.h"
 //#include "../eventstore/eventStore.h"
@@ -243,16 +244,28 @@ void gothroughFolderRegister(const char *watchdir)
 int main(int argc, char **argv)
 {
 
+    //MPI init
+    // Initialize the MPI environment
+    MPI_Init(NULL, NULL);
+
+    // Get the number of processes
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+    // Get the rank of the process
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
     int length, i = 0, wd;
     int fd;
     char buffer[BUF_LEN];
 
     EVENTTYPE eventType;
 
-    if (argc != 8)
+    if (argc != 5)
     {
         //printf("<binary> <watchpath> <required number of notification> <notifyserver interfaces><notify server port> <required INIT Number>\n");
-        printf("<binary> <sub number> <required number of notification> <notifyserver interfaces><notify server port> <required INIT Number><id><component total Num>\n");
+        printf("<binary> <sub number> <required number of notification> <notifyserver interfaces><group number> \n");
         return 0;
     }
 
@@ -268,26 +281,34 @@ int main(int argc, char **argv)
     INTERFACE = string(argv[3]);
     printf("notify server listen to interface %s\n", INTERFACE.data());
 
-    NOTIFYPORT = string(argv[4]);
-    printf("notify server listen to port %s\n", NOTIFYPORT.data());
+    //assign free one automatically
+    //NOTIFYPORT = string(argv[4]);
+    //printf("notify server listen to port %s\n", NOTIFYPORT.data());
+
+    // number of the server cluster
+    SERVERCLUSTERNUM = atoi(argv[4]);
 
     //printf("waiting the termination of threads id %ld\n", notifyserverid);
 
     // send the init request when there are specific number of clients subscribe the init event
-    int requiredInitNum = atoi(argv[5]);
+    //int requiredInitNum = atoi(argv[5]);
 
-    int componentid = atoi(argv[6]);
+    //int componentid = atoi(argv[6]);
+
+    int componentid = world_rank;
 
     printf("curr component id %d\n", componentid);
 
     COMPONENTID = componentid;
     GETIPCOMPONENTID = componentid;
 
-    int totalNum = atoi(argv[7]);
+    //int totalNum = atoi(argv[7]);
 
+    int totalNum = world_size;
     GETIPCOMPONENTNUM = totalNum;
 
-    initMultiClients();
+    string identity = "client";
+    initMultiClients(identity);
 
     //start a new thread to run notify server
     //parse the json file and create the clientid and put them in a map

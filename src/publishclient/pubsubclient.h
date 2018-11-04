@@ -62,7 +62,7 @@ public:
 
 
 
-  void initMultiClients();
+  void initMultiClients(string identity);
 };
 
 //define as singleton global variable
@@ -74,7 +74,7 @@ public:
 
 GreeterClient *roundrobinGetClient();
 
-void initMultiClients();
+void initMultiClients(string identity);
 
 void initMultiClientsByClusterDir(string clusterDir);
 

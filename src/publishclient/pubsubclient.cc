@@ -285,7 +285,7 @@ int GreeterClient::GetSubscribedNumber(vector<string> eventList)
     // Data we are sending to the server.
     SubNumReply reply;
 
-    int i=0;
+    int i = 0;
     int size = eventList.size();
 
     for (i = 0; i < size; i++)
@@ -315,7 +315,6 @@ int GreeterClient::GetSubscribedNumber(vector<string> eventList)
     }
 }
 
-
 void initMultiClientsByClusterDir(string clusterDir)
 {
     //get addr vector from getip
@@ -336,13 +335,13 @@ void initMultiClientsByClusterDir(string clusterDir)
     return;
 }
 
-
-
 //every clients should finish the record operation before doing this
-void initMultiClients()
+void initMultiClients(string identity)
 {
     //get addr vector from getip
-    multiaddr = loadMultiNodeIPPort();
+
+    multiaddr = loadMultiNodeIPPort(identity);
+
     int size = 0, i = 0;
     size = multiaddr.size();
 

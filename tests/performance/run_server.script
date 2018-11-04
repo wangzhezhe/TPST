@@ -1,0 +1,33 @@
+#!/bin/sh
+#SBATCH -J ED_SERVER
+#SBATCH -o ED_SERVER.%J.stdout
+#SBATCH -e ED_SERVER.%J.stderr
+#SBATCH -N 2
+#SBATCH -p short
+#SBATCH --qos short-award
+#SBATCH -t 00:02:00
+
+module unload openmpi/1.10.1
+module load mpich
+
+source /home1/zw241/.grpc
+
+rm -rf multinodeip
+
+cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/performance
+
+NUM_SERVER=4
+NUM_CLIENT=4
+NUM_CLIENT_TASK=256
+NUM_GROUPSIZE=2
+DIR=.
+
+mpirun --map-by ppr:2:node -n $NUM_SERVER  ./workflowserver 1500 eno1 $NUM_GROUPSIZE >& $DIR/server_$NUM_SERVER.log  &
+
+# check if start ok
+/bin/bash serverStartOk.sh 4
+
+
+mpirun --map-by ppr:2:node -n $NUM_CLIENT ./eventNotify $NUM_CLIENT_TASK 10 eno1 $NUM_GROUPSIZE >& $DIR/client_$NUM_SERVER.log  &
+
+wait

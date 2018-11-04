@@ -20,7 +20,9 @@ LD_PATH_GRPC = $(ROOT_PATH)/grpcinstall/include
 
 HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
-CXX = g++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC)
+#CXX = g++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC)
+CXX = mpic++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC)
+
 CPPFLAGS += `pkg-config --cflags protobuf grpc`
 #CXXFLAGS += -std=c++11 -I../deps/ -I/home1/zw241/Software/grpc/third_party/protobuf/src -DTIME -DDEBUG
 #CXXFLAGS += -std=c++11 -I../deps/  -I../deps/hiredis/ -DDEBUG
@@ -34,7 +36,7 @@ LDFLAGS += -L/usr/local/lib -L$(ROOT_PATH)/grpcinstall/lib -L$(ROOT_PATH)/grpc/l
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
            -ldl -lpthread -lgpr -luuid
 endif
-PROTOC = protoc
+PROTOC = /home1/zw241/Software/grpc/third_party/protobuf/src/protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
 

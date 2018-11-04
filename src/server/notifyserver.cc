@@ -57,7 +57,7 @@ mutex NotifiedNumMtx;
 int NotifiedNum = 0;
 
 //default value
-string NOTIFYPORT("50052");
+//string NOTIFYPORT("50052");
 int COMPONENTID;
 
 void startAction(string clientID)
@@ -122,7 +122,7 @@ class GreeterServiceImplNotify final : public Greeter::Service
         string clientID = request->clientid();
         string metadata = request->metadata();
 
-        printf("get client id %s get metadata %s\n", clientID.data(), metadata.data());
+        //printf("get client id %s get metadata %s\n", clientID.data(), metadata.data());
 
         //TODO get the json from the configID and use runtime to star this
         //it's better to put the mapping relation here
@@ -180,7 +180,9 @@ void runNotifyServer()
     //int port=50052;
     //os will assign a free port
 
-    string serverPort = NOTIFYPORT;
+    //string serverPort = NOTIFYPORT;
+    int freePort = getFreePortNum();
+    string serverPort = to_string(freePort);
     string ip;
     //printf("record ip\n");
 
