@@ -179,7 +179,7 @@ void fakegothroughFolderRegister(int subSize,string notifyAddr)
 }
 
 //go through the Trigurefile folder and register the .json file with type=trigure into the system
-void gothroughFolderRegister(const char *watchdir)
+void gothroughFolderRegister(const char *watchdir,string notifyAddr)
 {
 
     vector<string> fileList;
@@ -231,7 +231,8 @@ void gothroughFolderRegister(const char *watchdir)
 
         if (clientID != "")
         {
-            eventSubscribe(etrigger, clientID);
+        
+            eventSubscribe(etrigger, clientID,notifyAddr);
         }
     }
 

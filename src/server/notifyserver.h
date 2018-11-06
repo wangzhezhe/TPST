@@ -16,6 +16,9 @@ using namespace std;
 
 
 void* RunNotifyServer(void *arg);
+
+string getNotifyServerAddr();
+
 extern int NotifiedNum;
 extern int COMPONENTID;
 extern string NOTIFYADDR;

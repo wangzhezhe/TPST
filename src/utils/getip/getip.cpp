@@ -91,10 +91,10 @@ string getClusterDirByTopicId(int topicid)
 string clientClusterDir()
 {
 
-    printf("component num is %d\n", GETIPCOMPONENTNUM);
-    printf("component num per cluster is %d\n", SERVERCLUSTERNUM);
+    //printf("component num is %d\n", GETIPCOMPONENTNUM);
+    //printf("component num per cluster is %d\n", SERVERCLUSTERNUM);
 
-    int clusternum = GETIPCOMPONENTNUM % SERVERCLUSTERNUM;
+    int clusternum = SERVERCLUSTERNUM;
 
     if (clusternum == 0)
     {
@@ -197,11 +197,11 @@ vector<string> loadMultiNodeIPPortByClusterDir(string clusterDir)
                 continue;
             }
 
-            printf("load addr name %s\n", entry->d_name);
+            //printf("load addr name %s\n", entry->d_name);
             multiNodeAddr.push_back(string(entry->d_name));
         }
         //change to the upper dir
-        printf("debug id %d load finish\n", GETIPCOMPONENTID);
+        //printf("debug id %d load finish\n", GETIPCOMPONENTID);
         closedir(dp);
         return multiNodeAddr;
     }

@@ -112,10 +112,10 @@ void eventPublish(vector<string> pubList,string metadata)
     publishClient++;
     publishMutex.unlock();
 
-    if (publishClient % 100 == 0)
-    {
-        printf("publish times %d\n", publishClient);
-    }
+    //if (publishClient % 100 == 0)
+    //{
+    //    printf("publish times %d\n", publishClient);
+    //}
 
 
     string reply = greeter->Publish(pubList, "CLIENT", metadata);
@@ -154,10 +154,10 @@ void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr)
     SubscribedClient++;
     subscribedMutex.unlock();
 
-    if (SubscribedClient % 100 == 0)
-    {
-        printf("sub times %d\n", SubscribedClient);
-    }
+    //if (SubscribedClient % 100 == 0)
+    //{
+    //    printf("sub times %d\n", SubscribedClient);
+    //}
 
     //printf("debug sub event %s\n",etrigger->eventSubList[0].data());
     string reply = greeter->Subscribe(etrigger->eventSubList, clientID, notifyAddr);

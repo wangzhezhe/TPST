@@ -156,6 +156,10 @@ get the code for caliburn env
 
 
 ```
+module unload openmpi/1.10.1
+module load mpich
+source ~/.grpc
+
 cd /project1/parashar-001/zw241/software/eventDrivenWorkflow
 git fetch --all
 git reset --hard origin/caliburnEnv

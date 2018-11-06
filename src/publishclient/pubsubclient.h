@@ -52,7 +52,7 @@ public:
 
   string SayHello(const string &user);
 
-  string Subscribe(vector<string> eventList, string clientID);
+  string Subscribe(vector<string> eventList, string clientID, string notifyAddr);
 
   string Publish(vector<string> eventList,string source, string metadata);
   

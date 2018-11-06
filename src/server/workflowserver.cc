@@ -259,7 +259,7 @@ class GreeterServiceImpl final : public Greeter::Service
 
     string notifyAddr = request->metadata();
 
-    printf("debug notify addr is %s\n",notifyAddr.data());
+    //printf("debug notify addr is %s\n", notifyAddr.data());
 
     //this is the id used to label the identity of the client
     string clientId = request->clientid();
@@ -436,7 +436,7 @@ void MultiClient()
     }
 
     usleep(50000);
-    printf("there are %d clients record their ip in the multinode dir\n", size);
+    //printf("there are %d clients record their ip in the multinode dir\n", size);
   }
 
   initMultiClients("server");
@@ -458,7 +458,7 @@ void RunServer(string serverIP, string serverPort)
   builder.RegisterService(&service);
   // Finally assemble the server.
   std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Server listening on " << server_address << std::endl;
+  //std::cout << "Server listening on " << server_address << std::endl;
 
   // Wait for the server to shutdown. Note that some other thread must be
   // responsible for shutting down the server for this call to ever return.
