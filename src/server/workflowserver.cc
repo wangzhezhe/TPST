@@ -254,7 +254,14 @@ class GreeterServiceImpl final : public Greeter::Service
     string clientIP = parseIP(peerURL);
     string clientPort = parsePort(peerURL);
 
-    string notifyAddr = clientIP + ":" + clientPort;
+    //this value should require from the meta data
+    //string notifyAddr = clientIP + ":" + clientPort;
+
+    string notifyAddr = request->metadata();
+
+    printf("debug notify addr is %s\n",notifyAddr.data());
+
+    //this is the id used to label the identity of the client
     string clientId = request->clientid();
     if (clientId == "")
     {

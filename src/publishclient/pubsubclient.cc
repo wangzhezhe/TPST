@@ -203,7 +203,7 @@ string GreeterClient::SayHello(const string &user)
     }
 }
 
-string GreeterClient::Subscribe(vector<string> eventSubList, string clientID)
+string GreeterClient::Subscribe(vector<string> eventSubList, string clientID, string notifyAddr)
 {
 
     // Container for the data we expect from the server.
@@ -220,6 +220,7 @@ string GreeterClient::Subscribe(vector<string> eventSubList, string clientID)
     }
     //printf("debug sub part2\n");
     request.set_clientid(clientID);
+    request.set_metadata(notifyAddr);
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.

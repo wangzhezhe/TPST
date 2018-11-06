@@ -18,5 +18,5 @@ using namespace std;
 void* RunNotifyServer(void *arg);
 extern int NotifiedNum;
 extern int COMPONENTID;
-extern string NOTIFYPORT;
+extern string NOTIFYADDR;
 #endif

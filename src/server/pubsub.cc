@@ -60,6 +60,7 @@ void addNewClientLocal(string clientid, vector<string> eventList)
 {
 
     pubsubWrapper *psw = new (pubsubWrapper);
+    //this value should acquire from meta data
     psw->peerURL = "";
     psw->clientID = clientid;
     psw->iftrigure = false;

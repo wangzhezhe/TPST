@@ -127,7 +127,7 @@ void eventPublish(vector<string> pubList,string metadata)
 
     return;
 }
-void eventSubscribe(EventTriggure *etrigger, string clientID)
+void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr)
 {
     //only could be transfered by this way if original pointed is initiallises by malloc instead on new
     //EventTriggure *etrigger = (EventTriggure *)arguments;
@@ -160,7 +160,7 @@ void eventSubscribe(EventTriggure *etrigger, string clientID)
     }
 
     //printf("debug sub event %s\n",etrigger->eventSubList[0].data());
-    string reply = greeter->Subscribe(etrigger->eventSubList, clientID);
+    string reply = greeter->Subscribe(etrigger->eventSubList, clientID, notifyAddr);
     //cout << "Subscribe return value: " << reply << endl;
 
     clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */

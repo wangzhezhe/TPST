@@ -124,7 +124,7 @@ void fakePublishTest(int pubSize)
     return;
 }
 
-void fakegothroughFolderRegister(int subSize)
+void fakegothroughFolderRegister(int subSize,string notifyAddr)
 {
     //the json buffer shouled be load from memory
     /*
@@ -169,7 +169,7 @@ void fakegothroughFolderRegister(int subSize)
 
         if (clientID != "")
         {
-            eventSubscribe(etrigger, clientID);
+            eventSubscribe(etrigger, clientID, notifyAddr);
         }
     }
 
@@ -314,6 +314,13 @@ int main(int argc, char **argv)
     //parse the json file and create the clientid and put them in a map
     pthread_t notifyserverid;
     int status;
+
+    //get notify server addr
+    string notifyAddr=getNotifyServerAddr();
+    NOTIFYADDR = notifyAddr;
+    //send value to server addr
+
+    //start the server
     pthread_create(&notifyserverid, NULL, &RunNotifyServer, NULL);
 
     //wait the notify server start
@@ -323,7 +330,7 @@ int main(int argc, char **argv)
     clock_gettime(CLOCK_REALTIME, &start); /* mark the end time */
     printf("start id %d start time = (%lld.%.9ld)\n", COMPONENTID, (long long)start.tv_sec, start.tv_nsec);
 
-    fakegothroughFolderRegister(subSize);
+    fakegothroughFolderRegister(subSize,notifyAddr);
 
     //pthread_t operatorid;
 

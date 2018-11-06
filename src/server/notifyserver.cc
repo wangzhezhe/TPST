@@ -60,6 +60,8 @@ int NotifiedNum = 0;
 //string NOTIFYPORT("50052");
 int COMPONENTID;
 
+string NOTIFYADDR;
+
 void startAction(string clientID)
 {
 
@@ -174,13 +176,7 @@ void RunServer(string serverIP, string serverPort)
 }
 */
 
-void runNotifyServer()
-{
-    //TODO +1 is the port is occupied
-    //int port=50052;
-    //os will assign a free port
-
-    //string serverPort = NOTIFYPORT;
+string getNotifyServerAddr(){
     int freePort = getFreePortNum();
     string serverPort = to_string(freePort);
     string ip;
@@ -190,8 +186,20 @@ void runNotifyServer()
     //TODO send ip:port to workflowserver
 
     string socketAddr = ip + ":" + serverPort;
-    printf("notify server addr %s\n", socketAddr.data());
-    std::string server_address(socketAddr);
+    return socketAddr;
+}
+
+
+void runNotifyServer()
+{
+    //TODO +1 is the port is occupied
+    //int port=50052;
+    //os will assign a free port
+
+    //string serverPort = NOTIFYPORT;
+
+    printf("notify server addr %s\n", NOTIFYADDR.data());
+    std::string server_address(NOTIFYADDR);
     GreeterServiceImplNotify service;
 
     ServerBuilder builder;
@@ -209,6 +217,7 @@ void runNotifyServer()
     server->Wait();
 }
 
+//this server aims to recieve the notify request from the workflow server
 void *RunNotifyServer(void *arg)
 {
 
