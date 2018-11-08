@@ -313,6 +313,9 @@ void pubsubPublish(vector<string> eventList, string metadata)
             clientWrapper->publishedEvent = publishedEvent;
 
             //check if notify here
+            //TODO get a new thread from the thread pool to check this asynchronously
+            //TODO attention the case, use number to label the published times, decrease the number after every notification
+            //Becasue notify will only happens when there is publishing events
             bool tempiftrigure = checkIfTriggure(clientWrapper);
             if (tempiftrigure == true)
             {

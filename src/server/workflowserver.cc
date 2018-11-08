@@ -124,7 +124,11 @@ void *checkNotify(void *arguments)
   string clientidstr = psw->clientID;
 
   int clientsize = 0;
-  //printf("start checkNotify for clientid (%s)\n", clientidstr.data());
+
+//#ifdef DEBUG  
+  printf("start checkNotify for clientid (%s)\n", clientidstr.data());
+//#endif
+
   int times = 0;
   string satisfiedStr;
 
@@ -143,26 +147,16 @@ void *checkNotify(void *arguments)
   //  printf("server %s start checking notify event %s to %s\n", ServerIP.data(), eventkeywithoutNum.data(), peerURL.data());
   //}
 
-  while (1)
+  //on publish end, don't need while loop
+
+  //clock_gettime(CLOCK_REALTIME, &start2);
+
+  //bool notifyFlag = checkIfTriggure(psw, satisfiedStr);
+  bool notifyFlag = psw->iftrigure;
+  //printf("notifyflag for client id %s (%d)\n",clientId.data(),notifyFlag);
+  if (notifyFlag == false)
   {
-    //clock_gettime(CLOCK_REALTIME, &start2); /* mark start time */
-
-    //bool notifyFlag = checkIfTriggure(psw, satisfiedStr);
-    bool notifyFlag = psw->iftrigure;
-    //printf("notifyflag for client id %s (%d)\n",clientId.data(),notifyFlag);
-    if (notifyFlag == true)
-    {
-      break;
-    }
-    else
-    {
-
-      srand((unsigned)time(0));
-      usleep(1 * (waitTime));
-      //times++;
-      // printf("server %s checknotify %s satisfied %s sleep time %d iftrigure %d\n",
-      //       ServerIP.data(), eventkeywithoutNum.data(), satisfiedStr.data(), times, psw->iftrigure);
-    }
+    return NULL;
   }
 
   //printf("server %s notify event %s to %s\n", ServerIP.data(), eventkeywithoutNum.data(), peerURL.data());
@@ -173,7 +167,7 @@ void *checkNotify(void *arguments)
 
   //get metadata when iftrigure is true
   string metadata = psw->metadata;
-  //printf("CheckNotify id %s meta %s\n", clientidstr.data(), metadata.data());
+  printf("CheckNotify back: id %s meta %s\n", clientidstr.data(), metadata.data());
   string reply = greeter->NotifyBack(clientidstr, metadata);
 
   //printf("notification get reply (%s)\n", reply.data());
@@ -191,12 +185,24 @@ void *checkNotify(void *arguments)
   //printf("checknotify (%s) checking finish time = (%lf) second serverip %s\n", satisfiedStr.data(), diff, ServerIP.data());
 }
 
-void startNotify(string eventwithoutNum, string clientID)
+void startNotify(string eventwithoutNum)
 {
   pthread_t id;
-  pubsubWrapper *psw = subtoClient[eventwithoutNum][clientID];
-  //printf("server %s checking notify for %s\n", ServerIP.data(), eventwithoutNum.data());
-  pthread_create(&id, NULL, checkNotify, (void *)psw);
+
+  //range all the client id
+  map<string, pubsubWrapper *> subscribedMap = subtoClient[eventwithoutNum];
+  //range subscribedMap
+  map<string, pubsubWrapper *>::iterator itmap;
+
+  for (itmap = subscribedMap.begin(); itmap != subscribedMap.end(); ++itmap)
+  {
+    string clientID = itmap->first;
+    //pubsubWrapper *psw = subtoClient[eventwithoutNum][clientID];
+    pubsubWrapper *psw = itmap->second;
+    //printf("server %s checking notify for %s\n", ServerIP.data(), eventwithoutNum.data());
+    //TODO use thread pool here
+    pthread_create(&id, NULL, checkNotify, (void *)psw);
+  }
 }
 
 // Logic and data behind the server's behavior.
@@ -290,13 +296,17 @@ class GreeterServiceImpl final : public Greeter::Service
     for (i = 0; i < size; i++)
     {
       eventStr = request->pubsubmessage(i);
-      //printf("get subscribed event (%s)\n", eventStr.data());
+
+//#ifdef DEBUG
+      printf("get subscribed event (%s)\n", eventStr.data());
+//#endif 
       eventList.push_back(eventStr);
       //default number is 1
     }
 
     pubsubSubscribe(eventList, clientId, notifyAddr);
 
+    /* put this part in publish end
     //start notification
     size = eventList.size();
     int trinum = 1;
@@ -311,6 +321,7 @@ class GreeterServiceImpl final : public Greeter::Service
       //TODO what if submultiple events???
       startNotify(eventMessage, clientId);
     }
+    */
 
     reply->set_returnmessage("SUBSCRIBED");
 
@@ -325,7 +336,7 @@ class GreeterServiceImpl final : public Greeter::Service
 
     if (subtimes % 128 == 0)
     {
-      printf("debug for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", eventMessage.data(), diff, subavg, subtimes);
+      printf("debug for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", eventList[0].data(), diff, subavg, subtimes);
     }
 
     return Status::OK;
@@ -359,7 +370,9 @@ class GreeterServiceImpl final : public Greeter::Service
     for (i = 0; i < size; i++)
     {
       eventStr = request->pubsubmessage(i);
-      //printf("debug published event %s\n", eventStr.data());
+//#ifdef DEBUG
+      printf("debug published event %s\n", eventStr.data());
+//#endif
       eventList.push_back(eventStr);
       //printf("server (%s) get (%s) published events\n", ServerIP.data(), );
     }
@@ -413,6 +426,21 @@ class GreeterServiceImpl final : public Greeter::Service
     //}
 
     //check if triggure
+    //start notification
+    size = eventList.size();
+    int trinum = 1;
+    string eventMessage;
+    for (i = 0; i < size; i++)
+    {
+      eventMessage = eventList[i];
+      //ParseEvent(eventStr, eventMessage, trinum);
+      //TODO the thread for checking notify shouled be recorded and stored
+      //the checking notify should be killed when doing unsubscribe
+      //do this after publishing
+      //TODO what if submultiple events???
+
+      startNotify(eventMessage);
+    }
 
     reply->set_returnmessage("OK");
 
@@ -487,7 +515,7 @@ int main(int argc, char **argv)
     waitTime = atoi(argv[1]);
     printf("chechNotify wait period %d\n", waitTime);
     //nodeNumber = atoi(argv[2]);
-    
+
     //GETIPCOMPONENTNUM = nodeNumber;
     GETIPCOMPONENTNUM = world_size;
     printf("total instance number of the backend is %d\n", GETIPCOMPONENTNUM);
