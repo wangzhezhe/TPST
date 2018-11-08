@@ -2,11 +2,11 @@
 #SBATCH -J ED_SERVER
 #SBATCH -o ED_SERVER.%J.stdout
 #SBATCH -e ED_SERVER.%J.stderr
-#SBATCH -N 4
+#SBATCH -N 8
 #SBATCH -p short
 #SBATCH --qos short-award
 #SBATCH -t 00:02:00
-#SBATCH --ntasks-per-node=8
+#SBATCH --ntasks-per-node=16
 
 module unload openmpi/1.10.1
 module load mpich
@@ -15,21 +15,24 @@ source /home1/zw241/.grpc
 
 rm -rf multinodeip
 
-cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/performance
 
-NUM_SERVER=32
-NUM_CLIENT=32
-NUM_CLIENT_TASK=512
+PRJPATH=/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/performance
+
+cd $PRJPATH
+
+NUM_SERVER=128
+NUM_CLIENT=128
+NUM_CLIENT_TASK=256
 NUM_GROUPSIZE=16
-NUM_GROUP=2
+NUM_GROUP=8
 DIR=.
 
-mpirun --map-by ppr:16:node -n $NUM_SERVER  ./workflowserver 1500 eno1 $NUM_GROUPSIZE >& $DIR/server_"$NUM_SERVER"_"$NUM_GROUPSIZE".log  &
+mpirun --map-by ppr:16:node -n $NUM_SERVER  ./workflowserver 1500 eno1 $NUM_GROUPSIZE >& $DIR/server_"$NUM_SERVER".log  &
 
 # check if start ok
-/bin/bash serverStartOk.sh 32
+/bin/bash serverStartOk.sh 128
 
 
-mpirun --map-by ppr:16:node -n $NUM_CLIENT ./eventNotify $NUM_CLIENT_TASK 10 eno1 $NUM_GROUP >& $DIR/client_"$NUM_SERVER"_"$NUM_GROUPSIZE".log  &
+mpirun --map-by ppr:16:node -n $NUM_CLIENT ./eventNotify $NUM_CLIENT_TASK 10 eno1 $NUM_GROUP >& $DIR/client_"$NUM_SERVER".log  &
 
 wait
