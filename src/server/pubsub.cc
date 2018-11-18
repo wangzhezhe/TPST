@@ -75,8 +75,11 @@ void addNewClientLocal(string clientid, vector<string> eventList)
     for (i = 0; i < size; i++)
     {
         ParseEvent(eventList[i], eventWithoutNum, requireNum);
+        subtoClientMtx.lock();
         subtoClient[eventWithoutNum][clientid] = psw;
+        subtoClientMtx.unlock();
         psw->requiredeventMap[eventWithoutNum].insert(requireNum);
+        
     }
     return;
 }
@@ -98,8 +101,11 @@ void addNewClient(string clientid, string notifyAddr, vector<string> eventList)
     for (i = 0; i < size; i++)
     {
         ParseEvent(eventList[i], eventWithoutNum, requireNum);
+        subtoClientMtx.lock();
         subtoClient[eventWithoutNum][clientid] = psw;
+        subtoClientMtx.unlock();
         psw->requiredeventMap[eventWithoutNum].insert(requireNum);
+        
     }
 
     return;
@@ -108,7 +114,9 @@ void addNewClient(string clientid, string notifyAddr, vector<string> eventList)
 void deleteClient(string subevent, string clientid)
 {
     printf("delete subevent %s\n", subevent.data());
+    subtoClientMtx.lock();
     subtoClient[subevent].erase(clientid);
+    subtoClientMtx.unlock();
     return;
 }
 
@@ -272,8 +280,9 @@ void pubsubPublish(vector<string> eventList, string metadata)
         {
             return;
         }
-
+        subtoClientMtx.lock();
         map<string, pubsubWrapper *> clientMap = subtoClient[eventwithoutNum];
+        subtoClientMtx.unlock();
         //traverse map
         map<string, pubsubWrapper *>::iterator itmap;
 

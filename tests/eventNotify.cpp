@@ -107,25 +107,30 @@ void fakePublishTest(int pubSize)
     int i = 0;
     //srand(time(0));
     //string metadata = to_string(COMPONENTID) + "metadataTest" + to_string(i);
-    string metadata = to_string(COMPONENTID) + "metadataTest";
-    vector<string> pubeventList;
+    //string metadata = to_string(COMPONENTID) + "metadataTest";
+    //vector<string> pubeventList;
     for (i = 0; i < pubSize; i++)
     {
         //int index = (rand() % (pubSize - 0 + 1));
+
+        string metadata = to_string(COMPONENTID) + "metadataTest" + to_string(i);
+
+        vector<string> pubeventList;
 
         string fakePub = to_string(COMPONENTID) + "fakeSub" + to_string(i);
 
         pubeventList.push_back(fakePub);
 
+        eventPublish(pubeventList, metadata);
         //usleep(3000);
     }
     //publish in collective pattern
-    eventPublish(pubeventList, metadata);
+    //eventPublish(pubeventList, metadata);
 
     return;
 }
 
-void fakegothroughFolderRegister(int subSize,string notifyAddr)
+void fakegothroughFolderRegister(int subSize, string notifyAddr)
 {
     //the json buffer shouled be load from memory
     /*
@@ -174,13 +179,17 @@ void fakegothroughFolderRegister(int subSize,string notifyAddr)
         }
     }
 
+    struct timespec start;
+    clock_gettime(CLOCK_REALTIME, &start); /* mark the end time */
+    printf("start id %d start pub time = (%lld.%.9ld)\n", COMPONENTID, (long long)start.tv_sec, start.tv_nsec);
+
     fakePublishTest(subSize);
 
     return;
 }
 
 //go through the Trigurefile folder and register the .json file with type=trigure into the system
-void gothroughFolderRegister(const char *watchdir,string notifyAddr)
+void gothroughFolderRegister(const char *watchdir, string notifyAddr)
 {
 
     vector<string> fileList;
@@ -232,8 +241,8 @@ void gothroughFolderRegister(const char *watchdir,string notifyAddr)
 
         if (clientID != "")
         {
-        
-            eventSubscribe(etrigger, clientID,notifyAddr);
+
+            eventSubscribe(etrigger, clientID, notifyAddr);
         }
     }
 
@@ -318,7 +327,7 @@ int main(int argc, char **argv)
     int status;
 
     //get notify server addr
-    string notifyAddr=getNotifyServerAddr();
+    string notifyAddr = getNotifyServerAddr();
     NOTIFYADDR = notifyAddr;
     //send value to server addr
 
@@ -328,11 +337,9 @@ int main(int argc, char **argv)
     //wait the notify server start
     sleep(1);
 
-    struct timespec start;
-    clock_gettime(CLOCK_REALTIME, &start); /* mark the end time */
-    printf("start id %d start time = (%lld.%.9ld)\n", COMPONENTID, (long long)start.tv_sec, start.tv_nsec);
 
-    fakegothroughFolderRegister(subSize,notifyAddr);
+
+    fakegothroughFolderRegister(subSize, notifyAddr);
 
     //pthread_t operatorid;
 
@@ -340,13 +347,14 @@ int main(int argc, char **argv)
 
     while (1)
     {
-        if (NotifiedNum == requiredNotifiedNum)
-        {
-            break;
-        }
-        else
-        {
-            usleep(1000);
-        }
+        //if (NotifiedNum == requiredNotifiedNum)
+        //{
+        //    printf("current number %d\n", NotifiedNum);
+        //    break;
+        //}
+        //else
+        //{
+        usleep(1000);
+        //}
     }
 }
