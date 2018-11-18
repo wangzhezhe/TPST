@@ -107,11 +107,10 @@ void fakePublishTest(int pubSize)
     int i = 0;
     //srand(time(0));
     //string metadata = to_string(COMPONENTID) + "metadataTest" + to_string(i);
-    string metadata = to_string(COMPONENTID) + "metadataTest" 
+    string metadata = to_string(COMPONENTID) + "metadataTest";
+    vector<string> pubeventList;
     for (i = 0; i < pubSize; i++)
     {
-        vector<string> pubeventList;
-
         //int index = (rand() % (pubSize - 0 + 1));
 
         string fakePub = to_string(COMPONENTID) + "fakeSub" + to_string(i);
