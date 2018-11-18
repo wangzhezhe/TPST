@@ -106,11 +106,11 @@ void fakePublishTest(int pubSize)
 {
     int i = 0;
     //srand(time(0));
+    //string metadata = to_string(COMPONENTID) + "metadataTest" + to_string(i);
+    string metadata = to_string(COMPONENTID) + "metadataTest" 
     for (i = 0; i < pubSize; i++)
     {
         vector<string> pubeventList;
-
-        string metadata = to_string(COMPONENTID) + "metadataTest" + to_string(i);
 
         //int index = (rand() % (pubSize - 0 + 1));
 
@@ -118,10 +118,10 @@ void fakePublishTest(int pubSize)
 
         pubeventList.push_back(fakePub);
 
-        eventPublish(pubeventList, metadata);
-
-        usleep(3000);
+        //usleep(3000);
     }
+    //publish in collective pattern
+    eventPublish(pubeventList, metadata);
 
     return;
 }
