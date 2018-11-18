@@ -21,13 +21,14 @@ PRJPATH=/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/performa
 cd $PRJPATH
 
 NUM_SERVER=1
-NUM_CLIENT=1
-NUM_CLIENT_TASK=12
+NUM_CLIENT=64
+NUM_CLIENT_TASK=256
 NUM_GROUPSIZE=1
-NUM_GROUP=1
+NUM_GROUP=2
+THREAD_POOL=128
 DIR=.
 
-mpirun --map-by ppr:16:node -n $NUM_SERVER  ./workflowserver 1500 eno1 $NUM_GROUPSIZE >& $DIR/server_"$NUM_SERVER".log  &
+mpirun --map-by ppr:16:node -n $NUM_SERVER  ./workflowserver 1500 eno1 $NUM_GROUPSIZE $THREAD_POOL >& $DIR/server_"$NUM_SERVER".log  &
 
 # check if start ok
 /bin/bash serverStartOk.sh 1

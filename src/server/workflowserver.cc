@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <queue>
 
 #include <grpc++/grpc++.h>
 #include <uuid/uuid.h>
@@ -33,6 +34,8 @@
 #include <stdint.h> /* for uint64 definition */
 #include <stdlib.h> /* for exit() definition */
 #include <time.h>   /* for clock_gettime */
+#include "../utils/threadpool/ThreadPool.h"
+
 #define BILLION 1000000000L
 
 #ifdef BAZEL_BUILD
@@ -72,6 +75,10 @@ int subtimes = 0;
 
 mutex pubtimesMtx;
 int pubtimes = 0;
+
+ThreadPool *globalThreadPool = NULL;
+
+deque<std::shared_future<void*>> resultQueue;
 
 //broadcaster this event to nodes in
 void publishMultiServer(vector<string> eventList, string metadata)
@@ -125,9 +132,9 @@ void *checkNotify(void *arguments)
 
   int clientsize = 0;
 
-//#ifdef DEBUG  
+  //#ifdef DEBUG
   printf("start checkNotify for clientid (%s)\n", clientidstr.data());
-//#endif
+  //#endif
 
   int times = 0;
   string satisfiedStr;
@@ -172,7 +179,12 @@ void *checkNotify(void *arguments)
 
   //printf("notification get reply (%s)\n", reply.data());
   //TODO delete the published event in this pubsub wrapper
+  //Modify the published number
+  //if the number is zero, then delete
+  //if the number is not zero, poblish multiple times
   deletePubEvent(psw);
+
+  return NULL;
 
   //for testing
 
@@ -183,6 +195,35 @@ void *checkNotify(void *arguments)
   //clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
   //diff = (end.tv_sec - start.tv_sec) * 1.0 + (end.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
   //printf("checknotify (%s) checking finish time = (%lf) second serverip %s\n", satisfiedStr.data(), diff, ServerIP.data());
+}
+
+void check()
+{
+  int len = 0;
+
+  while (1)
+  {
+    int size = resultQueue.size();
+
+    if (size > 0)
+    {
+      int i = 0;
+      for (i = 0; i < size; i++)
+      {
+        //mtx.lock();
+        //std::shared_future<int> result = resultList[i];
+        shared_future<void*> result = resultQueue.front();
+        cout << result.get() << endl;
+        resultQueue.pop_front();
+        //mtx.unlock();
+      }
+    }
+    else
+    {
+      printf("no task\n");
+      sleep(1);
+    }
+  }
 }
 
 void startNotify(string eventwithoutNum)
@@ -201,7 +242,12 @@ void startNotify(string eventwithoutNum)
     pubsubWrapper *psw = itmap->second;
     //printf("server %s checking notify for %s\n", ServerIP.data(), eventwithoutNum.data());
     //TODO use thread pool here
-    pthread_create(&id, NULL, checkNotify, (void *)psw);
+    //pthread_create(&id, NULL, checkNotify, (void *)psw);
+    //join the thread into the threadpool
+    shared_future<void*> result = globalThreadPool->enqueue(checkNotify, (void *)psw);
+    //mtx.lock();
+    resultQueue.push_back(result);
+
   }
 }
 
@@ -297,9 +343,9 @@ class GreeterServiceImpl final : public Greeter::Service
     {
       eventStr = request->pubsubmessage(i);
 
-//#ifdef DEBUG
+      //#ifdef DEBUG
       printf("get subscribed event (%s)\n", eventStr.data());
-//#endif 
+      //#endif
       eventList.push_back(eventStr);
       //default number is 1
     }
@@ -370,9 +416,9 @@ class GreeterServiceImpl final : public Greeter::Service
     for (i = 0; i < size; i++)
     {
       eventStr = request->pubsubmessage(i);
-//#ifdef DEBUG
+      //#ifdef DEBUG
       printf("debug published event %s\n", eventStr.data());
-//#endif
+      //#endif
       eventList.push_back(eventStr);
       //printf("server (%s) get (%s) published events\n", ServerIP.data(), );
     }
@@ -470,8 +516,15 @@ void MultiClient()
   initMultiClients("server");
 }
 
-void RunServer(string serverIP, string serverPort)
+void RunServer(string serverIP, string serverPort, int threadPool)
 {
+
+  //init thread pool
+  ThreadPool threadPoolInstance(threadPool);
+  globalThreadPool = &threadPoolInstance;
+  //start check()
+  thread tcheck(check);
+  
 
   string socketAddr = serverIP + ":" + serverPort;
   printf("server socket addr %s\n", socketAddr.data());
@@ -488,6 +541,7 @@ void RunServer(string serverIP, string serverPort)
   std::unique_ptr<Server> server(builder.BuildAndStart());
   //std::cout << "Server listening on " << server_address << std::endl;
 
+  tcheck.join();
   // Wait for the server to shutdown. Note that some other thread must be
   // responsible for shutting down the server for this call to ever return.
   server->Wait();
@@ -510,7 +564,10 @@ int main(int argc, char **argv)
 
   //get wait time ./workflowserver 1000
   printf("parameter length %d\n", argc);
-  if (argc == 4)
+
+  int threadPoolSize = 32;
+
+  if (argc == 5)
   {
     waitTime = atoi(argv[1]);
     printf("chechNotify wait period %d\n", waitTime);
@@ -534,18 +591,21 @@ int main(int argc, char **argv)
     int groupSize = atoi(argv[3]);
     printf("group size is %d\n", groupSize);
     GETIPNUMPERCLUSTER = groupSize;
+
+    threadPoolSize = atoi(argv[4]);
   }
   else
   {
-    printf("./workflowserver <subscribe period time><network interfaces><group size>\n");
+    printf("./workflowserver <subscribe period time><network interfaces><group size><size of thread pool>\n");
     return 0;
   }
   //ServerPort = string("50051");
   int freePort = getFreePortNum();
   //this option should be automic in multithread case
   ServerPort = to_string(freePort);
+
   recordIPortForMultiNode(ServerIP, ServerPort);
   MultiClient();
-  RunServer(ServerIP, ServerPort);
+  RunServer(ServerIP, ServerPort, threadPoolSize);
   return 0;
 }

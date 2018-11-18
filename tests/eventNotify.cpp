@@ -119,6 +119,8 @@ void fakePublishTest(int pubSize)
         pubeventList.push_back(fakePub);
 
         eventPublish(pubeventList, metadata);
+
+        usleep(3000);
     }
 
     return;
