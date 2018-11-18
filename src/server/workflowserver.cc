@@ -78,7 +78,15 @@ int pubtimes = 0;
 
 ThreadPool *globalThreadPool = NULL;
 
-deque<std::shared_future<void*>> resultQueue;
+deque<std::shared_future<void *>> resultQueue;
+
+typedef struct NotifyInfo
+{
+  string addr;
+  string metaInfo;
+} NotifyInfo;
+
+deque<NotifyInfo> notifyQueue;
 
 //broadcaster this event to nodes in
 void publishMultiServer(vector<string> eventList, string metadata)
@@ -166,25 +174,31 @@ void *checkNotify(void *arguments)
     return NULL;
   }
 
+  //TODO put the metadata and the url at the notifyqueue
+  //TODO use another thread to get the element from the queue periodically
+
+  NotifyInfo ninfo = NotifyInfo();
+  ninfo.addr = peerURL.data();
+  ninfo.metaInfo = psw->metadata;
+  notifyQueue.push_back(ninfo);
+
+  deletePubEvent(psw);
+
   //printf("server %s notify event %s to %s\n", ServerIP.data(), eventkeywithoutNum.data(), peerURL.data());
 
-  //example: ipv4:192.168.11.4:59488
-  GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
-      peerURL.data(), grpc::InsecureChannelCredentials()));
+  /*
 
-  //get metadata when iftrigure is true
-  string metadata = psw->metadata;
-  printf("CheckNotify back: id %s meta %s\n", clientidstr.data(), metadata.data());
-  string reply = greeter->NotifyBack(clientidstr, metadata);
+ 
 
   //printf("notification get reply (%s)\n", reply.data());
   //TODO delete the published event in this pubsub wrapper
   //Modify the published number
   //if the number is zero, then delete
   //if the number is not zero, poblish multiple times
-  deletePubEvent(psw);
+ 
 
   return NULL;
+  */
 
   //for testing
 
@@ -197,162 +211,205 @@ void *checkNotify(void *arguments)
   //printf("checknotify (%s) checking finish time = (%lf) second serverip %s\n", satisfiedStr.data(), diff, ServerIP.data());
 }
 
-void check()
+void notifyback(string addr, string meta)
+{
+  //example: ipv4:192.168.11.4:59488
+  GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
+      peerURL.data(), grpc::InsecureChannelCredentials()));
+
+  //get metadata when iftrigure is true
+  string metadata = psw->metadata;
+  printf("CheckNotify back: id %s meta %s\n", clientidstr.data(), metadata.data());
+  string reply = greeter->NotifyBack(clientidstr, metadata);
+  return NULL;
+}
+
+void getElementFromNotifyQ()
 {
   int len = 0;
 
   while (1)
   {
-    int size = resultQueue.size();
+    int size = notifyQueue.size();
 
     if (size > 0)
     {
-      int i = 0;
-      for (i = 0; i < size; i++)
+      printf("current notifyQueue size %d\n", size);
+      for (int i = 0; i < 512; i++)
       {
-        //mtx.lock();
-        //std::shared_future<int> result = resultList[i];
-        shared_future<void*> result = resultQueue.front();
-        cout << result.get() << endl;
-        resultQueue.pop_front();
-        //mtx.unlock();
+        //get front
+        if (notifyQueue.empty())
+        {
+          break;
+        }
+
+        NotifyInfo ninfo = notifyQueue.front();
+        //send request and notify back
+        notifyback(ninfo.addr, ninfo.metaInfo);
+      }
+      else
+      {
+        //printf("no task\n");
+        usleep(100000);
       }
     }
-    else
+  }
+
+  void check()
+  {
+    int len = 0;
+
+    while (1)
     {
-      printf("no task\n");
-      sleep(1);
+      int size = resultQueue.size();
+
+      if (size > 0)
+      {
+        int i = 0;
+        for (i = 0; i < size; i++)
+        {
+          //mtx.lock();
+          //std::shared_future<int> result = resultList[i];
+          shared_future<void *> result = resultQueue.front();
+          cout << result.get() << endl;
+          resultQueue.pop_front();
+          //mtx.unlock();
+        }
+      }
+      else
+      {
+        //printf("no task\n");
+        sleep(1);
+      }
     }
   }
-}
 
-void startNotify(string eventwithoutNum)
-{
-  pthread_t id;
-
-  //range all the client id
-  map<string, pubsubWrapper *> subscribedMap = subtoClient[eventwithoutNum];
-  //range subscribedMap
-  map<string, pubsubWrapper *>::iterator itmap;
-
-  for (itmap = subscribedMap.begin(); itmap != subscribedMap.end(); ++itmap)
+  void startNotify(string eventwithoutNum)
   {
-    string clientID = itmap->first;
-    //pubsubWrapper *psw = subtoClient[eventwithoutNum][clientID];
-    pubsubWrapper *psw = itmap->second;
-    //printf("server %s checking notify for %s\n", ServerIP.data(), eventwithoutNum.data());
-    //TODO use thread pool here
-    //pthread_create(&id, NULL, checkNotify, (void *)psw);
-    //join the thread into the threadpool
-    shared_future<void*> result = globalThreadPool->enqueue(checkNotify, (void *)psw);
-    //mtx.lock();
-    resultQueue.push_back(result);
+    pthread_t id;
 
-  }
-}
+    //range all the client id
+    map<string, pubsubWrapper *> subscribedMap = subtoClient[eventwithoutNum];
+    //range subscribedMap
+    map<string, pubsubWrapper *>::iterator itmap;
 
-// Logic and data behind the server's behavior.
-class GreeterServiceImpl final : public Greeter::Service
-{
-  //for test using
-  Status SayHello(ServerContext *context, const HelloRequest *request, HelloReply *reply) override
-  {
-    std::string prefix("Hello:");
-    reply->set_message(prefix + request->name());
-    return Status::OK;
-  }
-
-  Status GetSubscribedNumber(ServerContext *context, const SubNumRequest *request, SubNumReply *reply)
-  {
-    vector<string> eventList;
-    //parse the request events
-    int size = request->subevent_size();
-    //printf("server get (%d) subscribed events\n", size);
-    int i = 0;
-    string eventStr;
-    //extract event and create event List
-    for (i = 0; i < size; i++)
+    for (itmap = subscribedMap.begin(); itmap != subscribedMap.end(); ++itmap)
     {
-      eventStr = request->subevent(i);
-      //printf("get events (%s)\n", eventStr.data());
-      eventList.push_back(eventStr);
-      //default number is 1
+      string clientID = itmap->first;
+      //pubsubWrapper *psw = subtoClient[eventwithoutNum][clientID];
+      pubsubWrapper *psw = itmap->second;
+      //printf("server %s checking notify for %s\n", ServerIP.data(), eventwithoutNum.data());
+      //TODO use thread pool here
+      //pthread_create(&id, NULL, checkNotify, (void *)psw);
+      //join the thread into the threadpool
+      shared_future<void *> result = globalThreadPool->enqueue(checkNotify, (void *)psw);
+      //mtx.lock();
+      resultQueue.push_back(result);
     }
-
-    //get the request event
-    //string requestEvent = request->subevent();
-    //printf("search the clients number associated with %s\n", requestEvent.data());
-    //search how many clients associated with this event
-
-    int clientsNumber = getSubscribedClientsNumber(eventList);
-
-    //return this number
-    reply->set_clientnumber(clientsNumber);
-
-    return Status::OK;
   }
 
-  Status Subscribe(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
+  // Logic and data behind the server's behavior.
+  class GreeterServiceImpl final : public Greeter::Service
   {
-
-    struct timespec start, end;
-    double diff;
-
-    clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
-
-    string peerURL = context->peer();
-
-    //replace the port here the server port for notify is 50052
-    string clientIP = parseIP(peerURL);
-    string clientPort = parsePort(peerURL);
-
-    //this value should require from the meta data
-    //string notifyAddr = clientIP + ":" + clientPort;
-
-    string notifyAddr = request->metadata();
-
-    //printf("debug notify addr is %s\n", notifyAddr.data());
-
-    //this is the id used to label the identity of the client
-    string clientId = request->clientid();
-    if (clientId == "")
+    //for test using
+    Status SayHello(ServerContext *context, const HelloRequest *request, HelloReply *reply) override
     {
-      printf("client id is not supposed to be \"\"\n");
+      std::string prefix("Hello:");
+      reply->set_message(prefix + request->name());
       return Status::OK;
     }
 
-    //clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
-    //diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
-    //printf("debug for subevent stage1 response time = (%llu) second\n", (long long unsigned int)diff);
-
-    //every elemnt could be accessed by specific function
-    //reply->set_returnmessage(prefix + request->pubsubmessage());
-
-    //parse the request events
-    int size = request->pubsubmessage_size();
-    //printf("server get (%d) subscribed events\n", size);
-    int i = 0;
-    vector<string> eventList;
-    string eventStr;
-
-    //test respond time
-    string debugevents;
-
-    //extract event and create event List
-    for (i = 0; i < size; i++)
+    Status GetSubscribedNumber(ServerContext *context, const SubNumRequest *request, SubNumReply *reply)
     {
-      eventStr = request->pubsubmessage(i);
+      vector<string> eventList;
+      //parse the request events
+      int size = request->subevent_size();
+      //printf("server get (%d) subscribed events\n", size);
+      int i = 0;
+      string eventStr;
+      //extract event and create event List
+      for (i = 0; i < size; i++)
+      {
+        eventStr = request->subevent(i);
+        //printf("get events (%s)\n", eventStr.data());
+        eventList.push_back(eventStr);
+        //default number is 1
+      }
 
-      //#ifdef DEBUG
-      printf("get subscribed event (%s)\n", eventStr.data());
-      //#endif
-      eventList.push_back(eventStr);
-      //default number is 1
+      //get the request event
+      //string requestEvent = request->subevent();
+      //printf("search the clients number associated with %s\n", requestEvent.data());
+      //search how many clients associated with this event
+
+      int clientsNumber = getSubscribedClientsNumber(eventList);
+
+      //return this number
+      reply->set_clientnumber(clientsNumber);
+
+      return Status::OK;
     }
 
-    pubsubSubscribe(eventList, clientId, notifyAddr);
+    Status Subscribe(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
+    {
 
-    /* put this part in publish end
+      struct timespec start, end;
+      double diff;
+
+      clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
+
+      string peerURL = context->peer();
+
+      //replace the port here the server port for notify is 50052
+      string clientIP = parseIP(peerURL);
+      string clientPort = parsePort(peerURL);
+
+      //this value should require from the meta data
+      //string notifyAddr = clientIP + ":" + clientPort;
+
+      string notifyAddr = request->metadata();
+
+      //printf("debug notify addr is %s\n", notifyAddr.data());
+
+      //this is the id used to label the identity of the client
+      string clientId = request->clientid();
+      if (clientId == "")
+      {
+        printf("client id is not supposed to be \"\"\n");
+        return Status::OK;
+      }
+
+      //clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
+      //diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+      //printf("debug for subevent stage1 response time = (%llu) second\n", (long long unsigned int)diff);
+
+      //every elemnt could be accessed by specific function
+      //reply->set_returnmessage(prefix + request->pubsubmessage());
+
+      //parse the request events
+      int size = request->pubsubmessage_size();
+      //printf("server get (%d) subscribed events\n", size);
+      int i = 0;
+      vector<string> eventList;
+      string eventStr;
+
+      //test respond time
+      string debugevents;
+
+      //extract event and create event List
+      for (i = 0; i < size; i++)
+      {
+        eventStr = request->pubsubmessage(i);
+
+        //#ifdef DEBUG
+        printf("get subscribed event (%s)\n", eventStr.data());
+        //#endif
+        eventList.push_back(eventStr);
+        //default number is 1
+      }
+
+      pubsubSubscribe(eventList, clientId, notifyAddr);
+
+      /* put this part in publish end
     //start notification
     size = eventList.size();
     int trinum = 1;
@@ -369,243 +426,243 @@ class GreeterServiceImpl final : public Greeter::Service
     }
     */
 
-    reply->set_returnmessage("SUBSCRIBED");
+      reply->set_returnmessage("SUBSCRIBED");
 
-    clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
-    diff = (end.tv_sec - start.tv_sec) * 1.0 + (end.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-    //TODO add lock here
+      clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
+      diff = (end.tv_sec - start.tv_sec) * 1.0 + (end.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
+      //TODO add lock here
 
-    subtimesMtx.lock();
-    subavg = (subavg * subtimes + diff) / (subtimes + 1);
-    subtimes++;
-    subtimesMtx.unlock();
+      subtimesMtx.lock();
+      subavg = (subavg * subtimes + diff) / (subtimes + 1);
+      subtimes++;
+      subtimesMtx.unlock();
 
-    if (subtimes % 128 == 0)
-    {
-      printf("debug for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", eventList[0].data(), diff, subavg, subtimes);
-    }
-
-    return Status::OK;
-  }
-
-  Status Publish(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
-  {
-
-    //test respond time
-    string debugeventspub;
-    double diff, diff1, diff2, diff3;
-    struct timespec start, end1, end2, end3, finish;
-
-    string source = request->source();
-    string metadata = request->metadata();
-
-    //printf("debug source %s", source.data());
-    //printf("debug get publish event source (%s) publish meta (%s)\n", source.data(), metadata.data());
-    //broadcaster to other servers
-
-    clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
-
-    //parse the request events
-    int size = request->pubsubmessage_size();
-    //printf("debug msg size %d\n", size);
-
-    int i = 0;
-    vector<string> eventList;
-    string eventStr;
-
-    for (i = 0; i < size; i++)
-    {
-      eventStr = request->pubsubmessage(i);
-      //#ifdef DEBUG
-      printf("debug published event %s\n", eventStr.data());
-      //#endif
-      eventList.push_back(eventStr);
-      //printf("server (%s) get (%s) published events\n", ServerIP.data(), );
-    }
-
-    //publish on one server
-    pubsubPublish(eventList, metadata);
-
-    //TODO add a string in request to label if the publish request is from client or server
-    //if the request is from server return directly
-    //if the request is from client, broadcaster eventList to multi server nodes
-
-    //CLIENT or SERVER
-
-    //broadcaster to other servers
-    if (source.compare("CLIENT") == 0)
-    {
-      //clock_gettime(CLOCK_REALTIME, &end1); /* mark the end time */
-      //diff1 = (en+d1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-
-      //TODO create new thread here (use asnchronous way to do the communication)
-      //publishMultiServer(eventList);
-
-      std::thread pubthread(publishMultiServer, eventList, metadata);
-      pubthread.detach();
-      //only caculate time when propagation is needed
-      //don't calculate time for the propagation between servers
-      clock_gettime(CLOCK_REALTIME, &end2); /* mark the end time */
-      diff = (end2.tv_sec - start.tv_sec) * 1.0 + (end2.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-
-      pubtimesMtx.lock();
-      pubavg = (pubavg * pubtimes + diff) / (pubtimes + 1);
-      pubtimes++;
-      pubtimesMtx.unlock();
-
-      if (pubtimes % 128 == 0)
+      if (subtimes % 128 == 0)
       {
-        printf("debug for publish response time = (%lf) avg time = (%lf) pubtimes (%d)\n", pubavg, diff, pubtimes);
+        printf("debug for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", eventList[0].data(), diff, subavg, subtimes);
       }
 
-      //for test using, only test one event case triggureing
-      //clock_gettime(CLOCK_REALTIME, &finish); /* mark the end time */
-      //diff = (finish.tv_sec - start1.tv_sec) * 1.0 + (finish.tv_nsec - start1.tv_nsec) * 1.0 / BILLION;
-      //printf("publish (%s) finish time = (%lld.%.9ld) second serverip %s\n", eventList[0].data(), (long long)finish.tv_sec, finish.tv_nsec, ServerIP.data());
+      return Status::OK;
     }
 
-    //if(source.compare("SERVER") == 0){
-    //clock_gettime(CLOCK_REALTIME, &end3); /* mark the end time */
-    //diff3 = (end3.tv_sec - start.tv_sec) * 1.0 + (end3.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-    //printf("debug for publish propagate (%s) response time = (%lf)\n", debugeventspub.data(), diff3);
-
-    //}
-
-    //check if triggure
-    //start notification
-    size = eventList.size();
-    int trinum = 1;
-    string eventMessage;
-    for (i = 0; i < size; i++)
+    Status Publish(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
     {
-      eventMessage = eventList[i];
-      //ParseEvent(eventStr, eventMessage, trinum);
-      //TODO the thread for checking notify shouled be recorded and stored
-      //the checking notify should be killed when doing unsubscribe
-      //do this after publishing
-      //TODO what if submultiple events???
 
-      startNotify(eventMessage);
+      //test respond time
+      string debugeventspub;
+      double diff, diff1, diff2, diff3;
+      struct timespec start, end1, end2, end3, finish;
+
+      string source = request->source();
+      string metadata = request->metadata();
+
+      //printf("debug source %s", source.data());
+      //printf("debug get publish event source (%s) publish meta (%s)\n", source.data(), metadata.data());
+      //broadcaster to other servers
+
+      clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
+
+      //parse the request events
+      int size = request->pubsubmessage_size();
+      //printf("debug msg size %d\n", size);
+
+      int i = 0;
+      vector<string> eventList;
+      string eventStr;
+
+      for (i = 0; i < size; i++)
+      {
+        eventStr = request->pubsubmessage(i);
+        //#ifdef DEBUG
+        printf("debug published event %s\n", eventStr.data());
+        //#endif
+        eventList.push_back(eventStr);
+        //printf("server (%s) get (%s) published events\n", ServerIP.data(), );
+      }
+
+      //publish on one server
+      pubsubPublish(eventList, metadata);
+
+      //TODO add a string in request to label if the publish request is from client or server
+      //if the request is from server return directly
+      //if the request is from client, broadcaster eventList to multi server nodes
+
+      //CLIENT or SERVER
+
+      //broadcaster to other servers
+      if (source.compare("CLIENT") == 0)
+      {
+        //clock_gettime(CLOCK_REALTIME, &end1); /* mark the end time */
+        //diff1 = (en+d1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
+
+        //TODO create new thread here (use asnchronous way to do the communication)
+        //publishMultiServer(eventList);
+
+        std::thread pubthread(publishMultiServer, eventList, metadata);
+        pubthread.detach();
+        //only caculate time when propagation is needed
+        //don't calculate time for the propagation between servers
+        clock_gettime(CLOCK_REALTIME, &end2); /* mark the end time */
+        diff = (end2.tv_sec - start.tv_sec) * 1.0 + (end2.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
+
+        pubtimesMtx.lock();
+        pubavg = (pubavg * pubtimes + diff) / (pubtimes + 1);
+        pubtimes++;
+        pubtimesMtx.unlock();
+
+        if (pubtimes % 128 == 0)
+        {
+          printf("debug for publish response time = (%lf) avg time = (%lf) pubtimes (%d)\n", pubavg, diff, pubtimes);
+        }
+
+        //for test using, only test one event case triggureing
+        //clock_gettime(CLOCK_REALTIME, &finish); /* mark the end time */
+        //diff = (finish.tv_sec - start1.tv_sec) * 1.0 + (finish.tv_nsec - start1.tv_nsec) * 1.0 / BILLION;
+        //printf("publish (%s) finish time = (%lld.%.9ld) second serverip %s\n", eventList[0].data(), (long long)finish.tv_sec, finish.tv_nsec, ServerIP.data());
+      }
+
+      //if(source.compare("SERVER") == 0){
+      //clock_gettime(CLOCK_REALTIME, &end3); /* mark the end time */
+      //diff3 = (end3.tv_sec - start.tv_sec) * 1.0 + (end3.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
+      //printf("debug for publish propagate (%s) response time = (%lf)\n", debugeventspub.data(), diff3);
+
+      //}
+
+      //check if triggure
+      //start notification
+      size = eventList.size();
+      int trinum = 1;
+      string eventMessage;
+      for (i = 0; i < size; i++)
+      {
+        eventMessage = eventList[i];
+        //ParseEvent(eventStr, eventMessage, trinum);
+        //TODO the thread for checking notify shouled be recorded and stored
+        //the checking notify should be killed when doing unsubscribe
+        //do this after publishing
+        //TODO what if submultiple events???
+
+        startNotify(eventMessage);
+      }
+
+      reply->set_returnmessage("OK");
+
+      return Status::OK;
     }
+  };
 
-    reply->set_returnmessage("OK");
-
-    return Status::OK;
-  }
-};
-
-void MultiClient()
-{
-  vector<string> multiAddr;
-  int size;
-  while (1)
+  void MultiClient()
   {
-    multiAddr = loadMultiNodeIPPort("server");
-    size = multiAddr.size();
-    //if (size == nodeNumber)
-    //TODO change this into a parameter
-    if (size == GETIPNUMPERCLUSTER)
+    vector<string> multiAddr;
+    int size;
+    while (1)
     {
-      break;
+      multiAddr = loadMultiNodeIPPort("server");
+      size = multiAddr.size();
+      //if (size == nodeNumber)
+      //TODO change this into a parameter
+      if (size == GETIPNUMPERCLUSTER)
+      {
+        break;
+      }
+
+      usleep(50000);
+      //printf("there are %d clients record their ip in the multinode dir\n", size);
     }
 
-    usleep(50000);
-    //printf("there are %d clients record their ip in the multinode dir\n", size);
+    initMultiClients("server");
   }
 
-  initMultiClients("server");
-}
-
-void RunServer(string serverIP, string serverPort, int threadPool)
-{
-
-  //init thread pool
-  ThreadPool threadPoolInstance(threadPool);
-  globalThreadPool = &threadPoolInstance;
-  //start check()
-  thread tcheck(check);
-  
-
-  string socketAddr = serverIP + ":" + serverPort;
-  printf("server socket addr %s\n", socketAddr.data());
-  std::string server_address(socketAddr);
-  GreeterServiceImpl service;
-
-  ServerBuilder builder;
-  // Listen on the given address without any authentication mechanism.
-  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-  // Register "service" as the instance through which we'll communicate with
-  // clients. In this case it corresponds to an *synchronous* service.
-  builder.RegisterService(&service);
-  // Finally assemble the server.
-  std::unique_ptr<Server> server(builder.BuildAndStart());
-  //std::cout << "Server listening on " << server_address << std::endl;
-
-  tcheck.join();
-  // Wait for the server to shutdown. Note that some other thread must be
-  // responsible for shutting down the server for this call to ever return.
-  server->Wait();
-}
-
-int main(int argc, char **argv)
-{
-
-  //MPI init
-  // Initialize the MPI environment
-  MPI_Init(NULL, NULL);
-
-  // Get the number of processes
-  int world_size;
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-  // Get the rank of the process
-  int world_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-
-  //get wait time ./workflowserver 1000
-  printf("parameter length %d\n", argc);
-
-  int threadPoolSize = 32;
-
-  if (argc == 5)
+  void RunServer(string serverIP, string serverPort, int threadPool)
   {
-    waitTime = atoi(argv[1]);
-    printf("chechNotify wait period %d\n", waitTime);
-    //nodeNumber = atoi(argv[2]);
 
-    //GETIPCOMPONENTNUM = nodeNumber;
-    GETIPCOMPONENTNUM = world_size;
-    printf("total instance number of the backend is %d\n", GETIPCOMPONENTNUM);
+    //init thread pool
+    ThreadPool threadPoolInstance(threadPool);
+    globalThreadPool = &threadPoolInstance;
+    //start check()
+    thread tcheck(check);
+    thread notifycheck(getElementFromNotifyQ);
 
-    string interfaces = string(argv[2]);
+    string socketAddr = serverIP + ":" + serverPort;
+    printf("server socket addr %s\n", socketAddr.data());
+    std::string server_address(socketAddr);
+    GreeterServiceImpl service;
 
-    INTERFACE = interfaces;
-    printf("network interfaces is %s\n", interfaces.data());
+    ServerBuilder builder;
+    // Listen on the given address without any authentication mechanism.
+    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    // Register "service" as the instance through which we'll communicate with
+    // clients. In this case it corresponds to an *synchronous* service.
+    builder.RegisterService(&service);
+    // Finally assemble the server.
+    std::unique_ptr<Server> server(builder.BuildAndStart());
+    //std::cout << "Server listening on " << server_address << std::endl;
 
-    //NOTIFYPORT = string(argv[3]);
-    //if running by mpi
-    //this parameter can assigned by mpi rank
-    //GETIPCOMPONENTID = atoi(argv[5]);
-    GETIPCOMPONENTID = world_rank;
-
-    int groupSize = atoi(argv[3]);
-    printf("group size is %d\n", groupSize);
-    GETIPNUMPERCLUSTER = groupSize;
-
-    threadPoolSize = atoi(argv[4]);
+    tcheck.join();
+    // Wait for the server to shutdown. Note that some other thread must be
+    // responsible for shutting down the server for this call to ever return.
+    server->Wait();
   }
-  else
+
+  int main(int argc, char **argv)
   {
-    printf("./workflowserver <subscribe period time><network interfaces><group size><size of thread pool>\n");
+
+    //MPI init
+    // Initialize the MPI environment
+    MPI_Init(NULL, NULL);
+
+    // Get the number of processes
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+    // Get the rank of the process
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+    //get wait time ./workflowserver 1000
+    printf("parameter length %d\n", argc);
+
+    int threadPoolSize = 32;
+
+    if (argc == 5)
+    {
+      waitTime = atoi(argv[1]);
+      printf("chechNotify wait period %d\n", waitTime);
+      //nodeNumber = atoi(argv[2]);
+
+      //GETIPCOMPONENTNUM = nodeNumber;
+      GETIPCOMPONENTNUM = world_size;
+      printf("total instance number of the backend is %d\n", GETIPCOMPONENTNUM);
+
+      string interfaces = string(argv[2]);
+
+      INTERFACE = interfaces;
+      printf("network interfaces is %s\n", interfaces.data());
+
+      //NOTIFYPORT = string(argv[3]);
+      //if running by mpi
+      //this parameter can assigned by mpi rank
+      //GETIPCOMPONENTID = atoi(argv[5]);
+      GETIPCOMPONENTID = world_rank;
+
+      int groupSize = atoi(argv[3]);
+      printf("group size is %d\n", groupSize);
+      GETIPNUMPERCLUSTER = groupSize;
+
+      threadPoolSize = atoi(argv[4]);
+    }
+    else
+    {
+      printf("./workflowserver <subscribe period time><network interfaces><group size><size of thread pool>\n");
+      return 0;
+    }
+    //ServerPort = string("50051");
+    int freePort = getFreePortNum();
+    //this option should be automic in multithread case
+    ServerPort = to_string(freePort);
+
+    recordIPortForMultiNode(ServerIP, ServerPort);
+    MultiClient();
+    RunServer(ServerIP, ServerPort, threadPoolSize);
     return 0;
   }
-  //ServerPort = string("50051");
-  int freePort = getFreePortNum();
-  //this option should be automic in multithread case
-  ServerPort = to_string(freePort);
-
-  recordIPortForMultiNode(ServerIP, ServerPort);
-  MultiClient();
-  RunServer(ServerIP, ServerPort, threadPoolSize);
-  return 0;
-}
