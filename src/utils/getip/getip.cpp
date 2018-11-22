@@ -20,6 +20,8 @@
 
 //#define INTERFACE "en0"
 
+//old version for group management
+
 string INTERFACE("eno1");
 
 int GETIPCOMPONENTNUM;
@@ -83,7 +85,7 @@ string getClusterDirByTopicId(int topicid)
 
     string clusterDir = multinodeip + "/cluster" + to_string(clusterId);
 
-    printf("get dir %s\n", GETIPCOMPONENTID, clusterDir.data());
+    printf("get dir %s\n", clusterDir.data());
 
     return clusterDir;
 }
@@ -105,7 +107,7 @@ string clientClusterDir()
 
     string clusterDir = multinodeip + "/cluster" + to_string(clusterIndex);
 
-    printf("component id %d get dir %s\n", GETIPCOMPONENTID, clusterDir.data());
+    //printf("component id %d get dir %s\n", GETIPCOMPONENTID, clusterDir.data());
 
     return clusterDir;
 }
@@ -113,8 +115,8 @@ string clientClusterDir()
 string getClusterDir()
 {
 
-    printf("component num is %d\n", GETIPCOMPONENTNUM);
-    printf("component num per cluster is %d\n", GETIPNUMPERCLUSTER);
+    //printf("component num is %d\n", GETIPCOMPONENTNUM);
+    //printf("component num per cluster is %d\n", GETIPNUMPERCLUSTER);
 
     int clusternum = GETIPCOMPONENTNUM / GETIPNUMPERCLUSTER;
 
@@ -469,7 +471,7 @@ int getFreePortNum()
     if (getsockname(socket_desc, (struct sockaddr *)&server, &len) != -1)
     {
 
-        printf("port number %d\n", ntohs(server.sin_port));
+        //printf("port number %d\n", ntohs(server.sin_port));
         close(socket_desc);
         return int(ntohs(server.sin_port));
     }

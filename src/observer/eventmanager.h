@@ -44,8 +44,12 @@ void jsonParsingTrigger(Document &d);
 
 void initOperator(int jsonNum);
 EventTriggure* addNewConfig(string jsonbuffer,string &clientID);
-void eventSubscribe(EventTriggure *etrigger,string clientID,string notifyAddr);
-void eventPublish(vector<string> pubList,string metadata);
+
+void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr,int eventId,string eventMsg);
+
+void eventPublish(vector<string> pubList,string metadata,int eventId);
+
+
 EventTriggure *fakeaddNewConfig(string driver,
                                 vector<string> eventSubList,
                                 vector<string> eventPubList,

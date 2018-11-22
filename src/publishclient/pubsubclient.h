@@ -52,13 +52,14 @@ public:
 
   string SayHello(const string &user);
 
-  string Subscribe(vector<string> eventList, string clientID, string notifyAddr);
+  string Subscribe(vector<string> eventList, string clientID, string notifyAddr,string source);
 
   string Publish(vector<string> eventList,string source, string metadata);
   
   string NotifyBack(string clientId,string metadata);
  
   int GetSubscribedNumber(vector<string> eventList);
+
 
 
 
@@ -72,14 +73,26 @@ public:
 
 //GreeterClient *getClientFromAddr(string peerURL);
 
-GreeterClient *roundrobinGetClient();
+//GreeterClient *roundrobinGetClient();
 
 void initMultiClients(string identity);
 
 void initMultiClientsByClusterDir(string clusterDir);
 
+void updateWorkerClients(string groupDir);
+
+GreeterClient *getClientFromEvent(string eventString);
+
+vector<GreeterClient *> getClientsExcept(string groupDir, string ipaddr);
+
+void initClients(string clusterDir);
+
 //TODO don't extern those two in future
+
 extern map<string, GreeterClient *> multiClients;
-extern vector<string> multiaddr;
+
+extern map<string, map<string, GreeterClient *>> workerClients;
+extern map<string, map<string, GreeterClient *>> coordinatorClients;
+
 
 #endif

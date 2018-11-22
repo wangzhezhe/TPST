@@ -28,7 +28,9 @@
 
 #include "workflowserver.grpc.pb.h"
 #include "pubsubclient.h"
-#include "../utils/getip/getip.h"
+//#include "../utils/getip/getip.h"
+#include "../utils/groupManager/groupManager.h"
+#include "../utils/dht/dht.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -72,10 +74,104 @@ GreeterClient *getClientFromAddr(string peerURL)
 }
 */
 
-map<string, GreeterClient *> multiClients;
-vector<string> multiaddr;
+////////for getip ///////////[deprecated]
+//map<string, GreeterClient *> multiClients;
+////////for getip ///////////
+
+//vector<string> multiaddr;
+
+///////for group management////////
+
+mutex workerClientsLock;
+map<string, map<string, GreeterClient *>> workerClients;
+map<string, map<string, GreeterClient *>> coordinatorClients;
+
 int robincount = 0;
 
+void updateCoordinatorClients(string groupDir)
+{
+    //load the file in coordinator dir
+    string coordinatorAddr = groupDir + "/" + gm_coordinatorDir;
+
+    vector<string> coordinatorAddrList = loadAddrInDir(coordinatorAddr);
+
+    int size = 0, i = 0;
+    size = coordinatorAddrList.size();
+
+    //traverse the addr vector
+    //create the client and put it into the map
+    for (i = 0; i < size; i++)
+    {
+        //printf("server process (%d) in cluster (%s) listen addr (%s)\n", i, clusterDir.data(), multiaddr[i].data());
+        GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
+            coordinatorAddrList[i].data(), grpc::InsecureChannelCredentials()));
+        coordinatorClients[groupDir][coordinatorAddrList[i]] = greeter;
+    }
+
+    return;
+}
+
+/*
+vector<GreeterClient *> getClientsExcept(string groupDir, string ipaddr)
+{
+    workerAddrMapLock.lock();
+    vector<string> workList = workerAddrMap[groupDir];
+    workerAddrMapLock.unlock();
+
+    vector<GreeterClient *> clientsInGroup;
+
+    int size = workList.size();
+
+    for (int i = 0; i < size; i++)
+    {
+        string addr = workList[i];
+        if (ipaddr.compare(addr) != 0)
+        {
+            GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
+                addr.data(), grpc::InsecureChannelCredentials()));
+            clientsInGroup.push_back(greeter);
+        }
+    }
+
+    return clientsInGroup;
+}
+*/
+
+//the format of the key is sth like ./multinodeip/cluster0
+void updateWorkerClients(string groupDir)
+{
+
+    //traverse the workerAddrMap
+    //if the key exist, go through
+    //if the key not exist, add new
+    workerAddrMapLock.lock();
+    vector<string> workList = workerAddrMap[groupDir];
+    workerAddrMapLock.unlock();
+
+    int size = workList.size();
+
+    for (int i = 0; i < size; i++)
+    {
+        string addr = workList[i];
+        if (workerClients.find(addr) != workerClients.end())
+        {
+            continue;
+        }
+        else
+        {
+            GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
+                addr.data(), grpc::InsecureChannelCredentials()));
+
+            workerClientsLock.lock();
+            workerClients[groupDir][addr.data()] = greeter;
+            workerClientsLock.unlock();
+        }
+    }
+
+    //TODO shrink (delete the old one from the map)
+}
+
+/*
 GreeterClient *randomGetClient(string clientId)
 {
     //get last 3 digit of client id idNum
@@ -95,7 +191,9 @@ GreeterClient *randomGetClient(string clientId)
     //printf("get server socket addr %s\n", addr.data());
     return multiClients[addr];
 }
+*/
 
+/*
 GreeterClient *roundrobinGetClient()
 {
     //get last 3 digit of client id idNum
@@ -118,7 +216,9 @@ GreeterClient *roundrobinGetClient()
     //printf("index %d get server socket addr %s\n", tmpindex, addr.data());
     return multiClients[addr];
 }
+*/
 
+/*deprecated
 GreeterClient *GreeterClient::getClient()
 {
 
@@ -140,6 +240,7 @@ GreeterClient *GreeterClient::getClient()
         socketaddr.data(), grpc::InsecureChannelCredentials()));
     return singleClient;
 }
+*/
 
 string GreeterClient::NotifyBack(string clientId, string metadata)
 {
@@ -203,7 +304,7 @@ string GreeterClient::SayHello(const string &user)
     }
 }
 
-string GreeterClient::Subscribe(vector<string> eventSubList, string clientID, string notifyAddr)
+string GreeterClient::Subscribe(vector<string> eventSubList, string clientID, string notifyAddr, string source)
 {
 
     // Container for the data we expect from the server.
@@ -221,6 +322,7 @@ string GreeterClient::Subscribe(vector<string> eventSubList, string clientID, st
     //printf("debug sub part2\n");
     request.set_clientid(clientID);
     request.set_metadata(notifyAddr);
+    request.set_source(source);
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
@@ -316,6 +418,7 @@ int GreeterClient::GetSubscribedNumber(vector<string> eventList)
     }
 }
 
+/*
 void initMultiClientsByClusterDir(string clusterDir)
 {
     //get addr vector from getip
@@ -335,26 +438,99 @@ void initMultiClientsByClusterDir(string clusterDir)
 
     return;
 }
+*/
+
+//call this at init step
+void initClients(string clusterDir)
+{
+
+    updateWorkerAddrMap(clusterDir);
+
+    printf("update worker map ok\n");
+
+    updateWorkerClients(clusterDir);
+
+    printf("init clients for clusterDir %s\n", clusterDir.data());
+}
+
+//fake use eventId for testing
+GreeterClient *getClientFromEvent(string eventString)
+{
+
+    //get cluster dir from the hash function
+    string clusterDir = getClusterDirFromEventMsg(eventString);
+
+    printf("current clusterDir %s\n", clusterDir.data());
+
+    //get client from the addr map
+
+    //get number i element from workerClients[clusterDir]
+
+    //debug print workerClients
+
+    printf("debug start init client\n");
+
+    if (workerClients.find(clusterDir) == workerClients.end())
+    {
+        initClients(clusterDir);
+    }
+
+    int serverNum = workerClients[clusterDir].size();
+
+    if (serverNum == 0)
+    {
+        printf("failed to get server number (value is 0) for %s\n", clusterDir.data());
+        return NULL;
+    }
+
+    srand(time(0));
+    int serverId = getServerIdFromAddr(serverNum);
+    printf("server id is %d\n", serverId);
+
+    workerClientsLock.lock();
+    map<string, GreeterClient *> clients = workerClients[clusterDir];
+    workerClientsLock.unlock();
+
+    int counter = 0;
+    for (map<string, GreeterClient *>::iterator it = clients.begin(); it != clients.end(); ++it)
+    {
+
+        if (counter == serverId)
+        {
+            return clients[it->first];
+        }
+        counter++;
+    }
+
+    return NULL;
+}
 
 //every clients should finish the record operation before doing this
-void initMultiClients(string identity)
+/*
+void initMultiClients()
 {
-    //get addr vector from getip
 
-    multiaddr = loadMultiNodeIPPort(identity);
-
-    int size = 0, i = 0;
-    size = multiaddr.size();
-
-    //traverse the addr vector
-    //create the client and put it into the map
-    for (i = 0; i < size; i++)
+    switch (gm_status)
     {
-        //printf("server process (%d) listen addr (%s)\n", i, multiaddr[i].data());
-        GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
-            multiaddr[i].data(), grpc::InsecureChannelCredentials()));
-        multiClients[multiaddr[i]] = greeter;
+    case CLIENT: // (can I just type case EASY?)
+        printf("status is client, load worker clients");
+        //get group dir by event id
+
+        getClusterDirFromClusterId() break;
+
+    case SERVER:
+        printf("status is server, load other worker in this group");
+        break;
     }
+
+    //get dir for clients
+
+    //init worker clients
+
+    //init coordinator clients
+
+    //init coordinator clients
 
     return;
 }
+*/

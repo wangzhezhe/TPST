@@ -20,21 +20,21 @@ PRJPATH=/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/performa
 
 cd $PRJPATH
 
-NUM_SERVER=1
+NUM_SERVER=12
 NUM_CLIENT=1
-NUM_CLIENT_TASK=4
-NUM_GROUPSIZE=1
-NUM_GROUP=1
+NUM_CLIENT_TASK=1
+NUM_GROUPSIZE=3
+NUM_GROUP=3
 THREAD_POOL=128
 NOTIFY_SLEEP=500000
 DIR=.
 
-mpirun --map-by ppr:16:node -n $NUM_SERVER  ./workflowserver 1500 eno1 $NUM_GROUPSIZE $THREAD_POOL $NOTIFY_SLEEP >& $DIR/server_"$NUM_SERVER"_"$NUM_CLIENT"_"$NUM_CLIENT_TASK".log  &
+mpirun --map-by ppr:16:node -n $NUM_SERVER  ./workflowserver 1500 eno1 $NUM_GROUPSIZE $NUM_GROUP $THREAD_POOL $NOTIFY_SLEEP >& $DIR/server_"$NUM_SERVER"_"$NUM_CLIENT"_"$NUM_CLIENT_TASK".log  &
 
 # check if start ok
-/bin/bash serverStartOk.sh 1
+/bin/bash serverStartOk.sh 12
 
 
-mpirun --map-by ppr:16:node -n $NUM_CLIENT ./eventNotify $NUM_CLIENT_TASK 10 eno1 $NUM_GROUP >& $DIR/client_"$NUM_SERVER"_"$NUM_CLIENT"_"$NUM_CLIENT_TASK".log  &
+mpirun --map-by ppr:16:node -n $NUM_CLIENT ./eventNotify $NUM_CLIENT_TASK 10 eno1 $NUM_GROUP $NUM_GROUPSIZE >& $DIR/client_"$NUM_SERVER"_"$NUM_CLIENT"_"$NUM_CLIENT_TASK".log  &
 
 wait

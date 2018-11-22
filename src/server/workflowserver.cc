@@ -29,12 +29,17 @@
 #include "pubsub.h"
 #include "unistd.h"
 #include <mutex>
-#include "../utils/getip/getip.h"
-#include "../publishclient/pubsubclient.h"
 #include <stdint.h> /* for uint64 definition */
 #include <stdlib.h> /* for exit() definition */
 #include <time.h>   /* for clock_gettime */
+
 #include "../utils/threadpool/ThreadPool.h"
+
+#include "../utils/groupManager/groupManager.h"
+
+#include "../utils/dht/dht.h"
+
+#include "../publishclient/pubsubclient.h"
 
 #define BILLION 1000000000L
 
@@ -64,6 +69,7 @@ int waitTime = 1000;
 int nodeNumber;
 string ServerIP;
 string ServerPort;
+string ServerAddr;
 
 //for debugging
 double subavg = 0;
@@ -81,6 +87,9 @@ ThreadPool *globalThreadPool = NULL;
 mutex resultmutex;
 deque<std::shared_future<void *>> resultQueue;
 
+bool propagateSub = false;
+bool propagatePub = false;
+
 typedef struct NotifyInfo
 {
   string addr;
@@ -94,6 +103,7 @@ deque<NotifyInfo> notifyQueue;
 int notifySleep = 1000000;
 
 //broadcaster this event to nodes in
+/* todo update the propagation process
 void publishMultiServer(vector<string> eventList, string metadata)
 {
 
@@ -102,13 +112,16 @@ void publishMultiServer(vector<string> eventList, string metadata)
   string serverSocket = ServerIP + ":" + ServerPort;
 
   //get the multiserver ip
-  int size = multiaddr.size();
+  //TODO this group info should be updated dynamically
+  string clusterDir = GM_CLUSTERDIR;
+  vector<string> addrList = workerAddrMap[clusterDir];
+  int size = addrList.size();
   //printf("addr size %d\n", size);
   int i, subnum, replynum;
   string reply, tempaddr;
   for (i = 0; i < size; i++)
   {
-    tempaddr = multiaddr[i];
+    tempaddr = addrList[i];
     if (serverSocket.compare(tempaddr) != 0)
     {
 
@@ -131,6 +144,7 @@ void publishMultiServer(vector<string> eventList, string metadata)
     }
   }
 }
+*/
 
 void *checkNotify(void *arguments)
 {
@@ -337,6 +351,9 @@ class GreeterServiceImpl final : public Greeter::Service
     return Status::OK;
   }
 
+  // TODO add group checking function
+  // update the group status in this server
+
   Status GetSubscribedNumber(ServerContext *context, const SubNumRequest *request, SubNumReply *reply)
   {
     vector<string> eventList;
@@ -369,6 +386,8 @@ class GreeterServiceImpl final : public Greeter::Service
 
   Status Subscribe(ServerContext *context, const PubSubRequest *request, PubSubReply *reply)
   {
+
+    printf("debug subscribe server id %d addr %s recieve subscription\n",  gm_rank, ServerAddr.data());
 
     struct timespec start, end;
     double diff;
@@ -419,7 +438,7 @@ class GreeterServiceImpl final : public Greeter::Service
       eventStr = request->pubsubmessage(i);
 
       //#ifdef DEBUG
-      //printf("get subscribed event (%s)\n", eventStr.data());
+      printf("get subscribed event (%s)\n", eventStr.data());
       //#endif
       eventList.push_back(eventStr);
       //default number is 1
@@ -454,9 +473,49 @@ class GreeterServiceImpl final : public Greeter::Service
     subtimes++;
     subtimesMtx.unlock();
 
-    if (subtimes % 128 == 0)
+    //if (subtimes % 128 == 0)
+    //{
+    printf("debug for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", eventList[0].data(), diff, subavg, subtimes);
+    //}
+
+    //TODO propagate subscription
+    string source = request->source();
+
+    if (propagateSub == true && source.compare("CLIENT") == 0)
     {
-      printf("debug for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", eventList[0].data(), diff, subavg, subtimes);
+      printf("propagate subscription to other nodes in group\n");
+
+      //get the client in current group
+
+      //assume every client subscribe one events
+      //assume there is one event msg subscription
+      string eventMsg = eventStr;
+      string clusterDir = getClusterDirFromEventMsg(eventMsg);
+
+      if (workerClients.find(clusterDir) == workerClients.end())
+      {
+        initClients(clusterDir);
+      }
+
+      map<string, GreeterClient *> greeterMap = workerClients[clusterDir];
+
+      for (map<string, GreeterClient *>::iterator it=greeterMap.begin(); it!=greeterMap.end(); ++it)
+      {
+        string key = it->first;
+
+        if (key.compare(ServerAddr) != 0)
+        {
+          GreeterClient *greeter = greeterMap[key];
+          string reply = greeter->Subscribe(eventList, clientId, notifyAddr, "SERVER");
+
+          if (reply.compare("SUBSCRIBED") != 0)
+          {
+            printf("propagation to server %s fail\n",ServerAddr.data());
+          }
+
+          printf("propagate event %s to server %s\n",eventList[0].data(),key.data());
+        }
+      }
     }
 
     return Status::OK;
@@ -515,8 +574,8 @@ class GreeterServiceImpl final : public Greeter::Service
       //TODO create new thread here (use asnchronous way to do the communication)
       //publishMultiServer(eventList);
 
-      std::thread pubthread(publishMultiServer, eventList, metadata);
-      pubthread.detach();
+      //std::thread pubthread(publishMultiServer, eventList, metadata);
+      //pubthread.detach();
       //only caculate time when propagation is needed
       //don't calculate time for the propagation between servers
       clock_gettime(CLOCK_REALTIME, &end2); /* mark the end time */
@@ -568,6 +627,7 @@ class GreeterServiceImpl final : public Greeter::Service
   }
 };
 
+/*
 void MultiClient()
 {
   vector<string> multiAddr;
@@ -589,10 +649,10 @@ void MultiClient()
 
   initMultiClients("server");
 }
+*/
 
 void RunServer(string serverIP, string serverPort, int threadPool)
 {
-
   //init thread pool
   ThreadPool threadPoolInstance(threadPool);
   globalThreadPool = &threadPoolInstance;
@@ -601,6 +661,8 @@ void RunServer(string serverIP, string serverPort, int threadPool)
   thread notifycheck(getElementFromNotifyQ);
 
   string socketAddr = serverIP + ":" + serverPort;
+  //ServerAddr is global value
+  ServerAddr = socketAddr;
   printf("server socket addr %s\n", socketAddr.data());
   std::string server_address(socketAddr);
   GreeterServiceImpl service;
@@ -642,39 +704,32 @@ int main(int argc, char **argv)
 
   int threadPoolSize = 32;
 
-  if (argc == 6)
+  if (argc == 7)
   {
     waitTime = atoi(argv[1]);
     printf("chechNotify wait period %d\n", waitTime);
-    //nodeNumber = atoi(argv[2]);
-
-    //GETIPCOMPONENTNUM = nodeNumber;
-    GETIPCOMPONENTNUM = world_size;
-    printf("total instance number of the backend is %d\n", GETIPCOMPONENTNUM);
 
     string interfaces = string(argv[2]);
 
-    INTERFACE = interfaces;
+    GM_INTERFACE = interfaces;
     printf("network interfaces is %s\n", interfaces.data());
 
-    //NOTIFYPORT = string(argv[3]);
-    //if running by mpi
-    //this parameter can assigned by mpi rank
-    //GETIPCOMPONENTID = atoi(argv[5]);
-    GETIPCOMPONENTID = world_rank;
+    gm_rank = world_rank;
 
     int groupSize = atoi(argv[3]);
     printf("group size is %d\n", groupSize);
-    GETIPNUMPERCLUSTER = groupSize;
+    gm_requiredGroupSize = groupSize;
 
-    threadPoolSize = atoi(argv[4]);
+    gm_groupNumber = atoi(argv[4]);
+    printf("group number is %d\n", gm_groupNumber);
 
-    notifySleep = atoi(argv[5]);
+    threadPoolSize = atoi(argv[5]);
 
+    notifySleep = atoi(argv[6]);
   }
   else
   {
-    printf("./workflowserver <subscribe period time><network interfaces><group size><size of thread pool>\n");
+    printf("./workflowserver <subscribe period time><network interfaces><group size><group number><size of thread pool><notify sleep>\n");
     return 0;
   }
   //ServerPort = string("50051");
@@ -682,8 +737,21 @@ int main(int argc, char **argv)
   //this option should be automic in multithread case
   ServerPort = to_string(freePort);
 
-  recordIPortForMultiNode(ServerIP, ServerPort);
-  MultiClient();
+  //recordIPortForMultiNode(ServerIP, ServerPort);
+  //MultiClient();
+
+  string ServerIP;
+
+  string clusterDir = getClusterDir(gm_rank);
+
+  recordIPortIntoClusterDir(ServerIP, ServerPort, clusterDir, gm_requiredGroupSize);
+
+  //printf("file Num for clusterDir %s is %d\n",clusterDir.data(), fileNum);
+
+  propagateSub = true;
+
+  propagatePub = false;
+
   RunServer(ServerIP, ServerPort, threadPoolSize);
   return 0;
 }

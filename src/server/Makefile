@@ -50,8 +50,14 @@ all: workflowserver
 split.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o split.o ../utils/split/split.cc
 
-getip.o:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o getip.o ../utils/getip/getip.cpp
+groupManager.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o groupManager.o ../utils/groupManager/groupManager.cpp
+
+dht.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o dht.o ../utils/dht/dht.cc
+
+dlm.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o dlm.o ../utils/dlm/dlm.cc
 
 pubsub.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o pubsub.o pubsub.cc
@@ -59,7 +65,7 @@ pubsub.o:
 pubsubclient.o:
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o pubsubclient.o ../publishclient/pubsubclient.cc
 
-workflowserver: workflowserver.pb.o workflowserver.grpc.pb.o workflowserver.o pubsub.o getip.o split.o pubsubclient.o
+workflowserver: workflowserver.pb.o workflowserver.grpc.pb.o workflowserver.o pubsub.o dht.o dlm.o groupManager.o split.o pubsubclient.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc

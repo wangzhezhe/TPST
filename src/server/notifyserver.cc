@@ -26,7 +26,7 @@
 #include "pubsub.h"
 #include "unistd.h"
 #include <mutex>
-#include "../utils/getip/getip.h"
+#include "../utils/groupManager/groupManager.h"
 #include "../observer/eventmanager.h"
 #include "../runtime/local.h"
 #include "../../src/publishclient/pubsubclient.h"
@@ -62,6 +62,7 @@ int COMPONENTID;
 
 string NOTIFYADDR;
 
+/*
 void startAction(string clientID)
 {
 
@@ -104,6 +105,7 @@ void startAction(string clientID)
 
     return;
 }
+*/
 
 // Logic and data behind the server's behavior.
 class GreeterServiceImplNotify final : public Greeter::Service
@@ -176,6 +178,7 @@ void RunServer(string serverIP, string serverPort)
 }
 */
 
+
 string getNotifyServerAddr(){
     int freePort = getFreePortNum();
     string serverPort = to_string(freePort);
@@ -188,6 +191,7 @@ string getNotifyServerAddr(){
     string socketAddr = ip + ":" + serverPort;
     return socketAddr;
 }
+
 
 
 void runNotifyServer()

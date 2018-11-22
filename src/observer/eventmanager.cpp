@@ -9,6 +9,7 @@
 #include "../runtime/slurm.h"
 #include "../runtime/local.h"
 #include "../publishclient/pubsubclient.h"
+
 #include <string>
 #include <iostream>
 #include <queue>
@@ -52,6 +53,8 @@ vector<string> operatorList;
 mutex clientIdtoConfigMtx;
 map<string, EventTriggure *> clientIdtoConfig;
 
+
+/*
 void initOperator(int jsonNum)
 {
 
@@ -98,13 +101,19 @@ void initOperator(int jsonNum)
         system(action);
     }
 }
-void eventPublish(vector<string> pubList,string metadata)
-{
-    GreeterClient *greeter = roundrobinGetClient();
+*/
 
+void eventPublish(vector<string> pubList,string metadata,int eventId)
+{
+    //GreeterClient *greeter = roundrobinGetClient();
+
+    string eventMsg=pubList[0];
+
+    GreeterClient *greeter = getClientFromEvent(eventMsg);
+    
     if (greeter == NULL)
     {
-        printf("failed to get greeter for event subscribe\n");
+        printf("failed to get greeter for event publisher from event %s\n",eventMsg.data());
         return;
     }
 
@@ -127,28 +136,32 @@ void eventPublish(vector<string> pubList,string metadata)
 
     return;
 }
-void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr)
+
+
+void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr,int eventId,string eventMsg)
 {
     //only could be transfered by this way if original pointed is initiallises by malloc instead on new
     //EventTriggure *etrigger = (EventTriggure *)arguments;
 
-    GreeterClient *greeter = roundrobinGetClient();
+    //GreeterClient *greeter = roundrobinGetClient();
 
-    if (greeter == NULL)
-    {
-        printf("failed to get greeter for event subscribe\n");
+    printf("debug event subscribe id %d\n", eventId);
+    
+    GreeterClient *greeter = getClientFromEvent(eventMsg);
+
+    if(greeter==NULL){
+        printf("failed to get greeter from %s\n",eventMsg.data());
         return;
     }
 
-    //printf("success to get the greeter\n");
+    //test using
+    //string reply = greeter->SayHello("fakeSubscriber");
+    //cout << "hello return value: " << reply << endl;
 
-    //debug how long should be used to go get the subscribed event
 
-    uint64_t diff;
-    struct timespec start, end;
+    //struct timespec subStart, subEnd, diff;
 
-    /* measure monotonic time */
-    clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
+    //clock_gettime(CLOCK_REALTIME, &subStart); 
 
     subscribedMutex.lock();
     SubscribedClient++;
@@ -159,16 +172,17 @@ void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr)
     //    printf("sub times %d\n", SubscribedClient);
     //}
 
-    //printf("debug sub event %s\n",etrigger->eventSubList[0].data());
-    string reply = greeter->Subscribe(etrigger->eventSubList, clientID, notifyAddr);
-    //cout << "Subscribe return value: " << reply << endl;
+    printf("debug sub event %s\n",etrigger->eventSubList[0].data());
+    string reply = greeter->Subscribe(etrigger->eventSubList, clientID, notifyAddr, "CLIENT");
+    cout << "Subscribe return value: " << reply << endl;
 
-    clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
+    //clock_gettime(CLOCK_REALTIME, &subEnd); 
 
-    diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+    //diff = BILLION * (subEnd.tv_sec - subStart.tv_sec) + subEnd.tv_nsec - subStart.tv_nsec;
     //printf("debug time get (%s) response time = (%lf) second\n", etrigger->eventList[0].data(), (float)diff / BILLION);
 
     int i = 0;
+
     if (reply.compare("SUBSCRIBED") != 0)
     {
         printf("rpc failed, don't execute command:\n");
@@ -178,7 +192,7 @@ void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr)
             printf("%s\n", etrigger->actionList[i].data());
         }
     }
-
+    
     return;
 }
 

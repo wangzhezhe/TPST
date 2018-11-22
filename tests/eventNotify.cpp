@@ -21,7 +21,9 @@
 //#include "../storage/memcache.h"
 #include "../src/server/notifyserver.h"
 
-#include "../src/utils/getip/getip.h"
+//#include "../src/utils/getip/getip.h"
+
+#include "../src/utils/groupManager/groupManager.h"
 
 #include "../src/utils/file/loaddata.h"
 
@@ -53,6 +55,7 @@ char projectPath[100] = "/home1/zw241/observerchain/tests";
 //char tmDir[50] = "TrigureFiles";
 char tmDir[50] = "TrigureFiles";
 
+/*
 void *tempStartOperator(void *arg)
 {
     printf("execute the init operator\n");
@@ -100,7 +103,7 @@ void *tempStartOperator(void *arg)
 
     return NULL;
 }
-
+*/
 //for test using, send multipublish request after subscribe
 void fakePublishTest(int pubSize)
 {
@@ -121,11 +124,55 @@ void fakePublishTest(int pubSize)
 
         pubeventList.push_back(fakePub);
 
-        eventPublish(pubeventList, metadata);
+        eventPublish(pubeventList, metadata, i);
         //usleep(3000);
     }
     //publish in collective pattern
     //eventPublish(pubeventList, metadata);
+
+    return;
+}
+
+void oneSubMultiplePub(int subSize, string notifyAddr)
+{
+    return;
+}
+
+void onePubMultipleSameSub(int subSize, string notifyAddr)
+{
+
+    //sub same event multiple times
+    string testEvent = "fakeOnePubMultipleSub_0";
+    //string metadata = "metadataTestPublish";
+
+    vector<string> pubeventList;
+    pubeventList.push_back(testEvent);
+
+    printf("debug onePubMultipleSub\n");
+    
+    int i = 0;
+    for (i = 0; i < subSize; i++)
+    {
+        vector<string> subeventList;
+        vector<string> actionList;
+
+        string fakeaction = "fakeaction" + to_string(i);
+
+        subeventList.push_back(testEvent);
+        //pubeventList.push_back(redundantPushEvent);
+        actionList.push_back(fakeaction);
+
+        string clientID;
+
+        string driver = "local";
+
+        EventTriggure *etrigger = fakeaddNewConfig(driver, subeventList, pubeventList, actionList, clientID);
+
+        if (clientID != "")
+        {
+            eventSubscribe(etrigger, clientID, notifyAddr, 0, testEvent);
+        }
+    }
 
     return;
 }
@@ -175,7 +222,7 @@ void fakegothroughFolderRegister(int subSize, string notifyAddr)
 
         if (clientID != "")
         {
-            eventSubscribe(etrigger, clientID, notifyAddr);
+            eventSubscribe(etrigger, clientID, notifyAddr,i,fakeSub);
         }
     }
 
@@ -188,6 +235,7 @@ void fakegothroughFolderRegister(int subSize, string notifyAddr)
     return;
 }
 
+/*
 //go through the Trigurefile folder and register the .json file with type=trigure into the system
 void gothroughFolderRegister(const char *watchdir, string notifyAddr)
 {
@@ -217,7 +265,6 @@ void gothroughFolderRegister(const char *watchdir, string notifyAddr)
         }
 
         //get current dir
-
         //snprintf(taskPath, sizeof taskPath, "%s/%s/%s", projectPath, tmDir, fileList[i].data());
         //snprintf(taskPath, sizeof taskPath, "%s/%s/%s", projectPath, dir, fileList[i].data());
 
@@ -241,13 +288,14 @@ void gothroughFolderRegister(const char *watchdir, string notifyAddr)
 
         if (clientID != "")
         {
-
             eventSubscribe(etrigger, clientID, notifyAddr);
         }
     }
 
     return;
 }
+
+*/
 
 //g++ -o notify watchnotifytm.cpp ../lib/file/loaddata.c
 //this source code is only avliable if use create/delete the file on the same machine
@@ -273,10 +321,10 @@ int main(int argc, char **argv)
 
     EVENTTYPE eventType;
 
-    if (argc != 5)
+    if (argc != 6)
     {
         //printf("<binary> <watchpath> <required number of notification> <notifyserver interfaces><notify server port> <required INIT Number>\n");
-        printf("<binary> <sub number> <required number of notification> <notifyserver interfaces><group number> \n");
+        printf("<binary> <sub number> <required number of notification> <notifyserver interfaces><group number><group size> \n");
         return 0;
     }
 
@@ -287,39 +335,25 @@ int main(int argc, char **argv)
 
     printf("subsize is %d\n", subSize);
 
+    //deprecated currently
     int requiredNotifiedNum = atoi(argv[2]);
 
-    INTERFACE = string(argv[3]);
-    printf("notify server listen to interface %s\n", INTERFACE.data());
-
-    //assign free one automatically
-    //NOTIFYPORT = string(argv[4]);
-    //printf("notify server listen to port %s\n", NOTIFYPORT.data());
+    GM_INTERFACE = string(argv[3]);
+    printf("notify server listen to interface %s\n", GM_INTERFACE.data());
 
     // number of the server cluster
-    SERVERCLUSTERNUM = atoi(argv[4]);
+    gm_groupNumber = atoi(argv[4]);
+    //use group manager
 
-    //printf("waiting the termination of threads id %ld\n", notifyserverid);
+    gm_requiredGroupSize = atoi(argv[5]);
 
-    // send the init request when there are specific number of clients subscribe the init event
-    //int requiredInitNum = atoi(argv[5]);
+    gm_rank = world_rank;
 
-    //int componentid = atoi(argv[6]);
+    printf("curr component id %d\n", gm_rank);
 
-    int componentid = world_rank;
-
-    printf("curr component id %d\n", componentid);
-
-    COMPONENTID = componentid;
-    GETIPCOMPONENTID = componentid;
-
-    //int totalNum = atoi(argv[7]);
-
-    int totalNum = world_size;
-    GETIPCOMPONENTNUM = totalNum;
-
-    string identity = "client";
-    initMultiClients(identity);
+    //init the worker and coordinator
+    //init clients when sending the events
+    //initMultiClients();
 
     //start a new thread to run notify server
     //parse the json file and create the clientid and put them in a map
@@ -337,24 +371,13 @@ int main(int argc, char **argv)
     //wait the notify server start
     sleep(1);
 
+    onePubMultipleSameSub(subSize, notifyAddr);
 
-
-    fakegothroughFolderRegister(subSize, notifyAddr);
-
-    //pthread_t operatorid;
-
-    //pthread_create(&operatorid, NULL, &tempStartOperator, (void *)&requiredInitNum);
+    //fakegothroughFolderRegister(subSize, notifyAddr);
 
     while (1)
     {
-        //if (NotifiedNum == requiredNotifiedNum)
-        //{
-        //    printf("current number %d\n", NotifiedNum);
-        //    break;
-        //}
-        //else
-        //{
+
         usleep(1000);
-        //}
     }
 }

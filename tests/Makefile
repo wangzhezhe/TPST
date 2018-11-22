@@ -49,8 +49,14 @@ all: eventNotify
 notifyserver.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/server/notifyserver.cc -o notifyserver.o
 
-getip.o:
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/utils/getip/getip.cpp -o getip.o
+groupManager.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o groupManager.o ../src/utils/groupManager/groupManager.cpp
+
+dht.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o dht.o ../src/utils/dht/dht.cc
+
+dlm.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o dlm.o ../src/utils/dlm/dlm.cc
 
 eventmanager.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/observer/eventmanager.cpp -o eventmanager.o
@@ -67,7 +73,7 @@ local.o:
 pubsubclient.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/publishclient/pubsubclient.cc -o pubsubclient.o
 
-eventNotify: workflowserver.pb.o notifyserver.o workflowserver.grpc.pb.o eventNotify.o loaddata.o eventmanager.o slurm.o local.o pubsubclient.o getip.o
+eventNotify: workflowserver.pb.o notifyserver.o workflowserver.grpc.pb.o eventNotify.o loaddata.o eventmanager.o slurm.o local.o pubsubclient.o groupManager.o dht.o dlm.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc

@@ -16,6 +16,12 @@ syntax = "proto3";
 
 package workflowserver;
 
+
+//Register Service for Group Management
+
+//checkFreeNode
+
+
 // The greeting service definition.
 service Greeter {
   // test using
