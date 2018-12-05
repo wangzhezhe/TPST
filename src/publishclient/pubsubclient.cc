@@ -47,6 +47,15 @@ using workflowserver::SubNumRequest;
 using workflowserver::NotifyReply;
 using workflowserver::NotifyRequest;
 
+using workflowserver::RecordSubReply;
+using workflowserver::RecordSubRequest;
+
+using workflowserver::RedistributeReply;
+using workflowserver::RedistributeRequest;
+
+using workflowserver::UpdateClusterReply;
+using workflowserver::UpdateClusterRequest;
+
 using namespace std;
 
 // this should be loaded from the ./ipconfig
@@ -84,7 +93,9 @@ GreeterClient *getClientFromAddr(string peerURL)
 
 mutex workerClientsLock;
 map<string, map<string, GreeterClient *>> workerClients;
-map<string, map<string, GreeterClient *>> coordinatorClients;
+//map<string, map<string, GreeterClient *>> coordinatorClients;
+
+vector<GreeterClient *> coordinatorClients;
 
 int robincount = 0;
 
@@ -92,6 +103,10 @@ void updateCoordinatorClients(string groupDir)
 {
     //load the file in coordinator dir
     string coordinatorAddr = groupDir + "/" + gm_coordinatorDir;
+
+    //clean the old clients and update
+
+    coordinatorClients.clear();
 
     vector<string> coordinatorAddrList = loadAddrInDir(coordinatorAddr);
 
@@ -105,7 +120,8 @@ void updateCoordinatorClients(string groupDir)
         //printf("server process (%d) in cluster (%s) listen addr (%s)\n", i, clusterDir.data(), multiaddr[i].data());
         GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
             coordinatorAddrList[i].data(), grpc::InsecureChannelCredentials()));
-        coordinatorClients[groupDir][coordinatorAddrList[i]] = greeter;
+        //coordinatorClients[groupDir][coordinatorAddrList[i]] = greeter;
+        coordinatorClients.push_back(greeter);
     }
 
     return;
@@ -418,6 +434,93 @@ int GreeterClient::GetSubscribedNumber(vector<string> eventList)
     }
 }
 
+string GreeterClient::RecordSub(string subevent, string serverAddr, int subNum)
+{
+    //send info(subNum) to the coordinator in current group
+    RecordSubRequest request;
+
+    request.set_serveraddr(serverAddr);
+    request.set_subevent(subevent);
+    request.set_subnum(subNum);
+
+    // Data we are sending to the server.
+    RecordSubReply reply;
+
+    ClientContext context;
+
+    // The actual RPC.
+    Status status = stub_->RecordSub(&context, request, &reply);
+
+    if (status.ok())
+    {
+        return reply.returnmessage();
+    }
+    else
+    {
+        cout << status.error_code() << ": " << status.error_message()
+             << endl;
+        return "RPC failed";
+    }
+}
+
+string GreeterClient::RedistributeSub(string subevent, string srcAddr, string dstAddr, int diffNum)
+{
+    RedistributeRequest request;
+
+    // The actual RPC.
+    printf("send RedistributeSub to %s\n", dstAddr.data());
+
+    request.set_subevent(subevent);
+    request.set_srcaddr(srcAddr);
+    request.set_destaddr(dstAddr);
+    request.set_diff(diffNum);
+
+    // Data we are sending to the server.
+    RedistributeReply reply;
+
+    ClientContext context;
+
+    Status status = stub_->RedistributeSub(&context, request, &reply);
+
+    printf("get status from RedistributeSub\n");
+
+    if (status.ok())
+    {
+        return reply.returnmessage();
+    }
+    else
+    {
+        cout << status.error_code() << ": " << status.error_message()
+             << endl;
+        return "RPC failed";
+    }
+}
+
+string GreeterClient::UpdateCluster(string newClusterDir)
+{
+    UpdateClusterRequest request;
+
+    request.set_cluster(newClusterDir);
+
+    // Data we are sending to the server.
+    UpdateClusterReply reply;
+
+    ClientContext context;
+
+    Status status = stub_->UpdateCluster(&context, request, &reply);
+
+    if (status.ok())
+    {
+        return reply.returnmessage();
+    }
+    else
+    {
+        cout << status.error_code() << ": " << status.error_message()
+             << endl;
+        return "RPC failed";
+    }
+}
+
 /*
 void initMultiClientsByClusterDir(string clusterDir)
 {
@@ -449,6 +552,7 @@ void initClients(string clusterDir)
     printf("update worker map ok\n");
 
     updateWorkerClients(clusterDir);
+    updateCoordinatorClients(clusterDir);
 
     printf("init clients for clusterDir %s\n", clusterDir.data());
 }
@@ -460,15 +564,13 @@ GreeterClient *getClientFromEvent(string eventString)
     //get cluster dir from the hash function
     string clusterDir = getClusterDirFromEventMsg(eventString);
 
-    printf("current clusterDir %s\n", clusterDir.data());
+    //printf("current clusterDir %s\n", clusterDir.data());
 
     //get client from the addr map
 
     //get number i element from workerClients[clusterDir]
 
     //debug print workerClients
-
-    printf("debug start init client\n");
 
     if (workerClients.find(clusterDir) == workerClients.end())
     {
@@ -485,7 +587,7 @@ GreeterClient *getClientFromEvent(string eventString)
 
     srand(time(0));
     int serverId = getServerIdFromAddr(serverNum);
-    printf("server id is %d\n", serverId);
+    //printf("server id is %d\n", serverId);
 
     workerClientsLock.lock();
     map<string, GreeterClient *> clients = workerClients[clusterDir];

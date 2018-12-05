@@ -103,10 +103,10 @@ void initOperator(int jsonNum)
 }
 */
 
-void eventPublish(vector<string> pubList,string metadata,int eventId)
+void eventPublish(vector<string> pubList,string metadata)
 {
     //GreeterClient *greeter = roundrobinGetClient();
-
+    //only use first event in the list to do the hash mapping
     string eventMsg=pubList[0];
 
     GreeterClient *greeter = getClientFromEvent(eventMsg);
@@ -134,18 +134,20 @@ void eventPublish(vector<string> pubList,string metadata,int eventId)
         printf("rpc failed, publish %s failed\n", pubList[0].data());
     }
 
+    printf("debug client publish event %s\n",eventMsg.data());
+
     return;
 }
 
 
-void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr,int eventId,string eventMsg)
+void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr,string eventMsg)
 {
     //only could be transfered by this way if original pointed is initiallises by malloc instead on new
     //EventTriggure *etrigger = (EventTriggure *)arguments;
 
     //GreeterClient *greeter = roundrobinGetClient();
 
-    printf("debug event subscribe id %d\n", eventId);
+    //printf("debug event subscribe\n", eventMsg.data());
     
     GreeterClient *greeter = getClientFromEvent(eventMsg);
 
@@ -172,9 +174,9 @@ void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr,
     //    printf("sub times %d\n", SubscribedClient);
     //}
 
-    printf("debug sub event %s\n",etrigger->eventSubList[0].data());
+    //printf("debug sub event %s\n",etrigger->eventSubList[0].data());
     string reply = greeter->Subscribe(etrigger->eventSubList, clientID, notifyAddr, "CLIENT");
-    cout << "Subscribe return value: " << reply << endl;
+    //cout << "Subscribe return value: " << reply << endl;
 
     //clock_gettime(CLOCK_REALTIME, &subEnd); 
 

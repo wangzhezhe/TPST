@@ -28,6 +28,23 @@ mutex publishedEventMtx;
 
 using namespace std;
 
+void eventUnSubscribe(string event,string clientId){
+
+    if(subtoClient.find(event)!=subtoClient.end()){
+        if(subtoClient[event].find(clientId)!=subtoClient[event].end()){
+
+            subtoClientMtx.lock();
+            subtoClient[event].erase(clientId);
+            subtoClientMtx.unlock();
+
+        }
+
+    }
+
+    return;
+
+}
+
 int getSubscribedClientsNumber(vector<string> subEventList)
 {
     //printf("subevent %s\n", subEvent.data());

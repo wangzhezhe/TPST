@@ -30,13 +30,9 @@
 #include "./groupManager.h"
 #include "../dlm/dlm.h"
 
-using namespace std;
 
-enum STATUS
-{
-    SERVER,
-    CLIENT
-};
+
+using namespace std;
 
 const string gm_multinodeip("./multinodeip");
 
@@ -55,7 +51,11 @@ int gm_requiredGroupSize;
 int gm_groupNumber;
 int gm_rank;
 
-STATUS gm_status;
+string SERVERSTATUS;
+
+string status_coor("coordinator");
+string status_worker("worker");
+string status_free("freepool");
 
 //current cluster dir
 string GM_CLUSTERDIR;
@@ -82,7 +82,7 @@ vector<string> loadAddrInDir(string Dir)
         if ((dp = opendir(dir.data())) == NULL)
         {
             printf("Can`t open directory %s\n", dir.data());
-            exit(0);
+            return AddrList;
         }
 
         while ((entry = readdir(dp)) != NULL)
@@ -108,8 +108,6 @@ vector<string> loadAddrInDir(string Dir)
         exit(1);
     }
 }
-
-
 
 //put addr into the map from the disk
 //identity is event message here
@@ -312,6 +310,7 @@ void recordIPortIntoClusterDir(string &ipstr, string port, string clusterDir, in
         dirThird = dirSecond + "/" + gm_coordinatorDir;
         createDir(dirThird);
         finalDir = dirThird;
+        SERVERSTATUS = status_coor;
     }
     else if (gm_rank >= gm_groupNumber && gm_rank < (gm_groupNumber * gm_requiredGroupSize))
     {
@@ -319,10 +318,12 @@ void recordIPortIntoClusterDir(string &ipstr, string port, string clusterDir, in
         dirThird = dirSecond + "/" + gm_workerDir;
         createDir(dirThird);
         finalDir = dirThird;
+        SERVERSTATUS = status_worker;
     }
     else
     {
         finalDir = dirSecond;
+        SERVERSTATUS = status_free;
     }
 
     char addrFile[100];
@@ -367,22 +368,27 @@ bool nodeAttach(string dir, string nodeAddr)
 }
 
 //get freenode from the FreePool
-bool getFreeNode(string &nodeAddr)
+vector<string> getFreeNodeList(int needNum)
 {
 
-    //get one freeNode from the freePool
+    vector<string> serverAddrList;
+
+    //get needNum freeNode from the freePool
     string dir = gm_FreePool;
     DIR *dp;
     struct dirent *entry;
+    string nodeAddr;
     if ((dp = opendir(dir.data())) == NULL)
     {
         //cluster dir not exist
         nodeAddr = "";
         printf("failed to open dir\n");
         closedir(dp);
-        return false;
+        return serverAddrList;
     }
+
     int fileNum = 0;
+
     while ((entry = readdir(dp)) != NULL)
     {
 
@@ -393,30 +399,42 @@ bool getFreeNode(string &nodeAddr)
         else
         {
             nodeAddr = string(entry->d_name);
+            serverAddrList.push_back(nodeAddr);
+
+
+
             fileNum++;
-            break;
+
+            if (fileNum == needNum)
+            {
+                break;
+            }
         }
     }
     //change to the upper dir
     //printf("there are %d second level cluster\n", FileNum);
     closedir(dp);
-    if (fileNum == 0)
+
+    //delete addr in freepool
+
+    // don't delete for debugging
+    for (int i = 0; i < serverAddrList.size(); i++)
     {
-        printf("empty dir for %s\n", gm_FreePool.data());
-        return false;
-    }
-    string fileDir = gm_FreePool + "/" + nodeAddr;
-    if (remove(fileDir.data()) != 0)
-    {
-        perror("Error deleting file");
-        return false;
+        nodeAddr = serverAddrList[i];
+        string fileDir = gm_FreePool + "/" + nodeAddr;
+        if (remove(fileDir.data()) != 0)
+        {
+            printf("Error deleting file %s in freePool\n", fileDir.data());
+        }
+        printf("move addr %s out of freepool\n", nodeAddr.data());
     }
 
     //TODO after moving file, the specific server should be notified to modify the groupInfo
     //server should know which group it located in
     //or maintain specific data structure from ip to group info on disk
+    //or those info can be updated by coordinator
 
-    return true;
+    return serverAddrList;
 }
 
 //node detach from current group

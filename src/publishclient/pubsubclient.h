@@ -60,10 +60,13 @@ public:
  
   int GetSubscribedNumber(vector<string> eventList);
 
+  string RecordSub(string subevent, string serverAddr, int subNum);
 
-
+  string RedistributeSub(string subevent, string srcAddr, string dstAddr, int diffNum);
 
   void initMultiClients(string identity);
+
+  string UpdateCluster(string newClusterDir);
 };
 
 //define as singleton global variable
@@ -81,6 +84,8 @@ void initMultiClientsByClusterDir(string clusterDir);
 
 void updateWorkerClients(string groupDir);
 
+void updateCoordinatorClients(string groupDir);
+
 GreeterClient *getClientFromEvent(string eventString);
 
 vector<GreeterClient *> getClientsExcept(string groupDir, string ipaddr);
@@ -92,7 +97,7 @@ void initClients(string clusterDir);
 extern map<string, GreeterClient *> multiClients;
 
 extern map<string, map<string, GreeterClient *>> workerClients;
-extern map<string, map<string, GreeterClient *>> coordinatorClients;
+extern vector<GreeterClient *> coordinatorClients;;
 
 
 #endif

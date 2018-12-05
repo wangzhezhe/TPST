@@ -40,6 +40,9 @@ typedef struct pubsubWrapper{
 }pubsubWrapper;
 
 
+extern mutex subtoClientMtx;
+
+
 extern map<string, set<int>> strtoEvent;
 
 extern map<string, map<string, pubsubWrapper *> > subtoClient;
@@ -67,6 +70,8 @@ bool checkIfTriggure(pubsubWrapper *psw, string &satisfiedStr);
 int getSubscribedClientsNumber(vector<string> subEventList);
 
 void deletePubEvent(pubsubWrapper *psw);
+
+void eventUnSubscribe(string event,string clientId);
 
 //void *checkNotify(void *arguments);
 

@@ -124,7 +124,7 @@ void fakePublishTest(int pubSize)
 
         pubeventList.push_back(fakePub);
 
-        eventPublish(pubeventList, metadata, i);
+        eventPublish(pubeventList, metadata);
         //usleep(3000);
     }
     //publish in collective pattern
@@ -148,8 +148,8 @@ void onePubMultipleSameSub(int subSize, string notifyAddr)
     vector<string> pubeventList;
     pubeventList.push_back(testEvent);
 
-    printf("debug onePubMultipleSub\n");
-    
+    printf("debug onePubMultipleSub subsize is %d\n",subSize);
+
     int i = 0;
     for (i = 0; i < subSize; i++)
     {
@@ -170,9 +170,19 @@ void onePubMultipleSameSub(int subSize, string notifyAddr)
 
         if (clientID != "")
         {
-            eventSubscribe(etrigger, clientID, notifyAddr, 0, testEvent);
+            eventSubscribe(etrigger, clientID, notifyAddr, testEvent);
         }
+
     }
+
+    //event publish
+    struct timespec start;
+    clock_gettime(CLOCK_REALTIME, &start); /* mark the end time */
+    printf("start id %d start pub time = (%lld.%.9ld)\n", gm_rank, (long long)start.tv_sec, start.tv_nsec);
+    
+    printf("wait for group redistribution\n");
+    //string metadata = "metadataTest";
+    //eventPublish(pubeventList, metadata);
 
     return;
 }
@@ -222,7 +232,7 @@ void fakegothroughFolderRegister(int subSize, string notifyAddr)
 
         if (clientID != "")
         {
-            eventSubscribe(etrigger, clientID, notifyAddr,i,fakeSub);
+            eventSubscribe(etrigger, clientID, notifyAddr,fakeSub);
         }
     }
 

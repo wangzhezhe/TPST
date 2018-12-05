@@ -26,7 +26,7 @@ SYSTEM ?= $(HOST_SYSTEM)
 #CXX = g++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC) 
 CXX = mpic++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC) 
 CPPFLAGS += `pkg-config --cflags protobuf grpc` -I/home1/zw241/Software/grpc/third_party/protobuf/src
-CXXFLAGS += -std=c++11 
+CXXFLAGS += -std=c++11 -fopenmp
 #CXXFLAGS += -std=c++11 -I../deps/  -I../deps/hiredis/ -DDEBUG
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += -L/usr/local/lib -L/home1/zw241/Software/protoinstall/lib -L/home1/zw241/Software/grpc/libs/opt/protobuf -L/home1/zw241/Software/grpcinstall/lib `pkg-config --libs protobuf grpc++ grpc`\
@@ -35,7 +35,7 @@ LDFLAGS += -L/usr/local/lib -L/home1/zw241/Software/protoinstall/lib -L/home1/zw
 else
 LDFLAGS += -L/usr/local/lib -L$(ROOT_PATH)/grpcinstall/lib -L$(ROOT_PATH)/grpc/libs/opt/protobuf -I$(LD_PATH) `pkg-config --libs protobuf grpc++ grpc`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
-           -ldl -lpthread -lgpr -luuid
+           -ldl -lpthread -lgpr -luuid -fopenmp
 endif
 PROTOC = /home1/zw241/Software/grpc/third_party/protobuf/src/protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
@@ -49,6 +49,9 @@ all: workflowserver
 
 split.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o split.o ../utils/split/split.cc
+
+coordinator.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o coordinator.o ../utils/coordinator/coordinator.cpp
 
 groupManager.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o groupManager.o ../utils/groupManager/groupManager.cpp
@@ -65,7 +68,7 @@ pubsub.o:
 pubsubclient.o:
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o pubsubclient.o ../publishclient/pubsubclient.cc
 
-workflowserver: workflowserver.pb.o workflowserver.grpc.pb.o workflowserver.o pubsub.o dht.o dlm.o groupManager.o split.o pubsubclient.o
+workflowserver: workflowserver.pb.o workflowserver.grpc.pb.o workflowserver.o pubsub.o dht.o dlm.o groupManager.o split.o pubsubclient.o coordinator.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc

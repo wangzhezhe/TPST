@@ -28,6 +28,8 @@ vector<string> loadAddrInDir(string Dir);
 
 void recordIPPortWithoutFile(string &ipstr, string port);
 
+vector<string> getFreeNodeList(int needNum);
+
 extern const string gm_multinodeip;
 
 extern const string gm_FreePool;
@@ -44,8 +46,14 @@ extern int gm_groupNumber;
 
 extern int gm_rank;
 
+extern string SERVERSTATUS;
+
+extern string status_coor;
+
 extern mutex workerAddrMapLock;
 
 extern map<string, vector<string>> workerAddrMap;
+
+extern string GM_CLUSTERDIR;
 
 #endif
