@@ -28,21 +28,39 @@ mutex publishedEventMtx;
 
 using namespace std;
 
-void eventUnSubscribe(string event,string clientId){
+SimplepubsubWrapper *getSimplepubsubWrapper(pubsubWrapper *psw)
+{
+    SimplepubsubWrapper *temppsw = new (SimplepubsubWrapper);
+    temppsw->clientID = psw->clientID;
+    temppsw->metadata = psw->metadata;
+    temppsw->peerURL = psw->peerURL;
 
-    if(subtoClient.find(event)!=subtoClient.end()){
-        if(subtoClient[event].find(clientId)!=subtoClient[event].end()){
+    map<string, set<int>> requiredeventMap = psw->requiredeventMap;
+
+    for (map<string, set<int>>::iterator it = requiredeventMap.begin(); it != requiredeventMap.end(); ++it)
+    {
+        string event = it->first;
+        temppsw->eventList.push_back(event);
+    }
+    
+    return temppsw;
+}
+
+void eventUnSubscribe(string event, string clientId)
+{
+
+    if (subtoClient.find(event) != subtoClient.end())
+    {
+        if (subtoClient[event].find(clientId) != subtoClient[event].end())
+        {
 
             subtoClientMtx.lock();
             subtoClient[event].erase(clientId);
             subtoClientMtx.unlock();
-
         }
-
     }
 
     return;
-
 }
 
 int getSubscribedClientsNumber(vector<string> subEventList)
@@ -96,7 +114,6 @@ void addNewClientLocal(string clientid, vector<string> eventList)
         subtoClient[eventWithoutNum][clientid] = psw;
         subtoClientMtx.unlock();
         psw->requiredeventMap[eventWithoutNum].insert(requireNum);
-        
     }
     return;
 }
@@ -122,7 +139,6 @@ void addNewClient(string clientid, string notifyAddr, vector<string> eventList)
         subtoClient[eventWithoutNum][clientid] = psw;
         subtoClientMtx.unlock();
         psw->requiredeventMap[eventWithoutNum].insert(requireNum);
-        
     }
 
     return;

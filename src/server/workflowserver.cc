@@ -609,6 +609,8 @@ class GreeterServiceImpl final : public Greeter::Service
 
     clock_gettime(CLOCK_REALTIME, &start);
 
+    vector<SimplepubsubWrapper *> spsw;
+
     subtoClientMtx.lock();
 
     for (itera = subtoClient[eventStr].begin(); itera != subtoClient[eventStr].end(); ++itera)
@@ -616,12 +618,8 @@ class GreeterServiceImpl final : public Greeter::Service
       string clientid = itera->first;
       pubsubWrapper *psw = itera->second;
 
-      //get necessary info
-      string notifyAddr = psw->peerURL;
-
-      //only consider one event currently
-      vector<string> eventList;
-      eventList.push_back(eventStr);
+      SimplepubsubWrapper *temppsw = getSimplepubsubWrapper(psw);
+      spsw.push_back(temppsw);
 
       //get greeter from the dstAddr
 
@@ -629,18 +627,6 @@ class GreeterServiceImpl final : public Greeter::Service
       //refer to https://www.cnblogs.com/zhoulipeng/p/3432009.html
       delete itera->second;
       subtoClient[eventStr].erase(itera++);
-
-      GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
-          dstAddr.data(), grpc::InsecureChannelCredentials()));
-
-      //printf("send clientid %s to dest %s\n", clientid.data(), dstAddr.data());
-      //subscribe to dest
-      string reply = greeter->Subscribe(eventList, clientid, notifyAddr, "SERVER");
-
-      if (reply.compare("SUBSCRIBED") != 0)
-      {
-        printf("redistribution, subscribe to server %s fail\n", dstAddr.data());
-      }
 
       //unsubscribe current info
       //eventUnSubscribe(eventStr, clientid);
@@ -661,6 +647,28 @@ class GreeterServiceImpl final : public Greeter::Service
 
     clock_gettime(CLOCK_REALTIME, &end);
     difftime = (end.tv_sec - start.tv_sec) * 1.0 + (end.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
+
+    GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
+        dstAddr.data(), grpc::InsecureChannelCredentials()));
+
+    for (int i = 0; i < spsw.size(); i++)
+    {
+
+      //printf("send clientid %s to dest %s\n", clientid.data(), dstAddr.data());
+      //subscribe to dest
+      SimplepubsubWrapper *temppsw = spsw[i];
+
+      string clientid = temppsw->clientID;
+      string notifyAddr = temppsw->peerURL;
+      vector<string> eventList = temppsw->eventList;
+
+      string reply = greeter->Subscribe(eventList, clientid, notifyAddr, "SERVER");
+
+      if (reply.compare("SUBSCRIBED") != 0)
+      {
+        printf("redistribution, subscribe to server %s fail\n", dstAddr.data());
+      }
+    }
 
     printf("RedistributeSub for eventStr %s is %lf\n", eventStr.data(), difftime);
 
@@ -875,55 +883,50 @@ void RedistributeByPlan(vector<Plan> planList)
   printf("plan size is %d\n", size);
 
 #pragma omp parallel
-{
-#pragma omp for
-  for (int i = 0; i < size; i++)
   {
-    int num_threads = omp_get_num_threads();
-    printf("Thread rank: %d\n", num_threads);
-    Plan plan = planList[i];
-    string moveEvent = plan.moveSubscription;
-    string srcaddr = plan.srcAddr;
-    string destaddr = plan.destAddr;
+#pragma omp for
+    for (int i = 0; i < size; i++)
+    {
+      int num_threads = omp_get_num_threads();
+      printf("Thread rank: %d\n", num_threads);
+      Plan plan = planList[i];
+      string moveEvent = plan.moveSubscription;
+      string srcaddr = plan.srcAddr;
+      string destaddr = plan.destAddr;
 
-    int diff = plan.moveNumber;
+      int diff = plan.moveNumber;
 
-    //unsubscribe event string at src
-    //subscribe event string at dest
+      //unsubscribe event string at src
+      //subscribe event string at dest
 
-    //send redistribute request
-    printf("send redistribution moveEvent %s src %s dst %s diff %d\n",
-           moveEvent.data(), srcaddr.data(), destaddr.data(), diff);
+      //send redistribute request
+      printf("send redistribution moveEvent %s src %s dst %s diff %d\n",
+             moveEvent.data(), srcaddr.data(), destaddr.data(), diff);
 
-    GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
-        srcaddr.data(), grpc::InsecureChannelCredentials()));
+      GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
+          srcaddr.data(), grpc::InsecureChannelCredentials()));
 
-    greeter->RedistributeSub(moveEvent, srcaddr, destaddr, diff);
+      greeter->RedistributeSub(moveEvent, srcaddr, destaddr, diff);
 
-    //update the sub num for self
+      //update the sub num for self
 
-    //this function is called on coordinator
-    int newSubTime = subtoClient[moveEvent].size();
+      //this function is called on coordinator
+      int newSubTime = subtoClient[moveEvent].size();
 
-    printf("newsize after redistribution %d for str %s for server %s\n", newSubTime, moveEvent.data(), ServerAddr.data());
+      printf("newsize after redistribution %d for str %s for server %s\n", newSubTime, moveEvent.data(), ServerAddr.data());
 
-    eventRecordMapLock.lock();
-    eventRecordMap[moveEvent][srcaddr] = newSubTime;
-    eventRecordMapLock.unlock();
+      eventRecordMapLock.lock();
+      eventRecordMap[moveEvent][srcaddr] = newSubTime;
+      eventRecordMapLock.unlock();
 
-    printf("finish plan\n");
+      printf("finish plan\n");
+    }
   }
-}
 }
 
 //check
 void checkOverload()
 {
-
-  struct timespec start, end1, end2;
-  double diff1, diff2;
-
-  clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
 
   //range map
   //for every event
@@ -1017,17 +1020,7 @@ void checkOverload()
                planList[k].moveSubscription.data(), planList[k].srcAddr.data(), planList[k].destAddr.data(), planList[k].moveNumber);
       }
 
-      clock_gettime(CLOCK_REALTIME, &end1); /* mark start time */
-      diff1 = (end1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-
-      printf("redistribution time part1 (%lf) seconds \n", diff1);
-
       RedistributeByPlan(planList);
-
-      clock_gettime(CLOCK_REALTIME, &end2); /* mark start time */
-      diff2 = (end2.tv_sec - start.tv_sec) * 1.0 + (end2.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-
-      printf("redistribution time part2 (%lf) seconds \n", diff2);
     }
 
     //TODO put server list in new dir
@@ -1048,9 +1041,19 @@ void periodChecking()
   printf("initial status:\n");
   outputMap();
 
+  struct timespec start, end1;
+  double diff1;
+
+  clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
+
   checkOverload();
 
+  clock_gettime(CLOCK_REALTIME, &end1); /* mark start time */
+  diff1 = (end1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
+
   //   }
+
+  printf("total time for checkOverload and redistribution is %lf\n",diff1);
 
   while (1)
   {

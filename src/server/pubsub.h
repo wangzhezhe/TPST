@@ -40,6 +40,15 @@ typedef struct pubsubWrapper{
 }pubsubWrapper;
 
 
+typedef struct SimplepubsubWrapper
+{
+    vector <string> eventList;
+    string peerURL;
+    string clientID;
+    string metadata;
+} SimplepubsubWrapper;
+
+
 extern mutex subtoClientMtx;
 
 
@@ -74,5 +83,7 @@ void deletePubEvent(pubsubWrapper *psw);
 void eventUnSubscribe(string event,string clientId);
 
 //void *checkNotify(void *arguments);
+
+SimplepubsubWrapper *getSimplepubsubWrapper(pubsubWrapper *psw);
 
 #endif
