@@ -30,6 +30,8 @@ void recordIPPortWithoutFile(string &ipstr, string port);
 
 vector<string> getFreeNodeList(int needNum);
 
+bool nodeAttach(string dir, string nodeAddr);
+
 extern const string gm_multinodeip;
 
 extern const string gm_FreePool;

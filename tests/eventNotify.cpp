@@ -116,11 +116,11 @@ void fakePublishTest(int pubSize)
     {
         //int index = (rand() % (pubSize - 0 + 1));
 
-        string metadata = to_string(COMPONENTID) + "metadataTest" + to_string(i);
+        string metadata = to_string(gm_rank) + "metadataTest" + to_string(i);
 
         vector<string> pubeventList;
 
-        string fakePub = to_string(COMPONENTID) + "fakeSub" + to_string(i);
+        string fakePub = to_string(gm_rank) + "fakeSub_" + to_string(i);
 
         pubeventList.push_back(fakePub);
 
@@ -175,14 +175,18 @@ void onePubMultipleSameSub(int subSize, string notifyAddr)
 
     }
 
+    
+    printf("wait for group redistribution sleep 5s\n");
+    
+    sleep(5);
+
     //event publish
     struct timespec start;
     clock_gettime(CLOCK_REALTIME, &start); /* mark the end time */
     printf("start id %d start pub time = (%lld.%.9ld)\n", gm_rank, (long long)start.tv_sec, start.tv_nsec);
-    
-    printf("wait for group redistribution\n");
-    //string metadata = "metadataTest";
-    //eventPublish(pubeventList, metadata);
+
+    string metadata = "metadataTest";
+    eventPublish(pubeventList, metadata);
 
     return;
 }
@@ -210,6 +214,9 @@ void fakegothroughFolderRegister(int subSize, string notifyAddr)
     //for test using
     string redundantPushEvent = "redundant";
 
+
+    printf("call fakegothroughFolderRegister, subsize is %d\n",subSize);
+
     for (i = 0; i < subSize; i++)
     {
         vector<string> pubeventList;
@@ -217,12 +224,10 @@ void fakegothroughFolderRegister(int subSize, string notifyAddr)
         vector<string> actionList;
 
         //every component pub sub different event
-        string fakeSub = to_string(COMPONENTID) + "fakeSub" + to_string(i);
-        string fakePub = to_string(COMPONENTID) + "fakePub" + to_string(i);
+        string fakeSub = to_string(gm_rank) + "fakeSub_" + to_string(i);
         string fakeaction = "fakeaction" + to_string(i);
 
         subeventList.push_back(fakeSub);
-        pubeventList.push_back(fakePub);
         //pubeventList.push_back(redundantPushEvent);
         actionList.push_back(fakeaction);
 
@@ -230,16 +235,24 @@ void fakegothroughFolderRegister(int subSize, string notifyAddr)
 
         EventTriggure *etrigger = fakeaddNewConfig(driver, subeventList, pubeventList, actionList, clientID);
 
+        //printf("debugtest sub id %d\n",i);
+
         if (clientID != "")
         {
             eventSubscribe(etrigger, clientID, notifyAddr,fakeSub);
         }
+
+       // printf("sub id %d ok\n",i);
+        
     }
 
+    sleep(3);
     struct timespec start;
     clock_gettime(CLOCK_REALTIME, &start); /* mark the end time */
-    printf("start id %d start pub time = (%lld.%.9ld)\n", COMPONENTID, (long long)start.tv_sec, start.tv_nsec);
+    printf("start id %d start pub time = (%lld.%.9ld)\n", gm_rank, (long long)start.tv_sec, start.tv_nsec);
+    
 
+    //sleep some time then publish
     fakePublishTest(subSize);
 
     return;
@@ -381,9 +394,10 @@ int main(int argc, char **argv)
     //wait the notify server start
     sleep(1);
 
-    onePubMultipleSameSub(subSize, notifyAddr);
+    //onePubMultipleSameSub(subSize, notifyAddr);
 
-    //fakegothroughFolderRegister(subSize, notifyAddr);
+    
+    fakegothroughFolderRegister(subSize, notifyAddr);
 
     while (1)
     {

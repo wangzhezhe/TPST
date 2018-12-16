@@ -156,9 +156,7 @@ void deleteClient(string subevent, string clientid)
 void deletePubEvent(pubsubWrapper *psw)
 {
 
-    publishedEventMtx.lock();
     psw->publishedEvent.clear();
-    publishedEventMtx.unlock();
     return;
 }
 
@@ -313,9 +311,11 @@ void pubsubPublish(vector<string> eventList, string metadata)
         {
             return;
         }
+
         subtoClientMtx.lock();
+        
         map<string, pubsubWrapper *> clientMap = subtoClient[eventwithoutNum];
-        subtoClientMtx.unlock();
+        
         //traverse map
         map<string, pubsubWrapper *>::iterator itmap;
 
@@ -347,7 +347,9 @@ void pubsubPublish(vector<string> eventList, string metadata)
 
             if (publishedEvent.find(eventwithoutNum) == publishedEvent.end())
             {
+                
                 publishedEvent[eventwithoutNum] = 0;
+               
             }
 
             publishedEvent[eventwithoutNum]++;
@@ -368,6 +370,9 @@ void pubsubPublish(vector<string> eventList, string metadata)
                 //printf("check iftrigure event %s bool %d\n", eventwithoutNum.data(), clientMap[clientId]->iftrigure);
             }
         }
+
+        subtoClientMtx.unlock();
+
     }
 
     //clock_gettime(CLOCK_REALTIME, &end2);

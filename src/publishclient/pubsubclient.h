@@ -99,5 +99,6 @@ extern map<string, GreeterClient *> multiClients;
 extern map<string, map<string, GreeterClient *>> workerClients;
 extern vector<GreeterClient *> coordinatorClients;;
 
+extern mutex coordinatorClientsLock;
 
 #endif

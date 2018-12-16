@@ -7,22 +7,6 @@
 
 using namespace std;
 
-//only for test using for the event in following format
-//eventmessage_i
-string getClusterDirFromEventMsg(string eventMsg)
-{
-
-    int startPosition = eventMsg.find("_");
-
-    eventMsg.erase(0, startPosition+1);
-
-    string clusterDir = "cluster"+eventMsg;
-
-    clusterDir = gm_multinodeip + "/" + clusterDir;
-
-    return clusterDir;
-}
-
 //use int i to simulate event with suffix number i
 string getClusterDirFromEvent(int i)
 {
@@ -37,6 +21,24 @@ string getClusterDirFromEvent(int i)
 
     return clusterDir;
 }
+
+//only for test using for the event in following format
+//eventmessage_i
+string getClusterDirFromEventMsg(string eventMsg)
+{
+
+    int startPosition = eventMsg.find("_");
+
+    eventMsg.erase(0, startPosition+1);
+
+    int index= stoi(eventMsg);
+
+    string clusterDir =  getClusterDirFromEvent(index);
+
+    return clusterDir;
+}
+
+
 
 //use random function is also ok
 //use srand (time(0)) before calling rand()

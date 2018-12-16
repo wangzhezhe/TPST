@@ -95,6 +95,7 @@ mutex workerClientsLock;
 map<string, map<string, GreeterClient *>> workerClients;
 //map<string, map<string, GreeterClient *>> coordinatorClients;
 
+mutex coordinatorClientsLock;
 vector<GreeterClient *> coordinatorClients;
 
 int robincount = 0;
@@ -105,8 +106,6 @@ void updateCoordinatorClients(string groupDir)
     string coordinatorAddr = groupDir + "/" + gm_coordinatorDir;
 
     //clean the old clients and update
-
-    coordinatorClients.clear();
 
     vector<string> coordinatorAddrList = loadAddrInDir(coordinatorAddr);
 
@@ -121,7 +120,9 @@ void updateCoordinatorClients(string groupDir)
         GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
             coordinatorAddrList[i].data(), grpc::InsecureChannelCredentials()));
         //coordinatorClients[groupDir][coordinatorAddrList[i]] = greeter;
+        coordinatorClientsLock.lock();
         coordinatorClients.push_back(greeter);
+        coordinatorClientsLock.unlock();
     }
 
     return;
@@ -587,7 +588,7 @@ GreeterClient *getClientFromEvent(string eventString)
 
     srand(time(0));
     int serverId = getServerIdFromAddr(serverNum);
-    //printf("server id is %d\n", serverId);
+    //printf("[publishclient] server id is %d\n", serverId);
 
     workerClientsLock.lock();
     map<string, GreeterClient *> clients = workerClients[clusterDir];

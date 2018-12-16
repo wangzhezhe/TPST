@@ -121,10 +121,10 @@ void eventPublish(vector<string> pubList,string metadata)
     publishClient++;
     publishMutex.unlock();
 
-    //if (publishClient % 100 == 0)
-    //{
-    //    printf("publish times %d\n", publishClient);
-    //}
+    if (publishClient % 100 == 0)
+    {
+        printf("publish times %d\n", publishClient);
+    }
 
 
     string reply = greeter->Publish(pubList, "CLIENT", metadata);
@@ -134,7 +134,7 @@ void eventPublish(vector<string> pubList,string metadata)
         printf("rpc failed, publish %s failed\n", pubList[0].data());
     }
 
-    printf("debug client publish event %s\n",eventMsg.data());
+    //printf("debug client publish event %s\n",eventMsg.data());
 
     return;
 }

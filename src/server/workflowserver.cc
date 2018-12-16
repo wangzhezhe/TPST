@@ -118,49 +118,44 @@ deque<NotifyInfo> notifyQueue;
 
 int notifySleep = 1000000;
 
-//broadcaster this event to nodes in
-/* todo update the propagation process
+//broadcaster this event to nodes in group
+
 void publishMultiServer(vector<string> eventList, string metadata)
 {
 
-  //printf("debug multi publish metadata %s\n", metadata.data());
-  //get self ip:port
-  string serverSocket = ServerIP + ":" + ServerPort;
+  printf("debug call publishMultiServer\n");
+  //get the cluster dir
+  string clusterWorkerDir = GM_CLUSTERDIR + "/" + gm_workerDir;
+  vector<string> workerList = loadAddrInDir(clusterWorkerDir);
 
-  //get the multiserver ip
-  //TODO this group info should be updated dynamically
-  string clusterDir = GM_CLUSTERDIR;
-  vector<string> addrList = workerAddrMap[clusterDir];
-  int size = addrList.size();
-  //printf("addr size %d\n", size);
-  int i, subnum, replynum;
-  string reply, tempaddr;
-  for (i = 0; i < size; i++)
+  //get the address for all the nodes in group (except its self in working group)
+  int size = workerList.size();
+
+  //broadcast the event to all the nodes
+
+  for (int i = 0; i < size; i++)
   {
-    tempaddr = addrList[i];
-    if (serverSocket.compare(tempaddr) != 0)
+
+    string tempaddr = workerList[i];
+    if (ServerAddr.compare(tempaddr) != 0)
     {
+      //send request
+      GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
+          tempaddr.data(), grpc::InsecureChannelCredentials()));
+      string reply = greeter->Publish(eventList, "SERVER", metadata);
 
-      //ask if notified first, if number !=0 then propagate
-      replynum = multiClients[tempaddr]->GetSubscribedNumber(eventList);
+      printf("broad cast to server %s\n", tempaddr.data());
 
-      //check the subtoclient in other nodes
-      if (replynum > 0)
+      if (reply.compare("OK") != 0)
       {
-        reply = multiClients[tempaddr]->Publish(eventList, "SERVER", metadata);
-        if (reply.compare("OK") != 0)
-        {
-          printf("failed to propagate event to server %s\n", tempaddr.data());
-          return;
-        }
+        printf("failed to propagate event to server %s\n", tempaddr.data());
+        return;
       }
-      //TODO the fault tolerant for propagation
-
-      //printf("propagate to server %s ok\n", multiaddr[i].data());
     }
   }
+
+  return;
 }
-*/
 
 void *checkNotify(void *arguments)
 {
@@ -168,7 +163,7 @@ void *checkNotify(void *arguments)
   struct timespec start, end, finish;
   double diff;
 
-  clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
+  //clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
 
   pubsubWrapper *psw = (pubsubWrapper *)arguments;
   string clientidstr = psw->clientID;
@@ -221,8 +216,9 @@ void *checkNotify(void *arguments)
   notifyQueue.push_back(ninfo);
   nqmutex.unlock();
 
+  subtoClientMtx.lock();
   deletePubEvent(psw);
-
+  subtoClientMtx.unlock();
   //printf("server %s notify event %s to %s\n", ServerIP.data(), eventkeywithoutNum.data(), peerURL.data());
 
   /*
@@ -335,6 +331,7 @@ void startNotify(string eventwithoutNum)
   pthread_t id;
 
   //range all the client id
+  subtoClientMtx.lock();
   map<string, pubsubWrapper *> subscribedMap = subtoClient[eventwithoutNum];
   //range subscribedMap
   map<string, pubsubWrapper *>::iterator itmap;
@@ -353,7 +350,10 @@ void startNotify(string eventwithoutNum)
     resultmutex.lock();
     resultQueue.push_back(result);
     resultmutex.unlock();
+
+    //delete psw here
   }
+  subtoClientMtx.unlock();
 }
 
 // Logic and data behind the server's behavior.
@@ -431,6 +431,9 @@ class GreeterServiceImpl final : public Greeter::Service
       return Status::OK;
     }
 
+    // propagate subscription
+    string source = request->source();
+
     //clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
     //diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
     //printf("debug for subevent stage1 response time = (%llu) second\n", (long long unsigned int)diff);
@@ -461,23 +464,6 @@ class GreeterServiceImpl final : public Greeter::Service
     }
 
     pubsubSubscribe(eventList, clientId, notifyAddr);
-
-    /* put this part in publish end
-    //start notification
-    size = eventList.size();
-    int trinum = 1;
-    string eventMessage;
-    for (i = 0; i < size; i++)
-    {
-      eventMessage = eventList[i];
-      ParseEvent(eventStr, eventMessage, trinum);
-      //TODO the thread for checking notify shouled be recorded and stored
-      //the checking notify should be killed when doing unsubscribe
-      //do this after publishing
-      //TODO what if submultiple events???
-      startNotify(eventMessage, clientId);
-    }
-    */
 
     reply->set_returnmessage("SUBSCRIBED");
 
@@ -511,7 +497,10 @@ class GreeterServiceImpl final : public Greeter::Service
       return Status::OK;
     }
 
+    //TODO assume there are only one coordinator
+    coordinatorClientsLock.lock();
     GreeterClient *coordinatorClient = coordinatorClients[0];
+    coordinatorClientsLock.unlock();
 
     string serverAddr = ServerAddr;
 
@@ -528,8 +517,6 @@ class GreeterServiceImpl final : public Greeter::Service
       }
     }
 
-    // propagate subscription
-    string source = request->source();
     if (propagateSub == true && source.compare("CLIENT") == 0)
     {
       printf("propagate subscription to other nodes in group\n");
@@ -703,8 +690,8 @@ class GreeterServiceImpl final : public Greeter::Service
     {
       eventStr = request->pubsubmessage(i);
       //#ifdef DEBUG
-      printf("debug server %d get publish event source (%s) publish meta (%s) publish event (%s)\n",
-             gm_rank, source.data(), metadata.data(), eventStr.data());
+      //printf("debug server %d get publish event source (%s) publish meta (%s) publish event (%s)\n",
+      //       gm_rank, source.data(), metadata.data(), eventStr.data());
 
       //#endif
       eventList.push_back(eventStr);
@@ -714,56 +701,39 @@ class GreeterServiceImpl final : public Greeter::Service
     //publish on one server
     pubsubPublish(eventList, metadata);
 
-    //TODO add a string in request to label if the publish request is from client or server
-    //if the request is from server return directly
-    //if the request is from client, broadcaster eventList to multi server nodes
 
-    //CLIENT or SERVER
 
-    //broadcaster to other servers
+    //broadcaster to other servers in same group
     if (propagatePub == true && source.compare("CLIENT") == 0)
     {
-      //clock_gettime(CLOCK_REALTIME, &end1); /* mark the end time */
-      //diff1 = (en+d1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
 
       //TODO create new thread here (use asnchronous way to do the communication)
       //publishMultiServer(eventList);
 
-      //std::thread pubthread(publishMultiServer, eventList, metadata);
-      //pubthread.detach();
-      //only caculate time when propagation is needed
-      //don't calculate time for the propagation between servers
-      clock_gettime(CLOCK_REALTIME, &end2); /* mark the end time */
-      diff = (end2.tv_sec - start.tv_sec) * 1.0 + (end2.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-
-      pubtimesMtx.lock();
-      pubavg = (pubavg * pubtimes + diff) / (pubtimes + 1);
-      pubtimes++;
-      pubtimesMtx.unlock();
-
-      if (pubtimes % 128 == 0)
-      {
-        printf("debug for publish response time = (%lf) avg time = (%lf) pubtimes (%d)\n", pubavg, diff, pubtimes);
-      }
-
-      //for test using, only test one event case triggureing
-      //clock_gettime(CLOCK_REALTIME, &finish); /* mark the end time */
-      //diff = (finish.tv_sec - start1.tv_sec) * 1.0 + (finish.tv_nsec - start1.tv_nsec) * 1.0 / BILLION;
-      //printf("publish (%s) finish time = (%lld.%.9ld) second serverip %s\n", eventList[0].data(), (long long)finish.tv_sec, finish.tv_nsec, ServerIP.data());
+      std::thread pubthread(publishMultiServer, eventList, metadata);
+      pubthread.detach();
     }
 
-    //if(source.compare("SERVER") == 0){
-    //clock_gettime(CLOCK_REALTIME, &end3); /* mark the end time */
-    //diff3 = (end3.tv_sec - start.tv_sec) * 1.0 + (end3.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-    //printf("debug for publish propagate (%s) response time = (%lf)\n", debugeventspub.data(), diff3);
+    clock_gettime(CLOCK_REALTIME, &end1);
+    diff1 = (end1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
 
-    //}
+    
+    pubtimesMtx.lock();
+    pubavg = (pubavg * pubtimes + diff1) / (pubtimes + 1);
+    pubtimes++;
+    pubtimesMtx.unlock();
 
-    //check if triggure
-    //start notification
+    if (pubtimes % 128 == 0)
+    {
+      printf("debug for publish (%s) response time = (%lf) avg time = (%lf) pubtimes (%d)\n", eventStr.data(), pubavg, diff1, pubtimes);
+    }
+
     size = eventList.size();
     int trinum = 1;
     string eventMessage;
+
+
+    
     for (i = 0; i < size; i++)
     {
       eventMessage = eventList[i];
@@ -772,9 +742,9 @@ class GreeterServiceImpl final : public Greeter::Service
       //the checking notify should be killed when doing unsubscribe
       //do this after publishing
       //TODO what if submultiple events???
-
       startNotify(eventMessage);
     }
+    
 
     reply->set_returnmessage("OK");
 
@@ -798,8 +768,9 @@ class GreeterServiceImpl final : public Greeter::Service
     //update the recordmap
     //void updateStatusMap(string event, string serverAddr, int subNumber)
 
+    eventRecordMapLock.lock();
     updateStatusMap(subevent, serveraddr, subnum);
-
+    eventRecordMapLock.unlock();
     reply->set_returnmessage("OK");
 
     return Status::OK;
@@ -881,7 +852,9 @@ void RedistributeByPlan(vector<Plan> planList)
   //get greeter for src (src are same)
 
   printf("plan size is %d\n", size);
+  omp_lock_t writelock;
 
+  omp_init_lock(&writelock);
 #pragma omp parallel
   {
 #pragma omp for
@@ -914,14 +887,17 @@ void RedistributeByPlan(vector<Plan> planList)
       int newSubTime = subtoClient[moveEvent].size();
 
       printf("newsize after redistribution %d for str %s for server %s\n", newSubTime, moveEvent.data(), ServerAddr.data());
+      omp_set_lock(&writelock);
 
       eventRecordMapLock.lock();
       eventRecordMap[moveEvent][srcaddr] = newSubTime;
       eventRecordMapLock.unlock();
-
+      // one thread at a time stuff
+      omp_unset_lock(&writelock);
       printf("finish plan\n");
     }
   }
+  omp_destroy_lock(&writelock);
 }
 
 //check
@@ -936,6 +912,7 @@ void checkOverload()
   //add into map
   vector<string> imBalancedEventVector;
 
+  eventRecordMapLock.lock();
   for (map<string, map<string, int>>::iterator it = eventRecordMap.begin(); it != eventRecordMap.end(); ++it)
   {
     string event = it->first;
@@ -949,6 +926,7 @@ void checkOverload()
       imBalancedEventVector.push_back(event);
     }
   }
+  eventRecordMapLock.unlock();
 
   int imbsize = imBalancedEventVector.size();
 
@@ -959,71 +937,82 @@ void checkOverload()
     return;
   }
 
-  else
+  vector<string> serverAddrList;
+
+  //range the imbalancedVector
+  //calculate freeNumber
+  //get max value among them
+  int serverNumber = 1;
+  for (int i = 0; i < imbsize; i++)
   {
-    //range the imbalancedVector
-    //calculate freeNumber
-    //get max value among them
-    int serverNumber = 1;
-    for (int i = 0; i < imbsize; i++)
+    printf("imbalance event %s\n", imBalancedEventVector[i].data());
+    string imbEvent = imBalancedEventVector[i];
+    int subSize = eventRecordMap[imbEvent].size();
+    double avg = getAverage(imbEvent);
+    int addNumber = calculateNewServerNum(avg, subSize);
+    serverNumber = max(serverNumber, addNumber);
+
+    printf("get serverNumber %d server process from pool\n", serverNumber);
+
+    // get free node, the value is serverNumber
+    //TODO execute the dir addr replacement at this step
+    //TODO consider if there is not enough resources in freepool
+    //vector<string> serverAddrList = fakeGetServerList(serverNumber);
+
+    serverAddrList = getFreeNodeList(serverNumber);
+
+    int listSize = serverAddrList.size();
+    printf("avaliable new listsize is %d\n", listSize);
+    for (int j = 0; j < listSize; j++)
     {
-      printf("imbalance event %s\n", imBalancedEventVector[i].data());
-      string imbEvent = imBalancedEventVector[i];
-      int subSize = eventRecordMap[imbEvent].size();
-      double avg = getAverage(imbEvent);
-      int addNumber = calculateNewServerNum(avg, subSize);
-      serverNumber = max(serverNumber, addNumber);
+      string serAddr = serverAddrList[j];
 
-      printf("get serverNumber %d server process from pool\n", serverNumber);
+      //update the cluster dir for new added nodes
+      //(after subscribing, the event record map at the coordinate node need to be updated)
 
-      // get free node, the value is serverNumber
-      //TODO execute the dir addr replacement at this step
-      //TODO consider if there is not enough resources in freepool
-      //vector<string> serverAddrList = fakeGetServerList(serverNumber);
+      GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
+          serAddr.data(), grpc::InsecureChannelCredentials()));
 
-      vector<string> serverAddrList = getFreeNodeList(serverNumber);
+      string newCluster = GM_CLUSTERDIR;
+      string reply = greeter->UpdateCluster(newCluster);
 
-      int listSize = serverAddrList.size();
-      printf("avaliable new listsize is %d\n", listSize);
-      for (int j = 0; j < listSize; j++)
+      if (reply.compare("OK") != 0)
       {
-        string serAddr = serverAddrList[j];
-
-        //update the cluster dir
-        //TODO modify the group info!!!!
-
-        GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
-            serAddr.data(), grpc::InsecureChannelCredentials()));
-
-        string newCluster = GM_CLUSTERDIR;
-        string reply = greeter->UpdateCluster(newCluster);
-
-        if (reply.compare("OK") != 0)
-        {
-          printf("update cluetsr %s fail\n", newCluster.data());
-        }
-
-        //void updateStatusMap(string event, string serverAddr, int subNumber)
-        updateStatusMap(imbEvent, serAddr, 0);
+        printf("update cluetsr %s fail\n", newCluster.data());
       }
 
-      //debug
-      //outputMap();
-      //all the data related to this event is updated
-
-      vector<Plan> planList = generatePlanForEvent(imbEvent);
-
-      //debug plan
-      for (int k = 0; k < planList.size(); k++)
-      {
-        printf("plan: event %s src %s dest %s num %d\n",
-               planList[k].moveSubscription.data(), planList[k].srcAddr.data(), planList[k].destAddr.data(), planList[k].moveNumber);
-      }
-
-      RedistributeByPlan(planList);
+      //void updateStatusMap(string event, string serverAddr, int subNumber)
+      updateStatusMap(imbEvent, serAddr, 0);
     }
 
+    //debug
+    //outputMap();
+    //all the data related to this event is updated
+
+    vector<Plan> planList = generatePlanForEvent(imbEvent);
+
+    //debug plan
+    for (int k = 0; k < planList.size(); k++)
+    {
+      printf("plan: event %s src %s dest %s num %d\n",
+             planList[k].moveSubscription.data(), planList[k].srcAddr.data(), planList[k].destAddr.data(), planList[k].moveNumber);
+    }
+
+    RedistributeByPlan(planList);
+
     //TODO put server list in new dir
+
+    int addrSize = serverAddrList.size();
+
+    for (int i = 0; i < addrSize; i++)
+    {
+      string newAddr = serverAddrList[i];
+      bool updateOk = nodeAttach(GM_CLUSTERDIR, newAddr);
+      if (updateOk == false)
+      {
+        printf("failed to add server (%s) into cluster (%s)\n", newAddr.data(), GM_CLUSTERDIR.data());
+      }
+    }
 
     // move a to b for specific number
     // redistribution
@@ -1053,7 +1042,7 @@ void periodChecking()
 
   //   }
 
-  printf("total time for checkOverload and redistribution is %lf\n",diff1);
+  printf("total time for checkOverload and redistribution is %lf\n", diff1);
 
   while (1)
   {
@@ -1132,11 +1121,13 @@ int main(int argc, char **argv)
 
   propagatePub = false;
 
+  const bool startPeridChecking = false;
+
   printf("server id %d server status %s\n", gm_rank, SERVERSTATUS.data());
 
   thread runServer(RunServer, ServerIP, ServerPort, threadPoolSize);
 
-  if (SERVERSTATUS.compare(status_coor) == 0)
+  if (startPeridChecking == true && SERVERSTATUS.compare(status_coor) == 0)
   {
     printf("server id %d is coordinator, run group checking\n", gm_rank);
     thread tCheck(periodChecking);

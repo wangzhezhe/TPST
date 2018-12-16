@@ -66,7 +66,7 @@ map<string, vector<string>> workerAddrMap;
 //all the coordinator Addr
 map<string, string> coordinatorAddrMap;
 
-bool loadCoordinator = false;
+map <string,bool> loadCoordinatorMap;
 
 //the Dir could be the coordinator or the worker ./multinodeip/cluster0/worker
 vector<string> loadAddrInDir(string Dir)
@@ -128,13 +128,16 @@ void updateWorkerAddrMap(string clusterDir)
 
     string workerDir = clusterDir + "/" + gm_workerDir;
     string coordinatorDir = clusterDir + "/" + gm_coordinatorDir;
+
+
+    //the worker dir may not exist if there is only one server
     vector<string> workerAddr = loadAddrInDir(workerDir);
     vector<string> coordinatorAddr = loadAddrInDir(coordinatorDir);
 
     releaseLock(clusterDir);
 
     //first time to load
-    if (loadCoordinator == false)
+    if (loadCoordinatorMap.find(clusterDir) == loadCoordinatorMap.end() || loadCoordinatorMap[clusterDir]==false)
     {
         int corSize = coordinatorAddr.size();
         for (int j = 0; j < corSize; j++)
@@ -144,7 +147,7 @@ void updateWorkerAddrMap(string clusterDir)
         workerAddrMapLock.lock();
         workerAddrMap[clusterDir] = workerAddr;
         workerAddrMapLock.unlock();
-        loadCoordinator = true;
+        loadCoordinatorMap[clusterDir] = true;
     }
 
     return;
@@ -349,6 +352,11 @@ bool nodeAttach(string dir, string nodeAddr)
 {
     //add nodeAddr into the string dir (cluster dir)
     string workerDirPath = dir + "/" + gm_workerDir;
+
+    //if the workdir does not exist
+    //create the work dir
+    createDir(workerDirPath);
+
     char addrFile[100];
     sprintf(addrFile, "%s/%s", workerDirPath.data(), nodeAddr.data());
 

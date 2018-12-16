@@ -23,7 +23,7 @@ map<string, map<string, int>> eventRecordMap;
 int checkPeriod = 5000000;
 
 //default value is 1024
-int overLoadThreshold = 1024; 
+int overLoadThreshold = 1024;
 
 //debug map
 
@@ -83,15 +83,14 @@ void redistributeStatusMap(string event, string serverAddr, int subNumber)
 void updateStatusMap(string event, string serverAddr, int subNumber)
 {
 
-    eventRecordMapLock.lock();
-
+    
     //empty
     if (eventRecordMap.find(event) == eventRecordMap.end())
     {
 
         eventRecordMap[event][serverAddr] = subNumber;
 
-        printf("new event %s new addr %s\n", event.data(), serverAddr.data());
+        //printf("new event %s new addr %s\n", event.data(), serverAddr.data());
     }
     else
     {
@@ -113,8 +112,6 @@ void updateStatusMap(string event, string serverAddr, int subNumber)
             //eventRecordMap[event]->currSubNumber = subNumber;
         }
     }
-
-    eventRecordMapLock.unlock();
 }
 
 int calculateNewServerNum(double avg, int currSubNum)
@@ -143,8 +140,8 @@ void AddNewServer(string event, vector<string> serverAddr)
     int size = serverAddr.size();
     for (int i = 0; i < size; i++)
     {
-        eventRecordMapLock.lock();
         string addr = serverAddr[i];
+        eventRecordMapLock.lock();
         eventRecordMap[event][addr] = 0;
         eventRecordMapLock.unlock();
     }
@@ -257,9 +254,6 @@ vector<Plan> generatePlanForEvent(string imbEvent)
 
     return planList;
 }
-
-
-
 
 /*
 

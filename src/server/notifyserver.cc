@@ -58,7 +58,6 @@ int NotifiedNum = 0;
 
 //default value
 //string NOTIFYPORT("50052");
-int COMPONENTID;
 
 string NOTIFYADDR;
 
@@ -147,7 +146,7 @@ class GreeterServiceImplNotify final : public Greeter::Service
         if (NotifiedNum % 128 == 0)
         {
             clock_gettime(CLOCK_REALTIME, &finish); /* mark the end time */
-            printf("id %d notifynum %d finish time = (%lld.%.9ld)\n", COMPONENTID, NotifiedNum, (long long)finish.tv_sec, finish.tv_nsec);
+            printf("id %d notifynum %d finish time = (%lld.%.9ld)\n", gm_rank, NotifiedNum, (long long)finish.tv_sec, finish.tv_nsec);
         }
         return Status::OK;
     }
