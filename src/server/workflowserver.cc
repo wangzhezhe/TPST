@@ -333,6 +333,9 @@ void startNotify(string eventwithoutNum)
   //range all the client id
   subtoClientMtx.lock();
   map<string, pubsubWrapper *> subscribedMap = subtoClient[eventwithoutNum];
+
+  printf("debug startnotify server id %d mapsize %d\n",gm_rank,subscribedMap.size());
+
   //range subscribedMap
   map<string, pubsubWrapper *>::iterator itmap;
 
@@ -1119,9 +1122,9 @@ int main(int argc, char **argv)
 
   propagateSub = false;
 
-  propagatePub = false;
+  propagatePub = true;
 
-  const bool startPeridChecking = false;
+  const bool startPeridChecking = true;
 
   printf("server id %d server status %s\n", gm_rank, SERVERSTATUS.data());
 

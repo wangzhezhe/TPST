@@ -148,7 +148,7 @@ void onePubMultipleSameSub(int subSize, string notifyAddr)
     vector<string> pubeventList;
     pubeventList.push_back(testEvent);
 
-    printf("debug onePubMultipleSub subsize is %d\n",subSize);
+    printf("debug onePubMultipleSub subsize is %d\n", subSize);
 
     int i = 0;
     for (i = 0; i < subSize; i++)
@@ -172,21 +172,26 @@ void onePubMultipleSameSub(int subSize, string notifyAddr)
         {
             eventSubscribe(etrigger, clientID, notifyAddr, testEvent);
         }
-
     }
 
-    
     printf("wait for group redistribution sleep 5s\n");
-    
-    sleep(5);
+
+    sleep(15);
+
+    //only the first client send the publish request
 
     //event publish
     struct timespec start;
     clock_gettime(CLOCK_REALTIME, &start); /* mark the end time */
     printf("start id %d start pub time = (%lld.%.9ld)\n", gm_rank, (long long)start.tv_sec, start.tv_nsec);
 
-    string metadata = "metadataTest";
-    eventPublish(pubeventList, metadata);
+    if (gm_rank == 0)
+    {
+
+
+        string metadata = "metadataTest";
+        eventPublish(pubeventList, metadata);
+    }
 
     return;
 }
@@ -214,8 +219,7 @@ void fakegothroughFolderRegister(int subSize, string notifyAddr)
     //for test using
     string redundantPushEvent = "redundant";
 
-
-    printf("call fakegothroughFolderRegister, subsize is %d\n",subSize);
+    printf("call fakegothroughFolderRegister, subsize is %d\n", subSize);
 
     for (i = 0; i < subSize; i++)
     {
@@ -239,18 +243,16 @@ void fakegothroughFolderRegister(int subSize, string notifyAddr)
 
         if (clientID != "")
         {
-            eventSubscribe(etrigger, clientID, notifyAddr,fakeSub);
+            eventSubscribe(etrigger, clientID, notifyAddr, fakeSub);
         }
 
-       // printf("sub id %d ok\n",i);
-        
+        // printf("sub id %d ok\n",i);
     }
 
-    sleep(3);
+    sleep(5);
     struct timespec start;
     clock_gettime(CLOCK_REALTIME, &start); /* mark the end time */
     printf("start id %d start pub time = (%lld.%.9ld)\n", gm_rank, (long long)start.tv_sec, start.tv_nsec);
-    
 
     //sleep some time then publish
     fakePublishTest(subSize);
@@ -394,10 +396,9 @@ int main(int argc, char **argv)
     //wait the notify server start
     sleep(1);
 
-    //onePubMultipleSameSub(subSize, notifyAddr);
+    onePubMultipleSameSub(subSize, notifyAddr);
 
-    
-    fakegothroughFolderRegister(subSize, notifyAddr);
+    //fakegothroughFolderRegister(subSize, notifyAddr);
 
     while (1)
     {
