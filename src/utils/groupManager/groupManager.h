@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <mutex>
+#include <set>
 
 
 using namespace std;
@@ -31,6 +32,8 @@ void recordIPPortWithoutFile(string &ipstr, string port);
 vector<string> getFreeNodeList(int needNum);
 
 bool nodeAttach(string dir, string nodeAddr);
+
+void updateCoordinatorAddr();
 
 extern const string gm_multinodeip;
 
@@ -57,5 +60,11 @@ extern mutex workerAddrMapLock;
 extern map<string, vector<string>> workerAddrMap;
 
 extern string GM_CLUSTERDIR;
+
+extern const string sourceIngroup; 
+extern const string sourceBetweengroup;
+extern const string sourceClient;
+
+extern set<string> coordinatorAddrSet;
 
 #endif

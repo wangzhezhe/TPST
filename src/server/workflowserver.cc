@@ -106,6 +106,8 @@ bool propagatePub = false;
 // 0.5 s
 int coorCheckPeriod = 10000000;
 
+const int checkingPeriod = 100000;
+
 typedef struct NotifyInfo
 {
   string addr;
@@ -117,6 +119,35 @@ mutex nqmutex;
 deque<NotifyInfo> notifyQueue;
 
 int notifySleep = 1000000;
+
+void publishMultiGroup(vector<string> eventList, string metadata)
+{
+
+  //range coordinatorAddrSet
+  set<string>::iterator it = coordinatorAddrSet.begin();
+
+  // Iterate till the end of set
+  while (it != coordinatorAddrSet.end())
+  {
+    // Print the element
+    string coordNator = (*it);
+    //Increment the iterator
+    it++;
+
+    if (coordNator.compare(ServerAddr) != 0)
+    {
+      GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
+          coordNator.data(), grpc::InsecureChannelCredentials()));
+      //broadcasting between groups
+      string reply = greeter->Publish(eventList, sourceBetweengroup, metadata);
+
+      if (reply.compare("OK") != 0)
+      {
+        printf("failed to propagate event to coordinator %s\n", coordNator.data());
+      }
+    }
+  }
+}
 
 //broadcaster this event to nodes in group
 
@@ -142,7 +173,7 @@ void publishMultiServer(vector<string> eventList, string metadata)
       //send request
       GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
           tempaddr.data(), grpc::InsecureChannelCredentials()));
-      string reply = greeter->Publish(eventList, "SERVER", metadata);
+      string reply = greeter->Publish(eventList, sourceIngroup, metadata);
 
       printf("broad cast to server %s\n", tempaddr.data());
 
@@ -177,32 +208,32 @@ void *checkNotify(void *arguments)
   int times = 0;
   string satisfiedStr;
 
-  //testusing, get the pub event
-  map<string, set<int>> reqEventMap = psw->requiredeventMap;
-
   string eventkeywithoutNum;
-
-  map<string, set<int>>::iterator itmap;
 
   string peerURL = psw->peerURL;
 
-  //for (itmap = reqEventMap.begin(); itmap != reqEventMap.end(); ++itmap)
+  //while (1)
   //{
-  //  eventkeywithoutNum = itmap->first;
-  //  printf("server %s start checking notify event %s to %s\n", ServerIP.data(), eventkeywithoutNum.data(), peerURL.data());
-  //}
+  //printf("notifyflag for client id (%s) status (%d)\n", clientidstr.data(), notifyFlag);
 
-  //on publish end, don't need while loop
+  psw->pswmtx.lock();
 
-  //clock_gettime(CLOCK_REALTIME, &start2);
-
-  //bool notifyFlag = checkIfTriggure(psw, satisfiedStr);
-  bool notifyFlag = psw->iftrigure;
-  //printf("notifyflag for client id %s (%d)\n",clientId.data(),notifyFlag);
-  if (notifyFlag == false)
+  if (psw->iftrigure == false)
   {
+    //usleep(checkingPeriod);
+    psw->pswmtx.unlock();
     return NULL;
   }
+  else
+  {
+    //avoid notify multiple times
+    psw->iftrigure = false;
+  }
+
+  psw->pswmtx.unlock();
+
+  printf("debug prepare to notify psw\n");
+  //}
 
   //TODO put the metadata and the url at the notifyqueue
   //TODO use another thread to get the element from the queue periodically
@@ -218,7 +249,9 @@ void *checkNotify(void *arguments)
 
   subtoClientMtx.lock();
   deletePubEvent(psw);
+
   subtoClientMtx.unlock();
+
   //printf("server %s notify event %s to %s\n", ServerIP.data(), eventkeywithoutNum.data(), peerURL.data());
 
   /*
@@ -334,7 +367,7 @@ void startNotify(string eventwithoutNum)
   subtoClientMtx.lock();
   map<string, pubsubWrapper *> subscribedMap = subtoClient[eventwithoutNum];
 
-  printf("debug startnotify server id %d mapsize %d\n",gm_rank,subscribedMap.size());
+  //printf("debug startnotify server id %d mapsize %d indexEvent %s\n", gm_rank, subscribedMap.size(), eventwithoutNum.data());
 
   //range subscribedMap
   map<string, pubsubWrapper *>::iterator itmap;
@@ -460,7 +493,7 @@ class GreeterServiceImpl final : public Greeter::Service
       eventStr = request->pubsubmessage(i);
 
       //#ifdef DEBUG
-      //printf("get subscribed event (%s)\n", eventStr.data());
+      printf("server %d get subscribed event (%s)\n", gm_rank, eventStr.data());
       //#endif
       eventList.push_back(eventStr);
       //default number is 1
@@ -478,10 +511,10 @@ class GreeterServiceImpl final : public Greeter::Service
     subtimes++;
     subtimesMtx.unlock();
 
-    if (subtimes % 128 == 0)
-    {
-      printf("debug server id %d for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", gm_rank, eventList[0].data(), diff, subavg, subtimes);
-    }
+    //if (subtimes % 128 == 0)
+    //{
+    printf("debug server id %d for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", gm_rank, eventList[0].data(), diff, subavg, subtimes);
+    //}
 
     //get coordinator clients
     //this should be updated after checking cluster !!!!
@@ -510,17 +543,20 @@ class GreeterServiceImpl final : public Greeter::Service
     for (i = 0; i < eventList.size(); i++)
     {
       eventStr = eventList[i];
-
-      int subNum = subtoClient[eventStr].size();
-
-      string reply = coordinatorClient->RecordSub(eventStr, serverAddr, subNum);
-      if (reply.compare("OK") != 0)
+      //for multiple sub, only record the first one
+      if (subtoClient.find(eventStr) != subtoClient.end())
       {
-        printf("server %s recorde for coordinator fail\n", eventStr.data());
+        int subNum = subtoClient[eventStr].size();
+
+        string reply = coordinatorClient->RecordSub(eventStr, serverAddr, subNum);
+        if (reply.compare("OK") != 0)
+        {
+          printf("server %s recorde for coordinator fail\n", eventStr.data());
+        }
       }
     }
 
-    if (propagateSub == true && source.compare("CLIENT") == 0)
+    if (propagateSub == true && source.compare(sourceClient) == 0)
     {
       printf("propagate subscription to other nodes in group\n");
 
@@ -545,7 +581,7 @@ class GreeterServiceImpl final : public Greeter::Service
         if (key.compare(ServerAddr) != 0)
         {
           GreeterClient *greeter = greeterMap[key];
-          string reply = greeter->Subscribe(eventList, clientId, notifyAddr, "SERVER");
+          string reply = greeter->Subscribe(eventList, clientId, notifyAddr, sourceIngroup);
 
           if (reply.compare("SUBSCRIBED") != 0)
           {
@@ -652,7 +688,7 @@ class GreeterServiceImpl final : public Greeter::Service
       string notifyAddr = temppsw->peerURL;
       vector<string> eventList = temppsw->eventList;
 
-      string reply = greeter->Subscribe(eventList, clientid, notifyAddr, "SERVER");
+      string reply = greeter->Subscribe(eventList, clientid, notifyAddr, sourceIngroup);
 
       if (reply.compare("SUBSCRIBED") != 0)
       {
@@ -693,61 +729,100 @@ class GreeterServiceImpl final : public Greeter::Service
     {
       eventStr = request->pubsubmessage(i);
       //#ifdef DEBUG
-      //printf("debug server %d get publish event source (%s) publish meta (%s) publish event (%s)\n",
-      //       gm_rank, source.data(), metadata.data(), eventStr.data());
 
       //#endif
       eventList.push_back(eventStr);
       //printf("server (%s) get (%s) published events\n", ServerIP.data(), );
+
+      //printf("debug size %d eventList size %d server %d get publish event source (%s) publish meta (%s) publish event (%s)\n",
+      //       size, eventList.size(), gm_rank, source.data(), metadata.data(), eventStr.data());
     }
 
     //publish on one server
     pubsubPublish(eventList, metadata);
 
-
+    //printf("debug publish id %d pubevent %s pubsubPublish ok\n", gm_rank, eventList[0].data());
 
     //broadcaster to other servers in same group
-    if (propagatePub == true && source.compare("CLIENT") == 0)
+    if (propagatePub == true && source.compare(sourceClient) == 0)
     {
 
       //TODO create new thread here (use asnchronous way to do the communication)
       //publishMultiServer(eventList);
 
+      //printf("id %d pub to multiserver\n", gm_rank);
+
       std::thread pubthread(publishMultiServer, eventList, metadata);
       pubthread.detach();
     }
 
+    if (SERVERSTATUS.compare(status_coor) == 0)
+    {
+      //printf("id %d status is coordinator\n", gm_rank);
+
+      //recieve info from in group server
+      if (source.compare(sourceIngroup) == 0 || source.compare(sourceClient) == 0)
+      {
+        //printf("id %d sourceIngroup or from sourceClient %s\n", gm_rank, source.data());
+
+        //broadcast to all the coordinator in all groups
+        //get all the coordinator in all the group
+        std::thread multiGroupthread(publishMultiGroup, eventList, metadata);
+        multiGroupthread.detach();
+      }
+      //recieve events from client direactly or from group members
+      if (source.compare(sourceBetweengroup) == 0)
+      {
+
+        //if there is sub info in map, broadcaster to all server in group
+        //else do nothing
+        //printf("debug id %d recieve event from other coordinator\n", gm_rank);
+
+        //assume the event will be published one by one
+        if (eventRecordMap.find(eventStr) != eventRecordMap.end())
+        {
+          thread pubthread(publishMultiServer, eventList, metadata);
+          pubthread.detach();
+        }
+      }
+    }
+
+    //printf("debug publish id %d pubevent %s broadcasting\n", gm_rank, eventList[0].data());
+
     clock_gettime(CLOCK_REALTIME, &end1);
     diff1 = (end1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
 
-    
     pubtimesMtx.lock();
     pubavg = (pubavg * pubtimes + diff1) / (pubtimes + 1);
     pubtimes++;
     pubtimesMtx.unlock();
 
-    if (pubtimes % 128 == 0)
-    {
-      printf("debug for publish (%s) response time = (%lf) avg time = (%lf) pubtimes (%d)\n", eventStr.data(), pubavg, diff1, pubtimes);
-    }
+    //if (pubtimes % 128 == 0)
+    //{
+    //printf("debug for publish (%s) response time = (%lf) avg time = (%lf) pubtimes (%d) current id %d\n", eventStr.data(), pubavg, diff1, pubtimes, gm_rank);
+    //}
 
     size = eventList.size();
-    int trinum = 1;
-    string eventMessage;
+    string peerURL = context->peer();
 
-
-    
-    for (i = 0; i < size; i++)
+    if (size > 0)
     {
-      eventMessage = eventList[i];
-      //ParseEvent(eventStr, eventMessage, trinum);
-      //TODO the thread for checking notify shouled be recorded and stored
-      //the checking notify should be killed when doing unsubscribe
-      //do this after publishing
-      //TODO what if submultiple events???
-      startNotify(eventMessage);
+      //use first as the index, only start notify when there is sub info on current server process
+      getIndexMtx.lock();
+      if (getIndexMap.find(eventStr) != getIndexMap.end())
+      {
+        //printf("debug start notify event %s source %s peer %s\n", eventStr.data(), source.data(), peerURL.data());
+        //outputsubtoClient();
+        //get indexEvent
+        set<string> indexEventSet = getIndexMap[eventStr];
+        for (set<string>::iterator it = indexEventSet.begin(); it != indexEventSet.end(); ++it)
+        {
+          string indexEvent = *it;
+          startNotify(indexEvent);
+        }
+      }
+      getIndexMtx.unlock();
     }
-    
 
     reply->set_returnmessage("OK");
 
@@ -1124,7 +1199,7 @@ int main(int argc, char **argv)
 
   propagatePub = true;
 
-  const bool startPeridChecking = true;
+  const bool startPeridChecking = false;
 
   printf("server id %d server status %s\n", gm_rank, SERVERSTATUS.data());
 
@@ -1136,6 +1211,11 @@ int main(int argc, char **argv)
     thread tCheck(periodChecking);
     tCheck.join();
   }
+
+  //update the coordinator addr
+  //wait all server to write data into dir
+  sleep(1);
+  updateCoordinatorAddr();
   runServer.join();
 
   return 0;

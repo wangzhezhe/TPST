@@ -100,7 +100,8 @@ void startAction(string clientID)
     }
 
     string metadata("testmetadata");
-    greeter->Publish(etrigger->eventPubList, "CLIENT", metadata);
+    //use updated source
+    greeter->Publish(etrigger->eventPubList, sourceClient, metadata);
 
     return;
 }
@@ -124,6 +125,7 @@ class GreeterServiceImplNotify final : public Greeter::Service
 
         string clientID = request->clientid();
         string metadata = request->metadata();
+        string peerURL = context->peer();
 
         //printf("get client id %s get metadata %s\n", clientID.data(), metadata.data());
 
@@ -143,11 +145,11 @@ class GreeterServiceImplNotify final : public Greeter::Service
 
         struct timespec finish;
 
-        if (NotifiedNum % 128 == 0)
-        {
+        //if (NotifiedNum % 128 == 0)
+        //{
             clock_gettime(CLOCK_REALTIME, &finish); /* mark the end time */
-            printf("id %d notifynum %d finish time = (%lld.%.9ld)\n", gm_rank, NotifiedNum, (long long)finish.tv_sec, finish.tv_nsec);
-        }
+            printf("id %d notifynum %d finish time = (%lld.%.9ld) peerurl is %s\n", gm_rank, NotifiedNum, (long long)finish.tv_sec, finish.tv_nsec, peerURL.data());
+        //}
         return Status::OK;
     }
 };

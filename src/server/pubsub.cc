@@ -24,6 +24,13 @@ mutex subtoClientMtx;
 //map<event, map<clientid,pubsubwrapper*>>
 map<string, map<string, pubsubWrapper *>> subtoClient;
 
+// TODO
+// map the event into the indexed event in subtoClient map
+// update this map after the subscription operation
+// make sure insert position when publish by getIndexMap
+mutex getIndexMtx;
+map<string, set<string>> getIndexMap;
+
 mutex publishedEventMtx;
 
 using namespace std;
@@ -42,7 +49,7 @@ SimplepubsubWrapper *getSimplepubsubWrapper(pubsubWrapper *psw)
         string event = it->first;
         temppsw->eventList.push_back(event);
     }
-    
+
     return temppsw;
 }
 
@@ -129,17 +136,49 @@ void addNewClient(string clientid, string notifyAddr, vector<string> eventList)
     psw->iftrigure = false;
     int size = eventList.size();
 
-    int i = 0;
-    string eventWithoutNum;
     int requireNum;
-    for (i = 0; i < size; i++)
+
+    //use first event as the index
+    string indexEvent;
+    if (size > 0)
     {
-        ParseEvent(eventList[i], eventWithoutNum, requireNum);
-        subtoClientMtx.lock();
-        subtoClient[eventWithoutNum][clientid] = psw;
-        subtoClientMtx.unlock();
-        psw->requiredeventMap[eventWithoutNum].insert(requireNum);
+        indexEvent = eventList[0];
     }
+    else
+    {
+        printf("error: event list for addNewClient should larger than 0\n");
+        return;
+    }
+
+    //printf("debug sub 3 new event key %s\n",indexEvent.data());
+
+    string indexEventWithoutNum;
+    ParseEvent(indexEvent, indexEventWithoutNum, requireNum);
+
+    for (int i = 0; i < size; i++)
+    {
+        string eventWithoutNum;
+        ParseEvent(eventList[i], eventWithoutNum, requireNum);
+        psw->requiredeventMap[eventWithoutNum].insert(requireNum);
+
+        getIndexMtx.lock();
+        if (getIndexMap.find(eventWithoutNum) != getIndexMap.end())
+        {
+            getIndexMap[eventWithoutNum].insert(indexEventWithoutNum);
+        }
+        else
+        {
+            set<string> indexSet;
+            indexSet.insert(indexEventWithoutNum);
+            getIndexMap[eventWithoutNum] = indexSet;
+        }
+
+        getIndexMtx.unlock();
+    }
+
+    subtoClientMtx.lock();
+    subtoClient[indexEventWithoutNum][clientid] = psw;
+    subtoClientMtx.unlock();
 
     return;
 }
@@ -177,23 +216,38 @@ bool checkIfTriggure(pubsubWrapper *psw)
     //get the dynamicPublishedMap
     map<string, int> dynamicPublishedEvent = psw->publishedEvent;
 
+    //printf("debug range dynamicPublishedEvent\n");
+    map<string, int>::iterator debugit;
+    for (debugit = dynamicPublishedEvent.begin(); debugit != dynamicPublishedEvent.end(); ++debugit)
+    {
+        string publishedEvent = debugit->first;
+        int times = debugit->second;
+
+        //printf("published event %s times %d\n", publishedEvent.data(), times);
+    }
+
     //if every required event is in publishedEvent, true, else false
     for (itmap = requiredeventMap.begin(); itmap != requiredeventMap.end(); ++itmap)
     {
 
         eventkeywithoutNum = itmap->first;
         set<int> eventNumSet = itmap->second;
+
+        //printf("debug required event %s\n", eventkeywithoutNum.data());
         for (itset = eventNumSet.begin(); itset != eventNumSet.end(); ++itset)
         {
             requirePushNum = (*itset);
             if (dynamicPublishedEvent.find(eventkeywithoutNum) == dynamicPublishedEvent.end())
             {
                 //event has not been published
+                //printf("eventkeywithoutNum (%s) is not been published\n", eventkeywithoutNum.data());
                 return false;
             }
             if (dynamicPublishedEvent[eventkeywithoutNum] != requirePushNum)
             {
                 //event has not been published required times
+                //printf("eventkeywithoutNum times %d is not required %d\n", dynamicPublishedEvent[eventkeywithoutNum], requirePushNum);
+
                 return false;
             }
 
@@ -240,7 +294,7 @@ void ParseEvent(string fullEvent, string &eventMessage, int &num)
     return;
 }
 
-void output()
+void outputsubtoClient()
 {
     //output subtoCliet
     printf("---------current inner data value----------\n");
@@ -307,75 +361,75 @@ void pubsubPublish(vector<string> eventList, string metadata)
 
         //if there is no eventwithoutNum in map, return
 
-        if (subtoClient.find(eventwithoutNum) == subtoClient.end())
+        if (getIndexMap.find(eventwithoutNum) == getIndexMap.end())
         {
-            return;
+            //event not been registered
+            continue;
         }
 
-        subtoClientMtx.lock();
-        
-        map<string, pubsubWrapper *> clientMap = subtoClient[eventwithoutNum];
-        
-        //traverse map
-        map<string, pubsubWrapper *>::iterator itmap;
+        //range the index set firstly
+        getIndexMtx.lock();
+        set<string> indexEventSet = getIndexMap[eventwithoutNum];
+        getIndexMtx.unlock();
 
-        //printf("number for clientset %d when publish event %s\n", setnum, eventwithoutNum.data());
-        //printf("debug publish event %s map size %d\n", eventwithoutNum.data(), clientMap.size());
-        //clock_gettime(CLOCK_REALTIME, &end1);
-        //diff = (end1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-        //printf("debug for publish end1 response time = (%lf) second\n", diff);
-        //traverse the map and put publish into it
-        for (itmap = clientMap.begin(); itmap != clientMap.end(); ++itmap)
+        
+
+        for (set<string>::iterator it = indexEventSet.begin(); it != indexEventSet.end(); ++it)
         {
 
-            //using openmp here, there is do data depedency between every clients
+            string indexEvent = *it;
 
-            int tid;
+            //printf("debug getIndexMap eventwithoutNum %s indexEvent %s\n", eventwithoutNum.data(), indexEvent.data());
 
-            //#pragma omp parallel
-            //            {
-
-            //#pragma omp single nowait private(tid)
-            //{
-            //test if specific element in set exist in clientidtoWrapper
-            string clientId = itmap->first;
-            pubsubWrapper *clientWrapper = itmap->second;
-            //printf("debug push clientid %s\n", clientId.data());
-            //tid = omp_get_thread_num();
-            //this eventmap is a small one
-            map<string, int> publishedEvent = clientWrapper->publishedEvent;
-
-            if (publishedEvent.find(eventwithoutNum) == publishedEvent.end())
+            subtoClientMtx.lock();
+            if (subtoClient.find(indexEvent) == subtoClient.end())
             {
-                
-                publishedEvent[eventwithoutNum] = 0;
-               
+                printf("error: indexEvent %s is not in subtoClient\n", indexEvent.data());
+                return;
+            }
+            
+
+            //traverse map
+            map<string, pubsubWrapper *>::iterator itmap;
+
+            //printf("number for clientset %d when publish event %s\n", setnum, eventwithoutNum.data());
+            //printf("debug publish event %s map size %d\n", eventwithoutNum.data(), clientMap.size());
+            //clock_gettime(CLOCK_REALTIME, &end1);
+            //diff = (end1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
+            //printf("debug for publish end1 response time = (%lf) second\n", diff);
+            //traverse the map and put publish into it
+            for (itmap = subtoClient[indexEvent].begin(); itmap != subtoClient[indexEvent].end(); ++itmap)
+            {
+
+                //using openmp here, there is do data depedency between every clients
+
+                int tid;
+
+                string clientId = itmap->first;
+                pubsubWrapper *clientWrapper = itmap->second;
+
+                if (clientWrapper->publishedEvent.find(eventwithoutNum) == clientWrapper->publishedEvent.end())
+                {
+
+                    clientWrapper->publishedEvent[eventwithoutNum] = 0;
+                }
+
+                clientWrapper->publishedEvent[eventwithoutNum]++;
+
+                //printf("insert eventwithoutNum %s into publishedEvent with number %d\n", eventwithoutNum.data(), clientWrapper->publishedEvent[eventwithoutNum]);
+
+                bool tempiftrigure = checkIfTriggure(clientWrapper);
+                if (tempiftrigure == true)
+                {
+                    //modify metadata only when need to notify
+                    subtoClient[indexEvent][clientId]->metadata = metadata;
+
+                    subtoClient[indexEvent][clientId]->iftrigure = tempiftrigure;
+                    printf("check iftrigure event %s indexEvent %s bool %d\n", eventwithoutNum.data(), indexEvent.data(), subtoClient[indexEvent][clientId]->iftrigure);
+                }
             }
 
-            publishedEvent[eventwithoutNum]++;
-
-            clientWrapper->publishedEvent = publishedEvent;
-
-            //check if notify here
-            //TODO get a new thread from the thread pool to check this asynchronously
-            //TODO attention the case, use number to label the published times, decrease the number after every notification
-            //Becasue notify will only happens when there is publishing events
-            bool tempiftrigure = checkIfTriggure(clientWrapper);
-            if (tempiftrigure == true)
-            {
-                //modify metadata only when need to notify
-                clientMap[clientId]->metadata = metadata;
-
-                clientMap[clientId]->iftrigure = tempiftrigure;
-                //printf("check iftrigure event %s bool %d\n", eventwithoutNum.data(), clientMap[clientId]->iftrigure);
-            }
+            subtoClientMtx.unlock();
         }
-
-        subtoClientMtx.unlock();
-
     }
-
-    //clock_gettime(CLOCK_REALTIME, &end2);
-    //diff = (end2.tv_sec - start.tv_sec) * 1.0 + (end2.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
-    //printf("debug for publish (%s) response time = (%lf) second\n", eventwithoutNum.data(), diff);
 }

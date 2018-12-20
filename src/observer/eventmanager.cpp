@@ -9,7 +9,7 @@
 #include "../runtime/slurm.h"
 #include "../runtime/local.h"
 #include "../publishclient/pubsubclient.h"
-
+#include "../utils/groupManager/groupManager.h"
 #include <string>
 #include <iostream>
 #include <queue>
@@ -18,6 +18,7 @@
 #include <time.h>   /* for clock_gettime */
 #include <pthread.h>
 #include <uuid/uuid.h>
+
 #define BILLION 1000000000L
 
 using namespace std;
@@ -109,13 +110,19 @@ void eventPublish(vector<string> pubList,string metadata)
     //only use first event in the list to do the hash mapping
     string eventMsg=pubList[0];
 
+
     GreeterClient *greeter = getClientFromEvent(eventMsg);
+
+    
     
     if (greeter == NULL)
     {
         printf("failed to get greeter for event publisher from event %s\n",eventMsg.data());
         return;
     }
+
+    //printf("debug event publish evt msg %s ok to get client\n",eventMsg.data());
+
 
     publishMutex.lock();
     publishClient++;
@@ -127,14 +134,16 @@ void eventPublish(vector<string> pubList,string metadata)
     }
 
 
-    string reply = greeter->Publish(pubList, "CLIENT", metadata);
+    string reply = greeter->Publish(pubList, sourceClient, metadata);
+
+    //printf("debug %s get reply\n",eventMsg.data());
 
     if (reply.compare("OK") != 0)
     {
         printf("rpc failed, publish %s failed\n", pubList[0].data());
     }
 
-    //printf("debug client publish event %s\n",eventMsg.data());
+    //printf("debug client %d publish event %s\n",gm_rank, eventMsg.data());
 
     return;
 }
@@ -175,7 +184,7 @@ void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr,
     //}
 
     //printf("debug sub event %s\n",etrigger->eventSubList[0].data());
-    string reply = greeter->Subscribe(etrigger->eventSubList, clientID, notifyAddr, "CLIENT");
+    string reply = greeter->Subscribe(etrigger->eventSubList, clientID, notifyAddr, sourceClient);
     //cout << "Subscribe return value: " << reply << endl;
 
     //clock_gettime(CLOCK_REALTIME, &subEnd); 

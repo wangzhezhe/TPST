@@ -396,6 +396,7 @@ string GreeterClient::Publish(vector<string> eventList, string source, string me
              << endl;
         return "RPC failed";
     }
+    return reply.returnmessage();
 }
 
 int GreeterClient::GetSubscribedNumber(vector<string> eventList)
@@ -550,12 +551,12 @@ void initClients(string clusterDir)
 
     updateWorkerAddrMap(clusterDir);
 
-    printf("update worker map ok\n");
+    //printf("update worker map ok\n");
 
     updateWorkerClients(clusterDir);
     updateCoordinatorClients(clusterDir);
 
-    printf("init clients for clusterDir %s\n", clusterDir.data());
+    //printf("init clients for clusterDir %s\n", clusterDir.data());
 }
 
 //fake use eventId for testing
@@ -607,33 +608,3 @@ GreeterClient *getClientFromEvent(string eventString)
 
     return NULL;
 }
-
-//every clients should finish the record operation before doing this
-/*
-void initMultiClients()
-{
-
-    switch (gm_status)
-    {
-    case CLIENT: // (can I just type case EASY?)
-        printf("status is client, load worker clients");
-        //get group dir by event id
-
-        getClusterDirFromClusterId() break;
-
-    case SERVER:
-        printf("status is server, load other worker in this group");
-        break;
-    }
-
-    //get dir for clients
-
-    //init worker clients
-
-    //init coordinator clients
-
-    //init coordinator clients
-
-    return;
-}
-*/

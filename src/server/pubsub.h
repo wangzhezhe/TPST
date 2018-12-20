@@ -28,6 +28,7 @@ typedef struct pubsubEvent{
 }pubsubEvent;
 
 typedef struct pubsubWrapper{
+    mutex pswmtx;
     string peerURL;
     string clientID;
     //one clientid, one metadata
@@ -55,6 +56,9 @@ extern mutex subtoClientMtx;
 extern map<string, set<int>> strtoEvent;
 
 extern map<string, map<string, pubsubWrapper *> > subtoClient;
+
+extern mutex getIndexMtx;
+extern map<string, set<string>> getIndexMap;
 
 void pubsubSubscribe(vector<string> eventList, string clientId, string notifyAddr);
 
@@ -85,5 +89,7 @@ void eventUnSubscribe(string event,string clientId);
 //void *checkNotify(void *arguments);
 
 SimplepubsubWrapper *getSimplepubsubWrapper(pubsubWrapper *psw);
+
+void outputsubtoClient();
 
 #endif

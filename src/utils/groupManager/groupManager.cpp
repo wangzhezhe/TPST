@@ -26,11 +26,10 @@
 #include <system_error>
 #include <cstring>
 #include <mutex>
+#include <set>
 
 #include "./groupManager.h"
 #include "../dlm/dlm.h"
-
-
 
 using namespace std;
 
@@ -57,6 +56,10 @@ string status_coor("coordinator");
 string status_worker("worker");
 string status_free("freepool");
 
+const string sourceIngroup("SERVERINGROUP");
+const string sourceBetweengroup("SERVERBTGROUP");
+const string sourceClient("CLIENT");
+
 //current cluster dir
 string GM_CLUSTERDIR;
 
@@ -64,9 +67,10 @@ mutex workerAddrMapLock;
 map<string, vector<string>> workerAddrMap;
 
 //all the coordinator Addr
-map<string, string> coordinatorAddrMap;
+mutex coorAddrSetLock;
+set<string> coordinatorAddrSet;
 
-map <string,bool> loadCoordinatorMap;
+map<string, bool> loadCoordinatorMap;
 
 //the Dir could be the coordinator or the worker ./multinodeip/cluster0/worker
 vector<string> loadAddrInDir(string Dir)
@@ -129,7 +133,6 @@ void updateWorkerAddrMap(string clusterDir)
     string workerDir = clusterDir + "/" + gm_workerDir;
     string coordinatorDir = clusterDir + "/" + gm_coordinatorDir;
 
-
     //the worker dir may not exist if there is only one server
     vector<string> workerAddr = loadAddrInDir(workerDir);
     vector<string> coordinatorAddr = loadAddrInDir(coordinatorDir);
@@ -137,7 +140,7 @@ void updateWorkerAddrMap(string clusterDir)
     releaseLock(clusterDir);
 
     //first time to load
-    if (loadCoordinatorMap.find(clusterDir) == loadCoordinatorMap.end() || loadCoordinatorMap[clusterDir]==false)
+    if (loadCoordinatorMap.find(clusterDir) == loadCoordinatorMap.end() || loadCoordinatorMap[clusterDir] == false)
     {
         int corSize = coordinatorAddr.size();
         for (int j = 0; j < corSize; j++)
@@ -149,6 +152,36 @@ void updateWorkerAddrMap(string clusterDir)
         workerAddrMapLock.unlock();
         loadCoordinatorMap[clusterDir] = true;
     }
+
+    return;
+}
+
+void updateCoordinatorAddr()
+{
+
+    //update coordinatorAddrMap
+
+    vector<string> clusterName = loadAddrInDir(gm_multinodeip);
+
+    int size = clusterName.size();
+
+    for (int i = 0; i < size; i++)
+    {
+
+        string clusterCoorDir = gm_multinodeip + "/" + clusterName[i] + "/" + gm_coordinatorDir;
+
+        //assume only one coordinator
+        vector<string> coorStr = loadAddrInDir(clusterCoorDir);
+        if (coorStr.size() > 0)
+        {
+            coorAddrSetLock.lock();
+            coordinatorAddrSet.insert(coorStr[0]);
+            coorAddrSetLock.unlock();
+            
+        }
+    }
+
+    printf("debug coor addr set number is %d\n", coordinatorAddrSet.size());
 
     return;
 }
@@ -408,8 +441,6 @@ vector<string> getFreeNodeList(int needNum)
         {
             nodeAddr = string(entry->d_name);
             serverAddrList.push_back(nodeAddr);
-
-
 
             fileNum++;
 

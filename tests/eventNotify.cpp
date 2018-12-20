@@ -98,7 +98,7 @@ void *tempStartOperator(void *arg)
     vector<string> eventList;
     eventList.push_back(INITEvent);
     string metadata = "test init meta";
-    string reply = greeter->Publish(eventList, "CLIENT", metadata);
+    string reply = greeter->Publish(eventList, sourceClient, metadata);
     printf("publish INIT event return (%s)\n", reply.data());
 
     return NULL;
@@ -188,12 +188,71 @@ void onePubMultipleSameSub(int subSize, string notifyAddr)
     if (gm_rank == 0)
     {
 
-
         string metadata = "metadataTest";
         eventPublish(pubeventList, metadata);
     }
 
     return;
+}
+
+void multipleSub(int subSize, string notifyAddr)
+{
+
+    //subscription with multiple event keys
+    //the subSize here is the number for the events key that are subscribed
+
+    vector<string> subeventList;
+    vector<string> actionList;
+    vector<string> pubeventList;
+    string driver = "local";
+
+    for (int i = 0; i < subSize; i++)
+    {
+
+        //every component pub sub different event
+        string fakeSub = to_string(gm_rank) + "fakeSub_" + to_string(i);
+        string fakeaction = "fakeaction" + to_string(i);
+
+        subeventList.push_back(fakeSub);
+
+        actionList.push_back(fakeaction);
+    }
+
+    string clientID;
+
+    EventTriggure *etrigger = fakeaddNewConfig(driver, subeventList, pubeventList, actionList, clientID);
+
+    printf("sub size is %d debugtest\n", subSize);
+
+    if (clientID != "")
+    {
+        //use first event as the hash value
+        eventSubscribe(etrigger, clientID, notifyAddr, subeventList[0]);
+    }
+
+    //sleep some time
+
+    sleep(5);
+
+    //event publish
+    struct timespec start;
+    clock_gettime(CLOCK_REALTIME, &start); /* mark the end time */
+    printf("start id %d start pub time = (%lld.%.9ld)\n", gm_rank, (long long)start.tv_sec, start.tv_nsec);
+    //publish events one by one
+    int j = 0;
+    for (j = 0; j < subSize; j++)
+    {
+        //printf("debug1 %d\n", j);
+        string metadata = "metadataTest";
+        vector<string> pubeventList;
+        pubeventList.push_back(subeventList[j]);
+        eventPublish(pubeventList, metadata);
+        //printf("debug2 subsize %d j %d publishedEvent %s\n", subSize, j, pubeventList[0].data());
+    }
+
+    struct timespec end;
+    clock_gettime(CLOCK_REALTIME, &end); /* mark the end time */
+    printf("id %d finish pub time = (%lld.%.9ld)\n", gm_rank, (long long)end.tv_sec, end.tv_nsec);
 }
 
 void fakegothroughFolderRegister(int subSize, string notifyAddr)
@@ -396,9 +455,11 @@ int main(int argc, char **argv)
     //wait the notify server start
     sleep(1);
 
-    onePubMultipleSameSub(subSize, notifyAddr);
+    //onePubMultipleSameSub(subSize, notifyAddr);
 
     //fakegothroughFolderRegister(subSize, notifyAddr);
+
+    multipleSub(subSize, notifyAddr);
 
     while (1)
     {
