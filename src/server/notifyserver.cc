@@ -86,7 +86,7 @@ void startAction(string clientID)
         //get the publishEvent from configure and call the publish operation
     }
 
-    //when all action finish, push the events in files
+    //when all action finish, push the events into files (if following events needed to be published after the application running)
 
     int pubSize = etrigger->eventPubList.size();
 

@@ -260,14 +260,27 @@ void fakegothroughFolderRegister(int subSize, string notifyAddr)
     //the json buffer shouled be load from memory
     /*
 {
-    "type": "TRIGGER",
+    "type": "TOPICTRIGGER",
     "eventSubList": ["INIT"],
-    "eventPubList": ["SIMFINISH"],
+    "eventPubListBeforAction": ["SIMSTART"],
+    "eventPubListAfterAction": ["SIMFINISH"],
     "driver": "local",
     "actionList": [
-       "/bin/bash ./app/simulate.sh --timesteps 1 --range 100 --nvalues 5 --log off > sim1.out"
+       "/bin/bash ./app/simulate.sh "
      ]
 }
+
+{
+    "type": "DATATRIGGER",
+    "eventDescription": "/path/to/the/customized/script",
+    "eventPubListBeforAction": ["SIMSTART"],
+    "eventPubListAfterAction": ["SIMFINISH"],
+    "driver": "local",
+    "actionList": [
+       "/bin/bash ./app/simulate.sh"
+     ]
+}
+
 
     */
 

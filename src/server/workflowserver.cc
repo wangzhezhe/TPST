@@ -154,7 +154,7 @@ void publishMultiGroup(vector<string> eventList, string metadata)
 void publishMultiServer(vector<string> eventList, string metadata)
 {
 
-  printf("debug call publishMultiServer\n");
+  //printf("debug call publishMultiServer\n");
   //get the cluster dir
   string clusterWorkerDir = GM_CLUSTERDIR + "/" + gm_workerDir;
   vector<string> workerList = loadAddrInDir(clusterWorkerDir);
