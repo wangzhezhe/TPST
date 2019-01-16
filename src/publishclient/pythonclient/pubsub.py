@@ -157,4 +157,4 @@ def initAddrAndPublish(event,meta):
 
 if __name__ == '__main__':
 
-    initAddrAndPublish()
+    initAddrAndPublish("testEvent","testMeta")
