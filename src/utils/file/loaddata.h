@@ -6,7 +6,7 @@
 
 using namespace std;
 
-string loadFile(char *filename);
+string loadFile(const char *filename);
 int ifjson(char *filename);
 char *getTaskNameFromEventName(char *filename);
 vector <string> scanFolder(const char *dirpath);

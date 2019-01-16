@@ -5,4 +5,4 @@
 #SBATCH -N 1
 
 
-/bin/bash ./runtask.sh taskb       
+/bin/bash /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/runtimeScripts/runtask.sh taskb       

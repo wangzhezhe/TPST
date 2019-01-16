@@ -47,6 +47,10 @@ vpath %.proto $(PROTOS_PATH)
 
 all: workflowserver
 
+
+strparse.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o strparse.o ../utils/strparse/strparse.cpp
+
 split.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o split.o ../utils/split/split.cc
 
@@ -68,7 +72,7 @@ pubsub.o:
 pubsubclient.o:
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o pubsubclient.o ../publishclient/pubsubclient.cc
 
-workflowserver: workflowserver.pb.o workflowserver.grpc.pb.o workflowserver.o pubsub.o dht.o dlm.o groupManager.o split.o pubsubclient.o coordinator.o
+workflowserver: workflowserver.pb.o workflowserver.grpc.pb.o workflowserver.o pubsub.o dht.o dlm.o groupManager.o split.o pubsubclient.o coordinator.o strparse.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc

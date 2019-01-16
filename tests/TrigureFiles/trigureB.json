@@ -1,9 +1,9 @@
 {
-    "type": "TRIGGER",
-    "eventList": ["T1_FINISH"],
-    "driver": "slurm",
+    "matchType": "NAME",
+    "eventSubList": ["dataPattern_1"],
+    "metaData":"null",
     "actionList": [
-        "./runtimeScripts/triguresbatchjoba",
-        "./runtimeScripts/triguresbatchjobb"
-     ]
+        "/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/runtimeScripts/triguresbatchjobB"
+     ],
+     "driver":"local"
 }

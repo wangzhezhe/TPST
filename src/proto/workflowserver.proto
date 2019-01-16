@@ -50,7 +50,7 @@ message HelloReply {
   string message = 1;
 }
 
-
+//TODO divide pub request and subrequest into different part, the clientid is unnecessary for event publish
 message PubSubRequest {
   //string array
   repeated string pubsubmessage = 1;
@@ -58,6 +58,8 @@ message PubSubRequest {
   //CLIENT or SERVER
   string source = 3;
   string metadata = 4;
+  string matchtype = 5;
+  string notifyserver = 6;
 }
 
 message PubSubReply {

@@ -29,7 +29,7 @@ LDFLAGS += -L/usr/local/lib -L/home1/zw241/Software/protoinstall/lib -L/home1/zw
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
            -ldl -lpthread -lgpr -luuid
 endif
-PROTOC = protoc
+PROTOC = /home1/zw241/Software/grpc/third_party/protobuf/src/protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
 
@@ -39,16 +39,38 @@ vpath %.proto $(PROTOS_PATH)
 
 all: operator
 
+
+strparse.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o strparse.o ../utils/strparse/strparse.cpp
+
+local.o:
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../runtime/local.cc -o local.o
+
+loaddata.o: 
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../utils/file/loaddata.cpp -o loaddata.o
+
+dht.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o dht.o ../utils/dht/dht.cc
+
+dlm.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o dlm.o ../utils/dlm/dlm.cc
+
+eventmanager.o:
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../observer/eventmanager.cpp -o eventmanager.o
+
+notifyserver.o:
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../server/notifyserver.cc -o notifyserver.o
+
+groupManager.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o groupManager.o ../utils/groupManager/groupManager.cpp
+
 split.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o split.o ../utils/split/split.cc
-
-getip.o:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o getip.o ../utils/getip/getip.cpp
 
 pubsubclient.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o pubsubclient.o ../publishclient/pubsubclient.cc
 
-operator: workflowserver.pb.o workflowserver.grpc.pb.o pubsubclient.o operator.o getip.o split.o
+operator: workflowserver.pb.o workflowserver.grpc.pb.o pubsubclient.o split.o notifyserver.o groupManager.o eventmanager.o dlm.o dht.o loaddata.o local.o operator.o strparse.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc

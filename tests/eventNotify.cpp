@@ -1,3 +1,5 @@
+// this file is used for scalable test
+// this is the prototype of the function of operator
 #include "stdio.h"
 #include "stdlib.h"
 #include "errno.h"

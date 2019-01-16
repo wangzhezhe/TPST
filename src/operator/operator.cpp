@@ -26,96 +26,90 @@
 #include <stdlib.h>
 #include <string>
 
-#include <grpc++/grpc++.h>
-
-#include "workflowserver.grpc.pb.h"
 #include "../publishclient/pubsubclient.h"
 #include "../utils/split/split.h"
+#include "../server/notifyserver.h"
+#include "../utils/groupManager/groupManager.h"
+#include "../observer/eventmanager.h"
+#include "../utils/file/loaddata.h"
 
-void initOperator(string queryEvent, int jsonNum)
+#include <grpc++/grpc++.h>
+#include "workflowserver.grpc.pb.h"
+
+void parseScript()
 {
+    string triggerPath("/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/TrigureFiles");
+    vector<string> fileList;
+    fileList = scanFolder(triggerPath.data());
 
-    GreeterClient *greeter = GreeterClient::getClient();
-    if (greeter == NULL)
+    int count = fileList.size();
+
+    for (int i = 0; i < count; i++)
     {
-        //printf("failed to get initialised greeter\n");
-        return;
-    }
-    //printf("init greeter\n");
-    int replyNum;
-    while (1)
-    {
-        replyNum = greeter->GetSubscribedNumber(queryEvent);
-        //printf("there are %d clients subscribe %s event\n", replyNum, queryEvent.data());
-        if (replyNum < jsonNum)
+
+        // if it is json file
+        if (strstr(fileList[i].data(), ".json") != NULL)
         {
-            usleep(500);
-        }
-        else
-        {
-            break;
+
+            string filePath = triggerPath + "/" + fileList[i];
+            printf("get file path (%s)\n", filePath.data());
+
+            string jsonbuffer = loadFile(filePath.data());
+
+            //create new client id and new event triggure
+
+            string clientID;
+
+            EventTriggure *etrigger = addNewConfig(jsonbuffer, clientID);
+
+            printf("check etrigger, type (%s) driver (%s) meta (%s) msg (%s)\n", etrigger->matchType.data(), etrigger->driver.data(), etrigger->metaData.data(),etrigger->eventSubList[0].data());
+
+            //send subscribe request (unblocked with id) send eventlist and the client id
+
+            if (clientID != "")
+            {
+                eventSubscribe(etrigger, clientID, NOTIFYADDR ,etrigger->eventSubList[0]);
+            }
         }
     }
+
+    return;
 }
 
 //using self defined pub sub server
 int main(int argc, char **argv)
 {
 
-    // check the input argument first is pub/sub second is the event list , shuld be the following format [event1,event2,event3]
+    //start the notify server
 
-    if (argc != 5)
-    {
-        printf("using following format: ./operator <checkEvent> <requiredNum> publish [event1,event2] or ./operator subscribe [event1.event2]\n");
-        return 0;
-    }
+    pthread_t notifyserverid;
+    int status;
 
-    string queryEvent = string(argv[1]);
-    int requiredNum = atoi(argv[2]);
-
-    //check second parameter
-
-    string operation = string(argv[3]);
-    if (operation.compare("publish") != 0 && operation.compare("subscribe") != 0)
-    {
-        printf("operation should be publish or subscribe\n");
-        return 0;
-    }
-
-    string eventStr = string(argv[4]);
-    string seprater = string(",");
-
-    //printf("operation %s event list %s\n", operation.data(), eventStr.data());
-
-    //check third parameter
-
-    vector<string> eventList;
-    eventList = split(eventStr, seprater);
-
-  
-    //printf("query event %s require num %d\n", queryEvent.data(), requiredNum);
-    initOperator(queryEvent, requiredNum);
+    //get notify server addr
+    string notifyAddr = getNotifyServerAddr();
+    NOTIFYADDR = notifyAddr;
+    //send value to server addr
     
-    GreeterClient *greeter = GreeterClient::getClient();
-   
-    if (greeter == NULL)
+    //TODO send this parameter from outside
+    gm_groupNumber = 1;
+
+    //start the server
+    pthread_create(&notifyserverid, NULL, &RunNotifyServer, NULL);
+
+    //wait the notify server start
+    sleep(1);
+
+    printf("the address of notify server is %s\n", NOTIFYADDR.data());
+
+    //parse the files in runtimeScripts
+    parseScript();
+
+    //register those files into the pub/sub broker
+
+    while (1)
     {
-        printf("failed to get initialised greeter\n");
-        return 0;
-    }
-    if (operation.compare("publish") == 0)
-    {
-        string reply = greeter->Publish(eventList);
-        //cout << "Publish return value: " << reply << endl;
+        usleep(1000);
     }
 
-    //printf("debug 4\n");
-    //else
-    //{
-    //TODO
-    //subscribe
-    //string reply = greeter->Subscribe(eventList);
-    //cout << "Subscribe return value: " << reply << endl;
-    //}
     return 0;
 }

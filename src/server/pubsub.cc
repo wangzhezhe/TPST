@@ -4,6 +4,8 @@
 #include "string"
 #include <omp.h>
 #include "../utils/split/split.h"
+#include "../utils/strparse/strparse.h"
+
 #include <time.h>
 #include <unistd.h>
 
@@ -39,7 +41,7 @@ SimplepubsubWrapper *getSimplepubsubWrapper(pubsubWrapper *psw)
 {
     SimplepubsubWrapper *temppsw = new (SimplepubsubWrapper);
     temppsw->clientID = psw->clientID;
-    temppsw->metadata = psw->metadata;
+    temppsw->subMetadata = psw->subMetadata;
     temppsw->peerURL = psw->peerURL;
 
     map<string, set<int>> requiredeventMap = psw->requiredeventMap;
@@ -125,7 +127,7 @@ void addNewClientLocal(string clientid, vector<string> eventList)
     return;
 }
 
-void addNewClient(string clientid, string notifyAddr, vector<string> eventList)
+void addNewClient(string clientid, string notifyAddr, vector<string> eventList, string matchType, string subMetadata)
 {
     pubsubWrapper *psw = new (pubsubWrapper);
     psw->peerURL = notifyAddr;
@@ -133,7 +135,9 @@ void addNewClient(string clientid, string notifyAddr, vector<string> eventList)
     map<string, int> publishedEvent;
     psw->publishedEvent = publishedEvent;
     psw->clientID = clientid;
+    psw->matchType = matchType;
     psw->iftrigure = false;
+    psw->subMetadata = subMetadata;
     int size = eventList.size();
 
     int requireNum;
@@ -199,6 +203,66 @@ void deletePubEvent(pubsubWrapper *psw)
     return;
 }
 
+bool checkIfTriggureMetaGrid(pubsubWrapper *psw, string publishedMeta)
+{
+    printf("start checkIfTriggureMetaGrid\n");
+    //extract the binding box from the publishedMeta
+    vector<int> publb;
+    vector<int> pubub;
+
+    string pubGridMeta = getGridFromRawMeta(publishedMeta);
+
+    getbbxfromGridMeta(pubGridMeta, publb, pubub);
+
+    printf("check pub lb %d %d ub %d %d\n", publb[0], publb[1], pubub[0], pubub[1]);
+
+    //extract the binding box from the subscribed data
+    vector<int> sublb;
+
+    vector<int> subub;
+
+    printf("check psw sub metadata %s\n", psw->subMetadata.data());
+    string submetastr = psw->subMetadata;
+    int position = submetastr.find(":");
+    //the format in psw is not correct
+    if (position == submetastr.npos)
+    {
+        return false;
+    }
+
+    getbbxfromGridMeta(submetastr, sublb, subub);
+
+    //compare two bingding box, to check if triggure
+
+    //plbx publb[0]
+    //plby publb[1]
+
+    //pubx pubub[0]
+    //puby pubub[1]
+
+    //slbx sublb[0]
+    //slby sublb[1]
+
+    //subx subub[0]
+    //suby subub[1]
+
+    printf("check sub lb %d %d ub %d %d\n", sublb[0], sublb[1], subub[0], subub[1]);
+
+    //refer to https://www.geeksforgeeks.org/find-two-rectangles-overlap/
+
+    if (sublb[0] > pubub[0] || subub[0] < publb[0])
+    {
+        return false;
+    }
+
+    if (subub[1] < publb[1] || sublb[1] > pubub[1])
+    {
+        return false;
+    }
+
+    return true;
+}
+
 //the psw should associated with the specific client id
 bool checkIfTriggure(pubsubWrapper *psw)
 {
@@ -262,9 +326,9 @@ bool checkIfTriggure(pubsubWrapper *psw)
 //the event here is in full format such as: event1:1, event2:2
 //when subscribe, only one of same event type could exist, for example event1:2 and event1:3 coube not be subscribed at the same time
 //TODO return error when same event has been subscribed with multiple number
-void pubsubSubscribe(vector<string> eventList, string clientId, string notifyAddr)
+void pubsubSubscribe(vector<string> eventList, string clientId, string notifyAddr, string matchType, string subMetadata)
 {
-    addNewClient(clientId, notifyAddr, eventList);
+    addNewClient(clientId, notifyAddr, eventList, matchType, subMetadata);
 }
 
 void ParseEvent(string fullEvent, string &eventMessage, int &num)
@@ -342,13 +406,8 @@ void outputsubtoClient()
     }
 }
 
-void pubsubPublish(vector<string> eventList, string metadata)
+void pubsubPublish(vector<string> eventList, string matchType, string metadata)
 {
-
-    struct timespec start, end1, end2;
-    double diff;
-
-    //clock_gettime(CLOCK_REALTIME, &start); /* mark start time */
 
     int size = eventList.size();
     int i;
@@ -372,8 +431,6 @@ void pubsubPublish(vector<string> eventList, string metadata)
         set<string> indexEventSet = getIndexMap[eventwithoutNum];
         getIndexMtx.unlock();
 
-        
-
         for (set<string>::iterator it = indexEventSet.begin(); it != indexEventSet.end(); ++it)
         {
 
@@ -387,7 +444,6 @@ void pubsubPublish(vector<string> eventList, string metadata)
                 printf("error: indexEvent %s is not in subtoClient\n", indexEvent.data());
                 return;
             }
-            
 
             //traverse map
             map<string, pubsubWrapper *>::iterator itmap;
@@ -407,23 +463,37 @@ void pubsubPublish(vector<string> eventList, string metadata)
 
                 string clientId = itmap->first;
                 pubsubWrapper *clientWrapper = itmap->second;
-
-                if (clientWrapper->publishedEvent.find(eventwithoutNum) == clientWrapper->publishedEvent.end())
+                bool tempiftrigure = false;
+                if (matchType.compare("NAME") == 0)
                 {
+                    if (clientWrapper->publishedEvent.find(eventwithoutNum) == clientWrapper->publishedEvent.end())
+                    {
 
-                    clientWrapper->publishedEvent[eventwithoutNum] = 0;
+                        clientWrapper->publishedEvent[eventwithoutNum] = 0;
+                    }
+
+                    clientWrapper->publishedEvent[eventwithoutNum]++;
+
+                    //printf("insert eventwithoutNum %s into publishedEvent with number %d\n", eventwithoutNum.data(), clientWrapper->publishedEvent[eventwithoutNum]);
+
+                    tempiftrigure = checkIfTriggure(clientWrapper);
+                }
+                else if (matchType.compare("META_GRID") == 0)
+                {
+                    tempiftrigure = checkIfTriggureMetaGrid(clientWrapper, metadata);
+                }
+                else
+                {
+                    printf("unsuported match type %s\n", matchType.data());
                 }
 
-                clientWrapper->publishedEvent[eventwithoutNum]++;
-
-                //printf("insert eventwithoutNum %s into publishedEvent with number %d\n", eventwithoutNum.data(), clientWrapper->publishedEvent[eventwithoutNum]);
-
-                bool tempiftrigure = checkIfTriggure(clientWrapper);
                 if (tempiftrigure == true)
                 {
                     //modify metadata only when need to notify
-                    subtoClient[indexEvent][clientId]->metadata = metadata;
-
+                    //TODO update the metadata storing published events
+                    //if there are multiple pub for same key in small range of time
+                    //some of metadata will missed
+                    subtoClient[indexEvent][clientId]->pubMetadata = metadata;
                     subtoClient[indexEvent][clientId]->iftrigure = tempiftrigure;
                     printf("check iftrigure event %s indexEvent %s bool %d\n", eventwithoutNum.data(), indexEvent.data(), subtoClient[indexEvent][clientId]->iftrigure);
                 }

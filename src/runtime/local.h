@@ -8,7 +8,9 @@ using namespace std;
 //TODO make this a common defination 
 //typedef int (*runtimeFunc)(char *);
 
-int localTaskStart( string batchPath);
+int pythonTaskStart(string batchPath, string metadata);
+
+int localTaskStart( string batchPath, string metadata);
 
 extern int localFinishNum;
 #endif

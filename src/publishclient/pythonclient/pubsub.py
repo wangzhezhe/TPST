@@ -21,6 +21,8 @@ import grpc
 import os 
 import netifaces as ni
 from threading import Thread
+from os import listdir
+from os.path import isfile, join
 
 import workflowserver_pb2
 import workflowserver_pb2_grpc
@@ -43,7 +45,6 @@ def triggureTask(args):
     if failure:
         print ('Execution of "%s" failed!\n' % cmd)
 
-
 class Greeter(workflowserver_pb2_grpc.GreeterServicer):
 
     def SayHello(self, request, context):
@@ -62,7 +63,6 @@ class Greeter(workflowserver_pb2_grpc.GreeterServicer):
         thread.join()
         return workflowserver_pb2.NotifyReply(returnmessage='notifyOk')
 
-
 # start one notify server to recieve notification
 def runNotifyServer(notifyAddr):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -75,8 +75,6 @@ def runNotifyServer(notifyAddr):
             time.sleep(_ONE_DAY_IN_SECONDS)
     except KeyboardInterrupt:
         server.stop(0)
-
-
 
 def sendNotify(addr, clientId):
     # NOTE(gRPC Python Team): .close() is possible on a channel and should be
@@ -98,7 +96,6 @@ def sendNotify(addr, clientId):
    
     print("Publish client received: " + response.returnmessage)
 
-
 def subscribeEventList(addr,eventList,clientId):
     with grpc.insecure_channel(addr) as channel:
         stub = workflowserver_pb2_grpc.GreeterStub(channel)
@@ -117,7 +114,7 @@ def subscribeEventList(addr,eventList,clientId):
    
     print("Publish client received: " + response.returnmessage)    
 
-def publishEventList(addr,eventList,clientId,metaInfo):
+def publishEventList(addr,eventList,clientId,metaInfo,matchtype):
     # NOTE(gRPC Python Team): .close() is possible on a channel and should be
     # used in circumstances in which the with statement does not fit the needs
     # of the code.
@@ -133,12 +130,14 @@ def publishEventList(addr,eventList,clientId,metaInfo):
         request.clientid=clientId
         request.source="CLIENT"
         request.metadata=metaInfo
-
+        request.matchtype=matchtype
+        
+        print("debug published request")
+        print(metaInfo)
         response = stub.Publish(request)
         #send the publish event
    
     print("Publish client received: " + response.returnmessage)
-
 
 def initAddrAndPublish(event,meta):
     
@@ -154,7 +153,28 @@ def initAddrAndPublish(event,meta):
     clientid = '0'
     publishEventList(addr,eventList,clientid,meta)
 
+def getServerAddr():
+    # only for one server test case
+    # don't use this for scale test
+    addrCategory="/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/performance/multinodeip"
+    serverAddrDir  = addrCategory+"/"+"cluster0"+"/"+"coordinator"
+    onlyfiles = [f for f in listdir(serverAddrDir) if isfile(join(serverAddrDir, f))]
+    return onlyfiles
+
+
 
 if __name__ == '__main__':
 
-    initAddrAndPublish("testEvent","testMeta")
+    addrList = getServerAddr()
+    print (addrList)
+
+
+    addr = addrList[0]
+
+    eventList = ["variable_1"]
+    # this shoule be deleted
+    clientId = "test"
+    metainfo = "GRID[<0,0>:<1,1>]%TS[5]"
+    publishEventList(addr,eventList,clientId,metainfo)
+
+    

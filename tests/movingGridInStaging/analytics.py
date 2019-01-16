@@ -6,12 +6,29 @@ import os
 import time
 import math
 import timeit
+import sys
+
+sys.path.append('../../src/publishclient/pythonclient')
+import pubsub as pubsubclient
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 # input the coordinate of the points and return the index of grid in array
 
+def sendEventToPubSub(ts):
+
+    addrList = pubsubclient.getServerAddr()
+    print (addrList)
+
+    addr = addrList[0]
+
+    eventList = ["dataPattern_1"]
+    # this shoule be deleted
+    clientId = "test" + "_" + str(ts)
+    metainfo = "GRID[<-1,-1>:<-1,-1>]%TS["+str(ts)+"]"
+    matchtype = "NAME"
+    pubsubclient.publishEventList(addr,eventList,clientId,metainfo,matchtype)
 
 def getIndex(px, py, pz):
     # TODO should add all boundry case
@@ -55,13 +72,10 @@ def checkAndPublishEvent(gridDataArray, iteration):
     if (ifTargetEventHappen == True):
         print (iteration)
         # send publish event
-        event = "CUBIC_DETECTED"
-        meta = str(iteration)
         detecttime = timeit.default_timer()
         print (detecttime)
         print ("publish to pub/sub broker")
-        return
-        # pubsubclient.initAddrAndPublish(event,meta)
+        #sendEventToPubSub(iteration)
         ifFirstHappen = True
     return
 
@@ -80,33 +94,42 @@ num_peers = 1
 appid = 2
 
 var_name = "ex1_sample_data"
-lock_name = "my_test_lock"
+#lock_name = "my_test_lock"
+
+if(len(sys.argv)!=2):
+    print("./analytics <version>")
+    exit(0)
+
+version = int(sys.argv[1])
 
 # {lb = {0}, ub = {3374}}
 
-iterationNum = 50
+# iterationNum = 50
+# get iteration from the parameter
 
 ds = dataspaces.dataspaceClient()
 
 ds.dspaces_init(comm, num_peers, appid)
 
-for ver in range(iterationNum):
+# ds.dspaces_lock_on_read(lock_name)
 
-    ds.dspaces_lock_on_read(lock_name)
+lb = [0]
+ub = [3374]
 
-    lb = [0]
-    ub = [3374]
+print("get version")
+print(version)
 
-    getdata = ds.dspaces_get_data(var_name, ver, lb, ub)
+getdata = ds.dspaces_get_data(var_name, version, lb, ub)
 
-    print ("get data")
-    print (getdata)
+#print ("get data")
+#print (getdata)
 
-    ds.dspaces_unlock_on_read(lock_name)
+# ds.dspaces_unlock_on_read(lock_name)
 
-    checkAndPublishEvent(getdata, ver)
+# checkAndPublishEvent(getdata, version)
 
-    # time.sleep(1)
+# time.sleep(1)
+# publishe events to pubsub store
 
 
 ds.dspaces_wrapper_finalize()

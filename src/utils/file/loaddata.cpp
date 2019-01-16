@@ -39,7 +39,7 @@ char *loadFile(char *filename)
 }
 */
 
-string loadFile(char *filename)
+string loadFile(const char *filename)
 {
 
     ifstream ifs;

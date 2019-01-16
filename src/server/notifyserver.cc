@@ -26,6 +26,7 @@
 #include "pubsub.h"
 #include "unistd.h"
 #include <mutex>
+#include <thread>
 #include "../utils/groupManager/groupManager.h"
 #include "../observer/eventmanager.h"
 #include "../runtime/local.h"
@@ -61,11 +62,12 @@ int NotifiedNum = 0;
 
 string NOTIFYADDR;
 
-/*
-void startAction(string clientID)
+void startAction(string clientID, string metadata)
 {
 
     //get map<string, EventTriggure *> clientIdtoConfig;
+
+    printf("clientid %s\n", clientID.data());
 
     if (clientIdtoConfig.find(clientID) == clientIdtoConfig.end())
     {
@@ -76,16 +78,33 @@ void startAction(string clientID)
 
     int actionSize = etrigger->actionList.size();
     int i;
-    for (i = 0; i < actionSize; i++)
+
+    printf("debug current driver %s\n",etrigger->driver.data());
+
+    if (etrigger->driver.compare("local") == 0)
     {
-        //TODO for execute the operator option in memory to decrease the number of system call
-        if (etrigger->driver.compare("local") == 0)
+        for (i = 0; i < actionSize; i++)
         {
-            localTaskStart(etrigger->actionList[i].data());
+
+            localTaskStart(etrigger->actionList[i].data(), metadata);
+
+            //get the publishEvent from configure and call the publish operation
         }
-        //get the publishEvent from configure and call the publish operation
     }
 
+    if (etrigger->driver.compare("python") == 0)
+    {
+        for (i = 0; i < actionSize; i++)
+        {
+
+            thread py_thread(pythonTaskStart, etrigger->actionList[i].data(), metadata);
+            py_thread.detach();
+
+            //get the publishEvent from configure and call the publish operation
+        }
+    }
+
+    /*
     //when all action finish, push the events into files (if following events needed to be published after the application running)
 
     int pubSize = etrigger->eventPubList.size();
@@ -102,10 +121,10 @@ void startAction(string clientID)
     string metadata("testmetadata");
     //use updated source
     greeter->Publish(etrigger->eventPubList, sourceClient, metadata);
+    */
 
     return;
 }
-*/
 
 // Logic and data behind the server's behavior.
 class GreeterServiceImplNotify final : public Greeter::Service
@@ -127,7 +146,8 @@ class GreeterServiceImplNotify final : public Greeter::Service
         string metadata = request->metadata();
         string peerURL = context->peer();
 
-        //printf("get client id %s get metadata %s\n", clientID.data(), metadata.data());
+        //meta data is the version here
+        printf("get client id %s get metadata %s\n", clientID.data(), metadata.data());
 
         //TODO get the json from the configID and use runtime to star this
         //it's better to put the mapping relation here
@@ -137,7 +157,8 @@ class GreeterServiceImplNotify final : public Greeter::Service
         reply->set_returnmessage(message);
 
         //don't do this for testing
-        //startAction(clientID);
+
+        startAction(clientID, metadata);
 
         NotifiedNumMtx.lock();
         NotifiedNum++;
@@ -147,8 +168,9 @@ class GreeterServiceImplNotify final : public Greeter::Service
 
         //if (NotifiedNum % 128 == 0)
         //{
-            clock_gettime(CLOCK_REALTIME, &finish); /* mark the end time */
-            printf("id %d notifynum %d finish time = (%lld.%.9ld) peerurl is %s\n", gm_rank, NotifiedNum, (long long)finish.tv_sec, finish.tv_nsec, peerURL.data());
+        clock_gettime(CLOCK_REALTIME, &finish); /* mark the end time */
+        printf("id %d notifynum %d finish time = (%lld.%.9ld) peerurl is %s\n",
+               gm_rank, NotifiedNum, (long long)finish.tv_sec, finish.tv_nsec, peerURL.data());
         //}
         return Status::OK;
     }
@@ -179,8 +201,8 @@ void RunServer(string serverIP, string serverPort)
 }
 */
 
-
-string getNotifyServerAddr(){
+string getNotifyServerAddr()
+{
     int freePort = getFreePortNum();
     string serverPort = to_string(freePort);
     string ip;
@@ -192,8 +214,6 @@ string getNotifyServerAddr(){
     string socketAddr = ip + ":" + serverPort;
     return socketAddr;
 }
-
-
 
 void runNotifyServer()
 {

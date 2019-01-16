@@ -321,7 +321,7 @@ string GreeterClient::SayHello(const string &user)
     }
 }
 
-string GreeterClient::Subscribe(vector<string> eventSubList, string clientID, string notifyAddr, string source)
+string GreeterClient::Subscribe(vector<string> eventSubList, string clientID, string notifyAddr, string source, string matchType, string metadata)
 {
 
     // Container for the data we expect from the server.
@@ -337,15 +337,31 @@ string GreeterClient::Subscribe(vector<string> eventSubList, string clientID, st
         //printf("add %s into request \n",eventList[i].data());
     }
     //printf("debug sub part2\n");
+
+    /*
+  //string array
+  repeated string pubsubmessage = 1;
+  string clientid = 2;
+  //CLIENT or SERVER
+  string source = 3;
+  string metadata = 4;
+  string matchtype = 5;
+  string notifyserver = 6;
+
+    */
     request.set_clientid(clientID);
-    request.set_metadata(notifyAddr);
     request.set_source(source);
+    request.set_metadata(metadata);
+    request.set_matchtype(matchType);
+    request.set_notifyserver(notifyAddr);
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
     ClientContext context;
 
     // The actual RPC.
+
+    printf("prepare to sub\n");
     Status status = stub_->Subscribe(&context, request, &reply);
     //printf("debug sub part3\n");
     // Act upon its status.

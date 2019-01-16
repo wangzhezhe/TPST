@@ -1,8 +1,9 @@
 {
-    "type": "TRIGGER",
-    "eventList": ["T1_FINISH","CONDITION_SATISFIED"],
-    "driver": "slurm",
+    "matchType": "META_GRID",
+    "eventSubList": ["variable_1"],
+    "metaData":"<0,0>:<2,2>",
     "actionList": [
-       "./runtimeScripts/triguresbatchjoba"
-    ]
+        "/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/movingGridInStaging/runanalytics.sh"
+     ],
+     "driver":"local"
 }

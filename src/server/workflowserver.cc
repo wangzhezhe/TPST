@@ -240,23 +240,31 @@ void *checkNotify(void *arguments)
 
   NotifyInfo ninfo = NotifyInfo();
   ninfo.addr = peerURL.data();
-  ninfo.metaInfo = psw->metadata;
+  ninfo.metaInfo = psw->pubMetadata;
   ninfo.clientid = clientidstr;
 
+  printf("debug prepare to notify psw p1\n");
+
   nqmutex.lock();
+  printf("debug prepare to notify psw lock\n");
   notifyQueue.push_back(ninfo);
+  printf("debug prepare to notify psw after push\n");
   nqmutex.unlock();
 
-  subtoClientMtx.lock();
-  deletePubEvent(psw);
+  printf("debug prepare to notify psw p2\n");
 
-  subtoClientMtx.unlock();
+  printf(" debug after push back ninfo into the notify queue meta %s matchType %s\n", ninfo.metaInfo.data(), psw->matchType.data());
 
-  //printf("server %s notify event %s to %s\n", ServerIP.data(), eventkeywithoutNum.data(), peerURL.data());
+  if (psw->matchType.compare("NAME")==0)
+  {
+    subtoClientMtx.lock();
+    deletePubEvent(psw);
+    subtoClientMtx.unlock();
+  }
+
+  printf("server %s notify event %s to %s clientid %s\n", ServerIP.data(), eventkeywithoutNum.data(), peerURL.data(), clientidstr.data());
 
   /*
-
- 
 
   //printf("notification get reply (%s)\n", reply.data());
   //TODO delete the published event in this pubsub wrapper
@@ -301,16 +309,23 @@ void getElementFromNotifyQ()
     if (size > 0)
     {
       printf("current notifyQueue size %d\n", size);
-      for (int i = 0; i < 512; i++)
+      int itervalue = 512;
+      if(size<512){
+        itervalue = size;
+      }
+      for (int i = 0; i < itervalue; i++)
       {
         //get front
         if (notifyQueue.size() > 0)
         {
 
-          nqmutex.lock();
+          //original position of the lock
           NotifyInfo ninfo = notifyQueue.front();
           //send request and notify back
+          //if there are lots of thread at operator end
+          //the speed of notifyback will decrease
           notifyback(ninfo.addr, ninfo.metaInfo, ninfo.clientid);
+          nqmutex.lock();
           notifyQueue.pop_front();
           nqmutex.unlock();
         }
@@ -367,7 +382,7 @@ void startNotify(string eventwithoutNum)
   subtoClientMtx.lock();
   map<string, pubsubWrapper *> subscribedMap = subtoClient[eventwithoutNum];
 
-  //printf("debug startnotify server id %d mapsize %d indexEvent %s\n", gm_rank, subscribedMap.size(), eventwithoutNum.data());
+  printf("debug startnotify server id %d mapsize %d indexEvent %s\n", gm_rank, subscribedMap.size(), eventwithoutNum.data());
 
   //range subscribedMap
   map<string, pubsubWrapper *>::iterator itmap;
@@ -455,12 +470,16 @@ class GreeterServiceImpl final : public Greeter::Service
     //this value should require from the meta data
     //string notifyAddr = clientIP + ":" + clientPort;
 
-    string notifyAddr = request->metadata();
+    string metadata = request->metadata();
+    string notifyAddr = request->notifyserver();
 
     //printf("debug notify addr is %s\n", notifyAddr.data());
 
     //this is the id used to label the identity of the client
     string clientId = request->clientid();
+
+    string matchType = request->matchtype();
+
     if (clientId == "")
     {
       printf("client id is not supposed to be \"\"\n");
@@ -499,7 +518,7 @@ class GreeterServiceImpl final : public Greeter::Service
       //default number is 1
     }
 
-    pubsubSubscribe(eventList, clientId, notifyAddr);
+    pubsubSubscribe(eventList, clientId, notifyAddr, matchType, metadata);
 
     reply->set_returnmessage("SUBSCRIBED");
 
@@ -581,7 +600,7 @@ class GreeterServiceImpl final : public Greeter::Service
         if (key.compare(ServerAddr) != 0)
         {
           GreeterClient *greeter = greeterMap[key];
-          string reply = greeter->Subscribe(eventList, clientId, notifyAddr, sourceIngroup);
+          string reply = greeter->Subscribe(eventList, clientId, notifyAddr, sourceIngroup, "NAME", "testMeta");
 
           if (reply.compare("SUBSCRIBED") != 0)
           {
@@ -688,7 +707,7 @@ class GreeterServiceImpl final : public Greeter::Service
       string notifyAddr = temppsw->peerURL;
       vector<string> eventList = temppsw->eventList;
 
-      string reply = greeter->Subscribe(eventList, clientid, notifyAddr, sourceIngroup);
+      string reply = greeter->Subscribe(eventList, clientid, notifyAddr, sourceIngroup, "NAME", "testMeta");
 
       if (reply.compare("SUBSCRIBED") != 0)
       {
@@ -712,6 +731,7 @@ class GreeterServiceImpl final : public Greeter::Service
     string source = request->source();
     string metadata = request->metadata();
 
+    string matchType = request->matchtype();
     //printf("debug source %s", source.data());
     //broadcaster to other servers
 
@@ -734,14 +754,15 @@ class GreeterServiceImpl final : public Greeter::Service
       eventList.push_back(eventStr);
       //printf("server (%s) get (%s) published events\n", ServerIP.data(), );
 
-      //printf("debug size %d eventList size %d server %d get publish event source (%s) publish meta (%s) publish event (%s)\n",
-      //       size, eventList.size(), gm_rank, source.data(), metadata.data(), eventStr.data());
+      printf("debug size %d eventList size %d server %d get publish event source (%s) publish meta (%s) publish event (%s)\n",
+             size, eventList.size(), gm_rank, source.data(), metadata.data(), eventStr.data());
     }
 
     //publish on one server
-    pubsubPublish(eventList, metadata);
 
-    //printf("debug publish id %d pubevent %s pubsubPublish ok\n", gm_rank, eventList[0].data());
+    pubsubPublish(eventList, matchType, metadata);
+
+    printf("debug publish ok %d pubevent %s pubsubPublish ok\n", gm_rank, eventList[0].data());
 
     //broadcaster to other servers in same group
     if (propagatePub == true && source.compare(sourceClient) == 0)
@@ -787,7 +808,7 @@ class GreeterServiceImpl final : public Greeter::Service
       }
     }
 
-    //printf("debug publish id %d pubevent %s broadcasting\n", gm_rank, eventList[0].data());
+    printf("debug publish id %d pubevent %s broadcasting\n", gm_rank, eventList[0].data());
 
     clock_gettime(CLOCK_REALTIME, &end1);
     diff1 = (end1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
@@ -1197,7 +1218,7 @@ int main(int argc, char **argv)
 
   propagateSub = false;
 
-  propagatePub = true;
+  propagatePub = false;
 
   const bool startPeridChecking = false;
 

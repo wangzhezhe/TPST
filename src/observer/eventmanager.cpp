@@ -54,7 +54,6 @@ vector<string> operatorList;
 mutex clientIdtoConfigMtx;
 map<string, EventTriggure *> clientIdtoConfig;
 
-
 /*
 void initOperator(int jsonNum)
 {
@@ -104,25 +103,21 @@ void initOperator(int jsonNum)
 }
 */
 
-void eventPublish(vector<string> pubList,string metadata)
+void eventPublish(vector<string> pubList, string metadata)
 {
     //GreeterClient *greeter = roundrobinGetClient();
     //only use first event in the list to do the hash mapping
-    string eventMsg=pubList[0];
-
+    string eventMsg = pubList[0];
 
     GreeterClient *greeter = getClientFromEvent(eventMsg);
 
-    
-    
     if (greeter == NULL)
     {
-        printf("failed to get greeter for event publisher from event %s\n",eventMsg.data());
+        printf("failed to get greeter for event publisher from event %s\n", eventMsg.data());
         return;
     }
 
     //printf("debug event publish evt msg %s ok to get client\n",eventMsg.data());
-
 
     publishMutex.lock();
     publishClient++;
@@ -132,7 +127,6 @@ void eventPublish(vector<string> pubList,string metadata)
     {
         printf("publish times %d\n", publishClient);
     }
-
 
     string reply = greeter->Publish(pubList, sourceClient, metadata);
 
@@ -148,8 +142,8 @@ void eventPublish(vector<string> pubList,string metadata)
     return;
 }
 
-
-void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr,string eventMsg)
+//TODO delete the eventMsg, it could be the first element in etrigger
+void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr, string eventMsg)
 {
     //only could be transfered by this way if original pointed is initiallises by malloc instead on new
     //EventTriggure *etrigger = (EventTriggure *)arguments;
@@ -157,11 +151,12 @@ void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr,
     //GreeterClient *greeter = roundrobinGetClient();
 
     //printf("debug event subscribe\n", eventMsg.data());
-    
+
     GreeterClient *greeter = getClientFromEvent(eventMsg);
 
-    if(greeter==NULL){
-        printf("failed to get greeter from %s\n",eventMsg.data());
+    if (greeter == NULL)
+    {
+        printf("failed to get greeter from %s\n", eventMsg.data());
         return;
     }
 
@@ -169,10 +164,9 @@ void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr,
     //string reply = greeter->SayHello("fakeSubscriber");
     //cout << "hello return value: " << reply << endl;
 
-
     //struct timespec subStart, subEnd, diff;
 
-    //clock_gettime(CLOCK_REALTIME, &subStart); 
+    //clock_gettime(CLOCK_REALTIME, &subStart);
 
     subscribedMutex.lock();
     SubscribedClient++;
@@ -184,10 +178,11 @@ void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr,
     //}
 
     //printf("debug sub event %s\n",etrigger->eventSubList[0].data());
-    string reply = greeter->Subscribe(etrigger->eventSubList, clientID, notifyAddr, sourceClient);
+    //(vector<string> eventSubList, string clientID, string notifyAddr, string source, string matchType, string metadata)
+    string reply = greeter->Subscribe(etrigger->eventSubList, clientID, notifyAddr, sourceClient, etrigger->matchType, etrigger->metaData);
     //cout << "Subscribe return value: " << reply << endl;
 
-    //clock_gettime(CLOCK_REALTIME, &subEnd); 
+    //clock_gettime(CLOCK_REALTIME, &subEnd);
 
     //diff = BILLION * (subEnd.tv_sec - subStart.tv_sec) + subEnd.tv_nsec - subStart.tv_nsec;
     //printf("debug time get (%s) response time = (%lf) second\n", etrigger->eventList[0].data(), (float)diff / BILLION);
@@ -203,7 +198,7 @@ void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr,
             printf("%s\n", etrigger->actionList[i].data());
         }
     }
-    
+
     return;
 }
 
@@ -329,6 +324,29 @@ EventTriggure *fakeaddNewConfig(string driver,
     return triggure;
 }
 
+/*
+example:
+get json buff {
+    "matchType": "NAME",
+    "eventSubList": ["dataPattern_A"],
+    "driver": "local",
+    "metaData":"null",
+    "actionList": [
+        "./runtimeScripts/triguresbatchjobb"
+     ]
+}
+
+get json buff {
+    "matchType": "META_GRID",
+    "eventSubList": ["variable_A"],
+    "driver": "local",
+    "metaData":"<0,0>:<2,2>",
+    "actionList": [
+        "./runtimeScripts/triguresbatchjobA"
+     ]
+}
+*/
+
 EventTriggure *addNewConfig(string jsonbuffer, string &clientID)
 {
     //parse json buffer
@@ -336,7 +354,7 @@ EventTriggure *addNewConfig(string jsonbuffer, string &clientID)
     //printf("current file data %s\n",jsonbuffer.data());
     d.Parse(const_cast<char *>(jsonbuffer.data()));
     //printf("jsonIfTriggerorOperator (%s)\n", jsonbuffer.data());
-    const char *type = d["type"].GetString();
+
     EventTriggure *triggure = new (EventTriggure);
 
     //get client id
@@ -345,59 +363,48 @@ EventTriggure *addNewConfig(string jsonbuffer, string &clientID)
 
     uuid_generate(uuid);
     uuid_unparse(uuid, idstr);
-    if (strcmp(type, "TRIGGER") == 0)
+
+    printf("get client id %s\n", idstr);
+    printf("get json buff %s\n", jsonbuffer.data());
+
+    //parse info
+
+    const char *matchtype = d["matchType"].GetString();
+
+    const char *driver = d["driver"].GetString();
+
+    const char *metadata = d["metaData"].GetString();
+
+    triggure->driver = string(driver);
+    triggure->metaData = string(metadata);
+    triggure->matchType = string(matchtype);
+
+    //register trigure and send subscribe call to pub-sub backend
+    const Value &eventSubList = d["eventSubList"];
+    const Value &actionList = d["actionList"];
+
+    SizeType i;
+
+    for (i = 0; i < eventSubList.Size(); i++)
     {
-        const char *driver = d["driver"].GetString();
-        triggure->driver = string(driver);
-
-#ifdef DEBUG
-        printf("process event trigure\n");
-#endif
-        //register trigure and send subscribe call to pub-sub backend
-        const Value &eventSubList = d["eventSubList"];
-        const Value &eventPubList = d["eventPubList"];
-        const Value &actionList = d["actionList"];
-
-        SizeType i;
-
-        for (i = 0; i < eventSubList.Size(); i++)
-        {
-            const char *tempsubstr = eventSubList[i].GetString();
-            string substr = string(tempsubstr);
-            triggure->eventSubList.push_back(substr);
-        }
-
-        for (i = 0; i < eventPubList.Size(); i++)
-        {
-            const char *temppubstr = eventPubList[i].GetString();
-            string pubstr = string(temppubstr);
-            triggure->eventPubList.push_back(pubstr);
-        }
-
-        for (i = 0; i < actionList.Size(); i++)
-        {
-            const char *tempstr = actionList[i].GetString();
-            triggure->actionList.push_back(string(tempstr));
-        }
-
-        string clientId(idstr);
-        clientIdtoConfigMtx.lock();
-        clientIdtoConfig[clientId] = triggure;
-        //printf("add clientid %s\n", clientId.data());
-        clientIdtoConfigMtx.unlock();
-
-        //outputTriggure(clientId);
-        clientID = clientId;
-        return triggure;
+        const char *tempsubstr = eventSubList[i].GetString();
+        string substr = string(tempsubstr);
+        triggure->eventSubList.push_back(substr);
     }
-    else if (strcmp(type, "OPERATOR") == 0)
+
+    for (i = 0; i < actionList.Size(); i++)
     {
-        printf("unsupported operator now %s\n", type);
-        return NULL;
+        const char *tempstr = actionList[i].GetString();
+        triggure->actionList.push_back(string(tempstr));
     }
-    else
-    {
-        printf("unsupported type %s\n", type);
-        return NULL;
-    }
+
+    string clientId(idstr);
+    clientIdtoConfigMtx.lock();
+    clientIdtoConfig[clientId] = triggure;
+    //printf("add clientid %s\n", clientId.data());
+    clientIdtoConfigMtx.unlock();
+
+    //outputTriggure(clientId);
+    clientID = clientId;
+    return triggure;
 }

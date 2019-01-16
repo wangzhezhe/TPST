@@ -35,7 +35,7 @@ copyCommand = "cp "+confpath+" ."
 os.system(copyCommand)
 
 # number of clients at clients end to join server
-num_peers= 1
+num_peers= 2
 appid = 1
 
 var_name = "ex1_sample_data" 
@@ -46,6 +46,12 @@ ds = dataspaces.dataspaceClient()
 
 ds.dspaces_init(comm,num_peers,appid)
 
+
+pubsubaddrList = pubsubclient.getServerAddr()
+print (pubsubaddrList)
+
+pubsubAddr = pubsubaddrList[0]
+
 def putDataToDataSpaces(gridList,timestep):
 
     cellDataArray=[]
@@ -53,7 +59,7 @@ def putDataToDataSpaces(gridList,timestep):
         #print gridList[i].p
         cellDataArray.append(gridList[i].p*1.0)
 
-    ds.dspaces_lock_on_write(lock_name)
+    #ds.dspaces_lock_on_write(lock_name)
 
     # elemsize = ctypes.sizeof(ctypes.c_double)
     # data = ([[1.1,2.2,3.3],[4.4,5.5,6.6]])
@@ -62,11 +68,27 @@ def putDataToDataSpaces(gridList,timestep):
     ver = timestep
     
     # data is 1 d array
-    lb = [0]
-
+    if(rank==0){
+        lb = [0]
+    }if (rank ==1){
+        lb = [3380]
+    }
+    
     ds.dspaces_put_data(var_name,ver,lb,cellDataArray)
-    ds.dspaces_unlock_on_write(lock_name)
+    #ds.dspaces_unlock_on_write(lock_name)
     print("write to dataspaces for ts %d" % (timestep))
+
+
+def sendEventToPubSub(pubsubAddr, ts):
+
+    eventList = ["variable_1"]
+    # this shoule be deleted
+    clientId = "test" + "_" + str(ts)
+    metainfo = "GRID[<0,0>:<1,1>]%TS["+str(ts)+"]"
+    matchtype= "META_GRID"
+    print("debug clientid %s metainfo %s matchtype %s"%(clientId,metainfo,matchtype))
+    pubsubclient.publishEventList(pubsubAddr,eventList,clientId,metainfo,matchtype)
+    print("pubsubclient %s ok"%(clientId))
 
 
 #prifix = "./image"
@@ -591,8 +613,13 @@ for t in range (changeVPeriod*10):
         # checkAndPublishEvent(gridListNew,t)
 
     # generateImage(gridListNew,prifix+"/image"+str(t))
+    
     putDataToDataSpaces(gridListNew,t)
-    # temp using
+    
+    print("debug before sening to pubsub %d"%(t))
+
+    sendEventToPubSub(pubsubAddr,t)
+    print("debug after sending to pubsub %d"%(t))
 
     '''
     if(t == 41):

@@ -31,10 +31,12 @@ typedef struct pubsubWrapper{
     mutex pswmtx;
     string peerURL;
     string clientID;
-    //one clientid, one metadata
-    string metadata;
+    //one clientid, one metadata (this meta data comes from subscription)
+    string subMetadata;
+    string pubMetadata;
     //int trigureNum; this value should be maintained in innermap of clienttoSub
     //PubSubReply *reply;
+    string matchType;
     bool iftrigure;
     map<string, int> publishedEvent;
     map<string, set<int>> requiredeventMap; //transfer eventList into this format
@@ -46,12 +48,11 @@ typedef struct SimplepubsubWrapper
     vector <string> eventList;
     string peerURL;
     string clientID;
-    string metadata;
+    string subMetadata;
 } SimplepubsubWrapper;
 
 
 extern mutex subtoClientMtx;
-
 
 extern map<string, set<int>> strtoEvent;
 
@@ -60,9 +61,9 @@ extern map<string, map<string, pubsubWrapper *> > subtoClient;
 extern mutex getIndexMtx;
 extern map<string, set<string>> getIndexMap;
 
-void pubsubSubscribe(vector<string> eventList, string clientId, string notifyAddr);
+void pubsubSubscribe(vector<string> eventList, string clientId, string notifyAddr, string matchType, string metadata);
 
-void pubsubPublish(vector<string> eventList, string metadata);
+void pubsubPublish(vector<string> eventList, string matchType, string metadata);
 
 //void addNewClientLocal(string clientid, vector<string> eventList);
 

@@ -30,6 +30,8 @@ typedef struct EventTriggure
 typedef struct EventTriggure
 {
     string driver;
+    string metaData;
+    string matchType;
     vector<string> eventSubList;
     vector<string> eventPubList;
     vector<string> actionList;
