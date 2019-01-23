@@ -10,7 +10,6 @@ import random
 import time
 import ctypes
 from mpi4py import MPI
-import dspaceswrapper.dataspaces as dataspaces
 
 
 import sys
@@ -19,84 +18,34 @@ sys.path.append('../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 import timeit
 
+prifix_rank0 = "./image_rank0"
+if os.path.isdir(prifix_rank0):
+    shutil.rmtree(prifix_rank0)
+
+
+os.mkdir(prifix_rank0)
+
+prifix_rank1 = "./image_rank1"
+if os.path.isdir(prifix_rank1):
+    shutil.rmtree(prifix_rank1)
+
+os.mkdir(prifix_rank1)
+
+
+if (len(sys.argv)!=2):
+    print("simulation <iteration>")
+    exit(0)
+
+iteration = int(sys.argv[1])
+
+
+startsim = timeit.default_timer()
+
+
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 
-# init dataspace client
-
-# copy all conf.* file to current dir
-serverdir = "/home1/zw241/dataspaces/tests/C"
-
-confpath = serverdir+"/conf*"
-
-copyCommand = "cp "+confpath+" ."
-
-os.system(copyCommand)
-
-# number of clients at clients end to join server
-num_peers= 2
-appid = 1
-
-var_name = "ex1_sample_data" 
-lock_name = "my_test_lock"
-
-
-ds = dataspaces.dataspaceClient()
-
-ds.dspaces_init(comm,num_peers,appid)
-
-
-pubsubaddrList = pubsubclient.getServerAddr()
-print (pubsubaddrList)
-
-pubsubAddr = pubsubaddrList[0]
-
-def putDataToDataSpaces(gridList,timestep):
-
-    cellDataArray=[]
-    for i in range (len(gridList)):
-        #print gridList[i].p
-        cellDataArray.append(gridList[i].p*1.0)
-
-    #ds.dspaces_lock_on_write(lock_name)
-
-    # elemsize = ctypes.sizeof(ctypes.c_double)
-    # data = ([[1.1,2.2,3.3],[4.4,5.5,6.6]])
-
-    # dataarray = (ver+1)*numpy.asarray(data)
-    ver = timestep
-    
-    # data is 1 d array
-    if(rank==0){
-        lb = [0]
-    }if (rank ==1){
-        lb = [3380]
-    }
-    
-    ds.dspaces_put_data(var_name,ver,lb,cellDataArray)
-    #ds.dspaces_unlock_on_write(lock_name)
-    print("write to dataspaces for ts %d" % (timestep))
-
-
-def sendEventToPubSub(pubsubAddr, ts):
-
-    eventList = ["variable_1"]
-    # this shoule be deleted
-    clientId = "test" + "_" + str(ts)
-    metainfo = "GRID[<0,0>:<1,1>]%TS["+str(ts)+"]"
-    matchtype= "META_GRID"
-    print("debug clientid %s metainfo %s matchtype %s"%(clientId,metainfo,matchtype))
-    pubsubclient.publishEventList(pubsubAddr,eventList,clientId,metainfo,matchtype)
-    print("pubsubclient %s ok"%(clientId))
-
-
-#prifix = "./image"
-#if os.path.isdir(prifix):
-#    shutil.rmtree(prifix)
-
-
-#os.mkdir(prifix)
 
 #define grid
 class Grid:
@@ -158,36 +107,6 @@ class ColorMass:
 
 
 ifFirstHappen = False
-
-def checkAndPublishEvent(gridListNew,iteration):
-    ifTargetEventHappen = True
-    massOriginInterest = [6,0,6]
-    targetValue = 7.5
-
-    # put the analysis into the simulation part
-    for i in range (massOriginInterest[0],massOriginInterest[0]+massR):
-        for j in range (massOriginInterest[1],massOriginInterest[1]+massR):
-            for k in range (massOriginInterest[2],massOriginInterest[2]+massR):
-                #print "index i j k (%d %d %d)" % (i,j,k)
-                #print  nparray[i][j][k]
-                #print "index i j k (%d %d %d)" % (i,j,k)
-                #print nparray[i][j][k]
-                index = getIndex(i,j,k)
-                if (gridListNew[index].p!=targetValue):
-                    ifTargetEventHappen = False
-                    break
-
-    if (ifTargetEventHappen == True):
-        print (iteration)
-        # send publish event
-        event = "CUBIC_DETECTED"
-        meta = str(iteration)
-        detecttime = timeit.default_timer()
-        print (detecttime)
-        pubsubclient.initAddrAndPublish(event,meta)
-        ifFirstHappen = True
-    return
-    
 
 
 # detect if the point is in mass
@@ -429,7 +348,7 @@ def generateImage(gridList,filename):
         #print gridList[i].p
         cellData.append(gridList[i].p)
 
-    pressure=numpy.asarray(cellData).reshape(gridnum, gridnum, gridnum,order='F')
+    pressure=numpy.asarray(cellData).reshape(gridnum, gridnum, gridnum, order='F')
     
     #print pressure
 
@@ -558,10 +477,15 @@ gridListNew = gridList
 # trace the position of the mass origin
 massOriginNew = redmass.massOrigin
 
-changeVPeriod = 5
+
 vsign = 1
 
-for t in range (changeVPeriod*10):
+if(rank==0):
+    changeVPeriod = 5
+if(rank==1):
+    changeVPeriod = 10
+
+for t in range (iteration):
 
     # update velocity field after several iteration
     '''
@@ -606,20 +530,13 @@ for t in range (changeVPeriod*10):
         elif (constantVFiled[2]!=0):
             constantVFiled = [vsign,0,0]
         
-
-    #don't do this checking at simulation part
-    #if(ifFirstHappen==False):
-        # only check when event thing not happen        
-        # checkAndPublishEvent(gridListNew,t)
-
-    # generateImage(gridListNew,prifix+"/image"+str(t))
     
-    putDataToDataSpaces(gridListNew,t)
-    
-    print("debug before sening to pubsub %d"%(t))
 
-    sendEventToPubSub(pubsubAddr,t)
-    print("debug after sending to pubsub %d"%(t))
+    if(rank==0):
+        generateImage(gridListNew,prifix_rank0+"/image"+str(t))
+    if(rank==1):
+        generateImage(gridListNew,prifix_rank1+"/image"+str(t))
+        
 
     '''
     if(t == 41):
@@ -704,9 +621,13 @@ for t in range (changeVPeriod*10):
         bluemass.massOrigin[2] = bluemass.massOrigin[2] + deltat*constantVFiled[2]
     
 
-        
-ds.dspaces_wrapper_finalize()
+print("current rank %d finish"%(rank))       
 MPI.Finalize()
+
+endsim = timeit.default_timer()
+
+print("time span")
+print (endsim-startsim)
 
 
 

@@ -11,10 +11,9 @@ import sys
 sys.path.append('../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 
+# input the coordinate of the points and return the index of grid in array
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
-
-# input the coordinate of the points and return the index of grid in array
 
 def sendEventToPubSub(ts):
 
@@ -51,7 +50,7 @@ def getIndex(px, py, pz):
     return index
 
 
-def checkAndPublishEvent(gridDataArray, iteration):
+def checkAndPublishEvent(gridDataArray_p1, gridDataArray_p2):
     ifTargetEventHappen = True
     massOriginInterest = [6, 0, 6]
     targetValue = 7.5
@@ -65,7 +64,7 @@ def checkAndPublishEvent(gridDataArray, iteration):
                 #print "index i j k (%d %d %d)" % (i,j,k)
                 #print nparray[i][j][k]
                 index = getIndex(i, j, k)
-                if (gridDataArray[index] != targetValue):
+                if (gridDataArray_p1[index] != targetValue):
                     ifTargetEventHappen = False
                     break
 
@@ -79,6 +78,54 @@ def checkAndPublishEvent(gridDataArray, iteration):
         ifFirstHappen = True
     return
 
+initp =  1.5
+targetValue = 7.5
+
+def checkDataPattern(gridDataArray_p1, gridDataArray_p2):
+
+    coord1 = []
+    coord2 = []
+    # get the index of red block in data 1
+    # print("caculate coord1")
+    break_flag=False
+    for x in range(15):
+        if(break_flag==True):
+            break
+        for y in range (15):
+            if(break_flag==True):
+                break
+            for z in range (15):
+                index = getIndex(x,y,z)
+                if (gridDataArray_p1[index]==targetValue):
+                    coord1 = [x,y,z]
+                    break_flag=True
+                    #print(coord1)
+                    break
+
+
+    # get the index of the red block in data 2
+    #print("caculate coord2")
+    break_flag=False
+    for x in range(15):
+        if(break_flag==True):
+            break
+        for y in range (15):
+            if(break_flag==True):
+                break
+            for z in range (15):
+                index = getIndex(x,y,z)
+                if (gridDataArray_p2[index]==targetValue):
+                    coord2 = [x,y,z]
+                    break_flag=True
+                    #print(coord2)
+                    break
+    
+    distance = pow((coord2[0]-coord1[0]),2)+pow((coord2[1]-coord1[1]),2)+pow((coord2[2]-coord1[2]),2)
+    #print(distance)
+    if(distance>140 and distance<150):
+        return True
+    else:
+        return False
 
 # copy all conf.* file to current dir
 serverdir = "/home1/zw241/dataspaces/tests/C"
@@ -99,38 +146,53 @@ var_name = "ex1_sample_data"
 if(len(sys.argv)!=2):
     print("./analytics <version>")
     exit(0)
+    
+iteration = int(sys.argv[1])
 
-version = int(sys.argv[1])
-
-# {lb = {0}, ub = {3374}}
-
-# iterationNum = 50
-# get iteration from the parameter
+startanay = timeit.default_timer()
 
 ds = dataspaces.dataspaceClient()
 
 ds.dspaces_init(comm, num_peers, appid)
 
+for version in range (iteration):
+
 # ds.dspaces_lock_on_read(lock_name)
 
-lb = [0]
-ub = [3374]
+    lb = [0]
+    ub = [3374]
 
-print("get version")
-print(version)
+    #print("get version")
+    #print(version)
 
-getdata = ds.dspaces_get_data(var_name, version, lb, ub)
+    getdata_p1 = ds.dspaces_get_data(var_name, version, lb, ub)
 
-#print ("get data")
-#print (getdata)
 
-# ds.dspaces_unlock_on_read(lock_name)
+    lb = [3380]
+    ub = [3380+3374]
 
-# checkAndPublishEvent(getdata, version)
+    #print("get version")
+    #print(version)
 
-# time.sleep(1)
-# publishe events to pubsub store
+    getdata_p2 = ds.dspaces_get_data(var_name, version, lb, ub)
 
+    # time.sleep(1)
+    # publishe events to pubsub store
+
+    #print("get data1")
+    #print (getdata_p1)
+
+    #print("get data2")
+    #print (getdata_p2)
+    patternHeppen = checkDataPattern(getdata_p1,getdata_p2)
+
+    if(patternHeppen==True):
+        print("patternHeppen at ts %d"%(version))
+        break
 
 ds.dspaces_wrapper_finalize()
-MPI.Finalize()
+
+endanay = timeit.default_timer()
+
+print("time span")
+print(endanay-startanay)
