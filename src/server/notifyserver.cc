@@ -158,7 +158,7 @@ class GreeterServiceImplNotify final : public Greeter::Service
 
         //don't do this for testing
 
-        startAction(clientID, metadata);
+        //startAction(clientID, metadata);
 
         NotifiedNumMtx.lock();
         NotifiedNum++;
@@ -166,12 +166,12 @@ class GreeterServiceImplNotify final : public Greeter::Service
 
         struct timespec finish;
 
-        //if (NotifiedNum % 128 == 0)
-        //{
+        if (NotifiedNum % 128 == 0)
+        {
         clock_gettime(CLOCK_REALTIME, &finish); /* mark the end time */
         printf("id %d notifynum %d finish time = (%lld.%.9ld) peerurl is %s\n",
                gm_rank, NotifiedNum, (long long)finish.tv_sec, finish.tv_nsec, peerURL.data());
-        //}
+        }
         return Status::OK;
     }
 };

@@ -288,10 +288,9 @@ void fakegothroughFolderRegister(int subSize, string notifyAddr)
 
     //TODO using distributed lock to get the id from the shared file system
     int i = 0;
-    string TRIGGURETYPE = "TRIGGER";
+    
     string driver = "local";
     //for test using
-    string redundantPushEvent = "redundant";
 
     printf("call fakegothroughFolderRegister, subsize is %d\n", subSize);
 
@@ -472,9 +471,9 @@ int main(int argc, char **argv)
 
     //onePubMultipleSameSub(subSize, notifyAddr);
 
-    //fakegothroughFolderRegister(subSize, notifyAddr);
+    fakegothroughFolderRegister(subSize, notifyAddr);
 
-    multipleSub(subSize, notifyAddr);
+    //multipleSub(subSize, notifyAddr);
 
     while (1)
     {

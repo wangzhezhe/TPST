@@ -309,6 +309,7 @@ void getElementFromNotifyQ()
     if (size > 0)
     {
       printf("current notifyQueue size %d\n", size);
+      
       int itervalue = 512;
       if(size<512){
         itervalue = size;
@@ -530,10 +531,10 @@ class GreeterServiceImpl final : public Greeter::Service
     subtimes++;
     subtimesMtx.unlock();
 
-    //if (subtimes % 128 == 0)
-    //{
-    printf("debug server id %d for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", gm_rank, eventList[0].data(), diff, subavg, subtimes);
-    //}
+    if (subtimes % 128 == 0)
+    {
+        printf("debug server id %d for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", gm_rank, eventList[0].data(), diff, subavg, subtimes);
+    }
 
     //get coordinator clients
     //this should be updated after checking cluster !!!!
@@ -818,10 +819,10 @@ class GreeterServiceImpl final : public Greeter::Service
     pubtimes++;
     pubtimesMtx.unlock();
 
-    //if (pubtimes % 128 == 0)
-    //{
-    //printf("debug for publish (%s) response time = (%lf) avg time = (%lf) pubtimes (%d) current id %d\n", eventStr.data(), pubavg, diff1, pubtimes, gm_rank);
-    //}
+    if (pubtimes % 128 == 0)
+    {
+        printf("debug for publish (%s) response time = (%lf) avg time = (%lf) pubtimes (%d) current id %d\n", eventStr.data(), pubavg, diff1, pubtimes, gm_rank);
+    }
 
     size = eventList.size();
     string peerURL = context->peer();
@@ -861,7 +862,7 @@ class GreeterServiceImpl final : public Greeter::Service
 
     if (subnum % 128 == 0)
     {
-      printf("server addr is %s and sub number is %d\n", serveraddr.data(), subnum);
+        printf("server addr is %s and sub number is %d\n", serveraddr.data(), subnum);
     }
 
     //update the recordmap
