@@ -139,7 +139,7 @@ void publishMultiGroup(vector<string> eventList, string metadata)
       GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
           coordNator.data(), grpc::InsecureChannelCredentials()));
       //broadcasting between groups
-      string reply = greeter->Publish(eventList, sourceBetweengroup, metadata);
+      string reply = greeter->Publish(eventList, sourceBetweengroup, metadata, "NAME");
 
       if (reply.compare("OK") != 0)
       {
@@ -173,7 +173,7 @@ void publishMultiServer(vector<string> eventList, string metadata)
       //send request
       GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
           tempaddr.data(), grpc::InsecureChannelCredentials()));
-      string reply = greeter->Publish(eventList, sourceIngroup, metadata);
+      string reply = greeter->Publish(eventList, sourceIngroup, metadata, "NAME");
 
       printf("broad cast to server %s\n", tempaddr.data());
 
@@ -232,7 +232,7 @@ void *checkNotify(void *arguments)
 
   psw->pswmtx.unlock();
 
-  printf("debug prepare to notify psw\n");
+  //printf("debug prepare to notify psw\n");
   //}
 
   //TODO put the metadata and the url at the notifyqueue
@@ -243,17 +243,17 @@ void *checkNotify(void *arguments)
   ninfo.metaInfo = psw->pubMetadata;
   ninfo.clientid = clientidstr;
 
-  printf("debug prepare to notify psw p1\n");
+  //printf("debug prepare to notify psw p1\n");
 
   nqmutex.lock();
-  printf("debug prepare to notify psw lock\n");
+  //printf("debug prepare to notify psw lock\n");
   notifyQueue.push_back(ninfo);
-  printf("debug prepare to notify psw after push\n");
+  //printf("debug prepare to notify psw after push\n");
   nqmutex.unlock();
 
-  printf("debug prepare to notify psw p2\n");
+  //printf("debug prepare to notify psw p2\n");
 
-  printf(" debug after push back ninfo into the notify queue meta %s matchType %s\n", ninfo.metaInfo.data(), psw->matchType.data());
+  //printf(" debug after push back ninfo into the notify queue meta %s matchType %s\n", ninfo.metaInfo.data(), psw->matchType.data());
 
   if (psw->matchType.compare("NAME")==0)
   {
@@ -262,7 +262,7 @@ void *checkNotify(void *arguments)
     subtoClientMtx.unlock();
   }
 
-  printf("server %s notify event %s to %s clientid %s\n", ServerIP.data(), eventkeywithoutNum.data(), peerURL.data(), clientidstr.data());
+  //printf("server %s notify event %s to %s clientid %s\n", ServerIP.data(), eventkeywithoutNum.data(), peerURL.data(), clientidstr.data());
 
   /*
 
@@ -314,6 +314,7 @@ void getElementFromNotifyQ()
       if(size<512){
         itervalue = size;
       }
+      //TODO use openmp here?
       for (int i = 0; i < itervalue; i++)
       {
         //get front
@@ -325,7 +326,9 @@ void getElementFromNotifyQ()
           //send request and notify back
           //if there are lots of thread at operator end
           //the speed of notifyback will decrease
-          notifyback(ninfo.addr, ninfo.metaInfo, ninfo.clientid);
+          thread notifyThread (notifyback, ninfo.addr, ninfo.metaInfo, ninfo.clientid);
+          notifyThread.detach();
+          //notifyback(ninfo.addr, ninfo.metaInfo, ninfo.clientid);
           nqmutex.lock();
           notifyQueue.pop_front();
           nqmutex.unlock();
@@ -383,7 +386,7 @@ void startNotify(string eventwithoutNum)
   subtoClientMtx.lock();
   map<string, pubsubWrapper *> subscribedMap = subtoClient[eventwithoutNum];
 
-  printf("debug startnotify server id %d mapsize %d indexEvent %s\n", gm_rank, subscribedMap.size(), eventwithoutNum.data());
+  //printf("debug startnotify server id %d mapsize %d indexEvent %s\n", gm_rank, subscribedMap.size(), eventwithoutNum.data());
 
   //range subscribedMap
   map<string, pubsubWrapper *>::iterator itmap;
@@ -513,7 +516,7 @@ class GreeterServiceImpl final : public Greeter::Service
       eventStr = request->pubsubmessage(i);
 
       //#ifdef DEBUG
-      printf("server %d get subscribed event (%s)\n", gm_rank, eventStr.data());
+      //printf("server %d get subscribed event (%s)\n", gm_rank, eventStr.data());
       //#endif
       eventList.push_back(eventStr);
       //default number is 1
@@ -651,7 +654,7 @@ class GreeterServiceImpl final : public Greeter::Service
       return Status::OK;
     }
 
-    printf("debug size of client subscribe eventStr %d\n", subtoClient[eventStr].size());
+    //printf("debug size of client subscribe eventStr %d\n", subtoClient[eventStr].size());
 
     clock_gettime(CLOCK_REALTIME, &start);
 
@@ -733,6 +736,10 @@ class GreeterServiceImpl final : public Greeter::Service
     string metadata = request->metadata();
 
     string matchType = request->matchtype();
+    //printf("testMatchType %s\n",matchType.data());
+    if(matchType.compare("")){
+      matchType = "NAME";
+    }
     //printf("debug source %s", source.data());
     //broadcaster to other servers
 
@@ -755,15 +762,15 @@ class GreeterServiceImpl final : public Greeter::Service
       eventList.push_back(eventStr);
       //printf("server (%s) get (%s) published events\n", ServerIP.data(), );
 
-      printf("debug size %d eventList size %d server %d get publish event source (%s) publish meta (%s) publish event (%s)\n",
-             size, eventList.size(), gm_rank, source.data(), metadata.data(), eventStr.data());
+      //printf("debug size %d eventList size %d server %d get publish event source (%s) publish meta (%s) publish event (%s)\n",
+      //       size, eventList.size(), gm_rank, source.data(), metadata.data(), eventStr.data());
     }
 
     //publish on one server
 
     pubsubPublish(eventList, matchType, metadata);
 
-    printf("debug publish ok %d pubevent %s pubsubPublish ok\n", gm_rank, eventList[0].data());
+    //printf("debug publish ok %d pubevent %s pubsubPublish ok\n", gm_rank, eventList[0].data());
 
     //broadcaster to other servers in same group
     if (propagatePub == true && source.compare(sourceClient) == 0)
@@ -809,7 +816,7 @@ class GreeterServiceImpl final : public Greeter::Service
       }
     }
 
-    printf("debug publish id %d pubevent %s broadcasting\n", gm_rank, eventList[0].data());
+    //printf("debug publish id %d pubevent %s broadcasting\n", gm_rank, eventList[0].data());
 
     clock_gettime(CLOCK_REALTIME, &end1);
     diff1 = (end1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;

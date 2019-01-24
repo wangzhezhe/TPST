@@ -18,18 +18,21 @@ sys.path.append('../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 import timeit
 
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+
+
 prifix_rank0 = "./image_rank0"
-if os.path.isdir(prifix_rank0):
-    shutil.rmtree(prifix_rank0)
-
-
-os.mkdir(prifix_rank0)
+if(rank==0):
+    if os.path.isdir(prifix_rank0):
+        shutil.rmtree(prifix_rank0)
+    os.mkdir(prifix_rank0)
 
 prifix_rank1 = "./image_rank1"
-if os.path.isdir(prifix_rank1):
-    shutil.rmtree(prifix_rank1)
-
-os.mkdir(prifix_rank1)
+if(rank==1):
+    if os.path.isdir(prifix_rank1):
+        shutil.rmtree(prifix_rank1)
+    os.mkdir(prifix_rank1)
 
 
 if (len(sys.argv)!=2):
@@ -42,8 +45,7 @@ iteration = int(sys.argv[1])
 startsim = timeit.default_timer()
 
 
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
+
 
 
 

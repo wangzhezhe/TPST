@@ -26,7 +26,7 @@ CXX = mpic++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC)
 CPPFLAGS += `pkg-config --cflags protobuf grpc`
 #CXXFLAGS += -std=c++11 -I../deps/ -I/home1/zw241/Software/grpc/third_party/protobuf/src -DTIME -DDEBUG
 #CXXFLAGS += -std=c++11 -I../deps/  -I../deps/hiredis/ -DDEBUG
-CXXFLAGS += -std=c++11 -I../deps/ -I$(ROOT_PATH)/grpc/third_party/protobuf/src 
+CXXFLAGS += -std=c++11 -I../deps/ -I$(ROOT_PATH)/grpc/third_party/protobuf/src -I/home1/zw241/pythonWorkSpace/nbodysimulation/include/python3.6m
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += -L/usr/local/lib -L/$(ROOT_PATH)/protoinstall/lib -L$(ROOT_PATH)/grpc/libs/opt/protobuf -L$(ROOT_PATH)/grpcinstall/lib `pkg-config --libs protobuf grpc++ grpc`\
            -lgrpc++_reflection\
@@ -34,7 +34,7 @@ LDFLAGS += -L/usr/local/lib -L/$(ROOT_PATH)/protoinstall/lib -L$(ROOT_PATH)/grpc
 else
 LDFLAGS += -L/usr/local/lib -L$(ROOT_PATH)/grpcinstall/lib -L$(ROOT_PATH)/grpc/libs/opt/protobuf -I$(LD_PATH)  `pkg-config --libs protobuf grpc++ grpc`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
-           -ldl -lpthread -lgpr -luuid
+           -ldl -lpthread -lgpr -luuid -L/software/python/3.6.3/lib -lpython3.6m -lpthread -ldl -lutil -lm
 endif
 PROTOC = /home1/zw241/Software/grpc/third_party/protobuf/src/protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
@@ -45,6 +45,9 @@ PROTOS_PATH = ../src/proto
 vpath %.proto $(PROTOS_PATH)
 
 all: eventNotify
+
+strparse.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o strparse.o ../src/utils/strparse/strparse.cpp
 
 notifyserver.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/server/notifyserver.cc -o notifyserver.o
@@ -73,7 +76,7 @@ local.o:
 pubsubclient.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../src/publishclient/pubsubclient.cc -o pubsubclient.o
 
-eventNotify: workflowserver.pb.o notifyserver.o workflowserver.grpc.pb.o eventNotify.o loaddata.o eventmanager.o slurm.o local.o pubsubclient.o groupManager.o dht.o dlm.o
+eventNotify: workflowserver.pb.o notifyserver.o workflowserver.grpc.pb.o eventNotify.o loaddata.o eventmanager.o slurm.o local.o pubsubclient.o groupManager.o dht.o dlm.o strparse.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc

@@ -464,6 +464,8 @@ void pubsubPublish(vector<string> eventList, string matchType, string metadata)
                 string clientId = itmap->first;
                 pubsubWrapper *clientWrapper = itmap->second;
                 bool tempiftrigure = false;
+
+
                 if (matchType.compare("NAME") == 0)
                 {
                     if (clientWrapper->publishedEvent.find(eventwithoutNum) == clientWrapper->publishedEvent.end())
@@ -495,7 +497,7 @@ void pubsubPublish(vector<string> eventList, string matchType, string metadata)
                     //some of metadata will missed
                     subtoClient[indexEvent][clientId]->pubMetadata = metadata;
                     subtoClient[indexEvent][clientId]->iftrigure = tempiftrigure;
-                    printf("check iftrigure event %s indexEvent %s bool %d\n", eventwithoutNum.data(), indexEvent.data(), subtoClient[indexEvent][clientId]->iftrigure);
+                    //printf("check iftrigure event %s indexEvent %s bool %d\n", eventwithoutNum.data(), indexEvent.data(), subtoClient[indexEvent][clientId]->iftrigure);
                 }
             }
 

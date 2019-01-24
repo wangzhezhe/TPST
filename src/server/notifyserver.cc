@@ -147,7 +147,7 @@ class GreeterServiceImplNotify final : public Greeter::Service
         string peerURL = context->peer();
 
         //meta data is the version here
-        printf("get client id %s get metadata %s\n", clientID.data(), metadata.data());
+        //printf("get client id %s get metadata %s\n", clientID.data(), metadata.data());
 
         //TODO get the json from the configID and use runtime to star this
         //it's better to put the mapping relation here
@@ -169,8 +169,8 @@ class GreeterServiceImplNotify final : public Greeter::Service
         if (NotifiedNum % 128 == 0)
         {
         clock_gettime(CLOCK_REALTIME, &finish); /* mark the end time */
-        printf("id %d notifynum %d finish time = (%lld.%.9ld) peerurl is %s\n",
-               gm_rank, NotifiedNum, (long long)finish.tv_sec, finish.tv_nsec, peerURL.data());
+        printf("id %d notifynum %d finish time = (%lld.%.9ld)\n",
+               gm_rank, NotifiedNum, (long long)finish.tv_sec, finish.tv_nsec);
         }
         return Status::OK;
     }

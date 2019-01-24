@@ -361,7 +361,7 @@ string GreeterClient::Subscribe(vector<string> eventSubList, string clientID, st
 
     // The actual RPC.
 
-    printf("prepare to sub\n");
+    //printf("prepare to sub\n");
     Status status = stub_->Subscribe(&context, request, &reply);
     //printf("debug sub part3\n");
     // Act upon its status.
@@ -377,7 +377,7 @@ string GreeterClient::Subscribe(vector<string> eventSubList, string clientID, st
     }
 }
 
-string GreeterClient::Publish(vector<string> eventList, string source, string metadata)
+string GreeterClient::Publish(vector<string> eventList, string source, string metadata, string matchType)
 {
     // Container for the data we expect from the server.
     PubSubRequest request;
@@ -393,6 +393,9 @@ string GreeterClient::Publish(vector<string> eventList, string source, string me
     request.set_source(source);
 
     request.set_metadata(metadata);
+    
+    request.set_matchtype(matchType);
+
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.

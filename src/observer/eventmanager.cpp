@@ -128,7 +128,7 @@ void eventPublish(vector<string> pubList, string metadata)
         printf("publish times %d\n", publishClient);
     }
 
-    string reply = greeter->Publish(pubList, sourceClient, metadata);
+    string reply = greeter->Publish(pubList, sourceClient, metadata, "NAME" );
 
     //printf("debug %s get reply\n",eventMsg.data());
 
@@ -306,6 +306,7 @@ EventTriggure *fakeaddNewConfig(string driver,
     triggure->eventSubList = eventSubList;
     triggure->eventPubList = eventPubList;
     triggure->actionList = actionList;
+    triggure->matchType="NAME";
 
     uuid_t uuid;
     char idstr[50];

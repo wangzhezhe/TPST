@@ -54,7 +54,7 @@ public:
 
   string Subscribe(vector<string> eventSubList, string clientID, string notifyAddr, string source, string matchType, string metadata);
 
-  string Publish(vector<string> eventList,string source, string metadata);
+  string Publish(vector<string> eventList, string source, string metadata, string matchType);
   
   string NotifyBack(string clientId,string metadata);
  

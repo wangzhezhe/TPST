@@ -27,7 +27,7 @@ LDFLAGS += -L/usr/local/lib -L/home1/zw241/Software/protoinstall/lib -L/home1/zw
 else
 LDFLAGS += -L/usr/local/lib -L/home1/zw241/Software/protoinstall/lib -L/home1/zw241/Software/grpc/libs/opt/protobuf -L/home1/zw241/Software/grpcinstall/lib `pkg-config --libs protobuf grpc++ grpc`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
-           -ldl -lpthread -lgpr -luuid -L/software/python/3.6.3/lib -lpython3.6m -lpthread -ldl -lutil -lm
+           -ldl -lpthread -lgpr -luuid
 endif
 PROTOC = /home1/zw241/Software/grpc/third_party/protobuf/src/protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
