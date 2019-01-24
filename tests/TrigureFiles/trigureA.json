@@ -3,7 +3,7 @@
     "eventSubList": ["variable_1"],
     "metaData":"<0,0>:<2,2>",
     "actionList": [
-        "/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/movingGridInStaging/runanalytics.sh"
+        "/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/movingGridMultiInStagingEvent/runanalytics.sh"
      ],
      "driver":"local"
 }

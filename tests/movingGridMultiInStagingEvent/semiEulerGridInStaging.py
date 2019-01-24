@@ -15,8 +15,8 @@ import dspaceswrapper.dataspaces as dataspaces
 
 import sys
 # insert pubsub and detect the things after every iteration
-#sys.path.append('../../src/publishclient/pythonclient')
-#import pubsub as pubsubclient
+sys.path.append('../../src/publishclient/pythonclient')
+import pubsub as pubsubclient
 import timeit
 
 comm = MPI.COMM_WORLD
@@ -46,11 +46,10 @@ ds = dataspaces.dataspaceClient()
 
 ds.dspaces_init(comm,num_peers,appid)
 
+pubsubaddrList = pubsubclient.getServerAddr()
+print (pubsubaddrList)
 
-#pubsubaddrList = pubsubclient.getServerAddr()
-#print (pubsubaddrList)
-
-#pubsubAddr = pubsubaddrList[0]
+pubsubAddr = pubsubaddrList[0]
 
 def putDataToDataSpaces(gridList,timestep):
 
@@ -80,7 +79,7 @@ def putDataToDataSpaces(gridList,timestep):
 
 
 def sendEventToPubSub(pubsubAddr, ts):
-
+  
     eventList = ["variable_1"]
     # this shoule be deleted
     clientId = "test" + "_" + str(ts)
@@ -632,8 +631,11 @@ for t in range (iteration):
     putDataToDataSpaces(gridListNew,t)
     
     #print("debug before sening to pubsub %d"%(t))
-
-    #sendEventToPubSub(pubsubAddr,t)
+    comm.Barrier()
+    if(rank==0):
+        sendEventToPubSub(pubsubAddr,t)
+    
+   
     #print("debug after sending to pubsub %d"%(t))
 
     '''

@@ -50,23 +50,23 @@ mpirun --map-by ppr:16:node -n $NUM_SERVER  ./workflowserver 1500 eno1 $NUM_GROU
 
 # start the operator
 
-module load mpich
-module load python/3.6.3
-cd /home1/zw241/pythonWorkSpace/nbodysimulation
-source ./bin/activate
-cd $PRJPATH
-source /home1/zw241/.grpc
-./operator >& $PRJPATH/wftest_operator.log  &
+#module load mpich
+#module load python/3.6.3
+#cd /home1/zw241/pythonWorkSpace/nbodysimulation
+#source ./bin/activate
+#cd $PRJPATH
+#source /home1/zw241/.grpc
+#./operator >& $PRJPATH/wftest_operator.log  &
 
 # start the simulation
 
-module load mpich
-module load python/3.6.3
-cd /home1/zw241/pythonWorkSpace/nbodysimulation
-source ./bin/activate
+#module load mpich
+#module load python/3.6.3
+#cd /home1/zw241/pythonWorkSpace/nbodysimulation
+#source ./bin/activate
 
-cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/movingGridInStaging
+#cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/movingGridInStaging
 
-python semiEulerGridInStaging.py >& $PRJPATH/wftest_simulation.log  &
+#python semiEulerGridInStaging.py >& $PRJPATH/wftest_simulation.log  &
 
 wait
