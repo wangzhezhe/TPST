@@ -44,6 +44,8 @@
 
 #include "../utils/coordinator/coordinator.h"
 
+#include "../../deps/spdlog/spdlog.h"
+
 #define BILLION 1000000000L
 
 #ifdef BAZEL_BUILD
@@ -255,7 +257,7 @@ void *checkNotify(void *arguments)
 
   //printf(" debug after push back ninfo into the notify queue meta %s matchType %s\n", ninfo.metaInfo.data(), psw->matchType.data());
 
-  if (psw->matchType.compare("NAME")==0)
+  if (psw->matchType.compare("NAME") == 0)
   {
     subtoClientMtx.lock();
     deletePubEvent(psw);
@@ -309,9 +311,10 @@ void getElementFromNotifyQ()
     if (size > 0)
     {
       printf("current notifyQueue size %d\n", size);
-      
+
       int itervalue = 512;
-      if(size<512){
+      if (size < 512)
+      {
         itervalue = size;
       }
       //TODO use openmp here?
@@ -326,7 +329,7 @@ void getElementFromNotifyQ()
           //send request and notify back
           //if there are lots of thread at operator end
           //the speed of notifyback will decrease
-          thread notifyThread (notifyback, ninfo.addr, ninfo.metaInfo, ninfo.clientid);
+          thread notifyThread(notifyback, ninfo.addr, ninfo.metaInfo, ninfo.clientid);
           notifyThread.detach();
           //notifyback(ninfo.addr, ninfo.metaInfo, ninfo.clientid);
           nqmutex.lock();
@@ -536,7 +539,7 @@ class GreeterServiceImpl final : public Greeter::Service
 
     if (subtimes % 128 == 0)
     {
-        printf("debug server id %d for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", gm_rank, eventList[0].data(), diff, subavg, subtimes);
+      printf("debug server id %d for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", gm_rank, eventList[0].data(), diff, subavg, subtimes);
     }
 
     //get coordinator clients
@@ -737,7 +740,8 @@ class GreeterServiceImpl final : public Greeter::Service
 
     string matchType = request->matchtype();
     //printf("testMatchType %s\n",matchType.data());
-    if(matchType.compare("")){
+    if (matchType.compare(""))
+    {
       matchType = "NAME";
     }
     //printf("debug source %s", source.data());
@@ -828,7 +832,7 @@ class GreeterServiceImpl final : public Greeter::Service
 
     if (pubtimes % 128 == 0)
     {
-        printf("debug for publish (%s) response time = (%lf) avg time = (%lf) pubtimes (%d) current id %d\n", eventStr.data(), pubavg, diff1, pubtimes, gm_rank);
+      printf("debug for publish (%s) response time = (%lf) avg time = (%lf) pubtimes (%d) current id %d\n", eventStr.data(), pubavg, diff1, pubtimes, gm_rank);
     }
 
     size = eventList.size();
@@ -869,7 +873,7 @@ class GreeterServiceImpl final : public Greeter::Service
 
     if (subnum % 128 == 0)
     {
-        printf("server addr is %s and sub number is %d\n", serveraddr.data(), subnum);
+      printf("server addr is %s and sub number is %d\n", serveraddr.data(), subnum);
     }
 
     //update the recordmap
@@ -930,7 +934,7 @@ void RunServer(string serverIP, string serverPort, int threadPool)
   string socketAddr = serverIP + ":" + serverPort;
   //ServerAddr is global value
   ServerAddr = socketAddr;
-  printf("server socket addr %s\n", socketAddr.data());
+  spdlog::debug("server socket addr {}", socketAddr.data());
   std::string server_address(socketAddr);
   GreeterServiceImpl service;
 
@@ -1174,11 +1178,11 @@ int main(int argc, char **argv)
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
   //get wait time ./workflowserver 1000
-  printf("parameter length %d\n", argc);
+  spdlog::info("parameter length {}", argc);
 
   int threadPoolSize = 32;
 
-  if (argc == 8)
+  if (argc == 9)
   {
     waitTime = atoi(argv[1]);
     printf("chechNotify wait period %d\n", waitTime);
@@ -1202,10 +1206,21 @@ int main(int argc, char **argv)
     notifySleep = atoi(argv[6]);
 
     overLoadThreshold = atoi(argv[7]);
+
+    int logLevel = atoi(argv[8]);
+
+    if (logLevel == 0)
+    {
+      spdlog::set_level(spdlog::level::info);
+    } 
+    else
+    {
+      spdlog::set_level(spdlog::level::debug);
+    }
   }
   else
   {
-    printf("./workflowserver <subscribe period time> <network interfaces> <group size> <group number> <size of thread pool> <notify sleep> <threshold for coordinator checking>\n");
+    printf("./workflowserver <subscribe period time> <network interfaces> <group size> <group number> <size of thread pool> <notify sleep> <threshold for coordinator checking> <loglevel>\n");
     return 0;
   }
   //ServerPort = string("50051");
@@ -1230,13 +1245,13 @@ int main(int argc, char **argv)
 
   const bool startPeridChecking = false;
 
-  printf("server id %d server status %s\n", gm_rank, SERVERSTATUS.data());
+  spdlog::info("server id {} server status {}", gm_rank, SERVERSTATUS.data());
 
   thread runServer(RunServer, ServerIP, ServerPort, threadPoolSize);
 
   if (startPeridChecking == true && SERVERSTATUS.compare(status_coor) == 0)
   {
-    printf("server id %d is coordinator, run group checking\n", gm_rank);
+    spdlog::info("server id {} is coordinator, run group checking\n", gm_rank);
     thread tCheck(periodChecking);
     tCheck.join();
   }

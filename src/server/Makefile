@@ -21,10 +21,11 @@ ROOT_PATH = /home1/zw241/Software
 LD_PATH_PROTO = $(ROOT_PATH)/grpc/third_party/protobuf/src
 LD_PATH_GRPC = $(ROOT_PATH)/grpcinstall/include
 
+INCLUDE_DEPS = /project1/parashar-001/zw241/software/eventDrivenWorkflow/deps
 HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
 #CXX = g++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC) 
-CXX = mpic++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC) 
+CXX = mpic++ -I$(LD_PATH_PROTO) -I$(LD_PATH_GRPC) -I$(INCLUDE_DEPS)
 CPPFLAGS += `pkg-config --cflags protobuf grpc` -I/home1/zw241/Software/grpc/third_party/protobuf/src 
 CXXFLAGS += -std=c++11 -fopenmp
 #CXXFLAGS += -std=c++11 -I../deps/  -I../deps/hiredis/ -DDEBUG
