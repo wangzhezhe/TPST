@@ -426,10 +426,20 @@ void pubsubPublish(vector<string> eventList, string matchType, string metadata)
             continue;
         }
 
+        //if (ifdebug)
+        //{
+        //    printf("%s debug0\n", eventwithoutNum.data());
+        //}
+
         //range the index set firstly
         getIndexMtx.lock();
         set<string> indexEventSet = getIndexMap[eventwithoutNum];
         getIndexMtx.unlock();
+
+        //if (ifdebug)
+        //{
+        //    printf("%s debug1\n", eventwithoutNum.data());
+        //}
 
         for (set<string>::iterator it = indexEventSet.begin(); it != indexEventSet.end(); ++it)
         {
@@ -438,14 +448,35 @@ void pubsubPublish(vector<string> eventList, string matchType, string metadata)
 
             //printf("debug getIndexMap eventwithoutNum %s indexEvent %s\n", eventwithoutNum.data(), indexEvent.data());
 
+            //if (ifdebug)
+            //{
+            //    printf("%s debug2\n", eventwithoutNum.data());
+            //}
+
             subtoClientMtx.lock();
             if (subtoClient.find(indexEvent) == subtoClient.end())
             {
                 printf("error: indexEvent %s is not in subtoClient\n", indexEvent.data());
+                subtoClientMtx.unlock();
                 return;
             }
+            subtoClientMtx.unlock();
+
+            //if (ifdebug)
+            //{
+            //    printf("%s debug3\n", eventwithoutNum.data());
+            //}
 
             //traverse map
+            subtoClientMtx.lock();
+            map<string, pubsubWrapper *> innermap = subtoClient[indexEvent];
+            subtoClientMtx.unlock();
+
+            //if (ifdebug)
+            //{
+            //    printf("%s debug4\n", eventwithoutNum.data());
+            //}
+
             map<string, pubsubWrapper *>::iterator itmap;
 
             //printf("number for clientset %d when publish event %s\n", setnum, eventwithoutNum.data());
@@ -454,7 +485,7 @@ void pubsubPublish(vector<string> eventList, string matchType, string metadata)
             //diff = (end1.tv_sec - start.tv_sec) * 1.0 + (end1.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
             //printf("debug for publish end1 response time = (%lf) second\n", diff);
             //traverse the map and put publish into it
-            for (itmap = subtoClient[indexEvent].begin(); itmap != subtoClient[indexEvent].end(); ++itmap)
+            for (itmap = innermap.begin(); itmap != innermap.end(); ++itmap)
             {
 
                 //using openmp here, there is do data depedency between every clients
@@ -465,6 +496,10 @@ void pubsubPublish(vector<string> eventList, string matchType, string metadata)
                 pubsubWrapper *clientWrapper = itmap->second;
                 bool tempiftrigure = false;
 
+                //if (ifdebug)
+                //{
+                //    printf("%s debug5\n", eventwithoutNum.data());
+                //}
 
                 if (matchType.compare("NAME") == 0)
                 {
@@ -489,19 +524,29 @@ void pubsubPublish(vector<string> eventList, string matchType, string metadata)
                     printf("unsuported match type %s\n", matchType.data());
                 }
 
+                //if (ifdebug)
+                //{
+                //    printf("%s debug6\n", eventwithoutNum.data());
+                //}
+
                 if (tempiftrigure == true)
                 {
                     //modify metadata only when need to notify
                     //TODO update the metadata storing published events
                     //if there are multiple pub for same key in small range of time
                     //some of metadata will missed
+                    subtoClientMtx.lock();
                     subtoClient[indexEvent][clientId]->pubMetadata = metadata;
                     subtoClient[indexEvent][clientId]->iftrigure = tempiftrigure;
+                    subtoClientMtx.unlock();
                     //printf("check iftrigure event %s indexEvent %s bool %d\n", eventwithoutNum.data(), indexEvent.data(), subtoClient[indexEvent][clientId]->iftrigure);
                 }
-            }
 
-            subtoClientMtx.unlock();
+                //if (ifdebug)
+                //{
+                //    printf("%s debug7\n", eventwithoutNum.data());
+                //}
+            }
         }
     }
 }

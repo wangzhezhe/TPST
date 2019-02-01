@@ -31,6 +31,7 @@
 //#include "../utils/getip/getip.h"
 #include "../utils/groupManager/groupManager.h"
 #include "../utils/dht/dht.h"
+#include "../../deps/spdlog/spdlog.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -393,16 +394,25 @@ string GreeterClient::Publish(vector<string> eventList, string source, string me
     request.set_source(source);
 
     request.set_metadata(metadata);
-    
-    request.set_matchtype(matchType);
 
+    request.set_matchtype(matchType);
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
     ClientContext context;
 
     // The actual RPC.
+    //if (gm_rank == 1)
+    //{
+    //    printf("debug publish before sent %s\n", eventList[0].data());
+    //}
+
     Status status = stub_->Publish(&context, request, &reply);
+    
+    //if (gm_rank == 1)
+    //{
+    //    printf("debug publish after sent %s\n", eventList[0].data());
+    //}
 
     // Act upon its status.
     if (status.ok())
@@ -411,8 +421,9 @@ string GreeterClient::Publish(vector<string> eventList, string source, string me
     }
     else
     {
-        cout << status.error_code() << ": " << status.error_message()
+        cout << "rpc fail " << status.error_code() << ": " << status.error_message()
              << endl;
+
         return "RPC failed";
     }
     return reply.returnmessage();
@@ -579,7 +590,7 @@ void initClients(string clusterDir)
 }
 
 //fake use eventId for testing
-GreeterClient *getClientFromEvent(string eventString)
+GreeterClient *getClientFromEvent(string eventString, int reqNum)
 {
 
     //get cluster dir from the hash function

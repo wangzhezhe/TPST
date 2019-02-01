@@ -36,6 +36,8 @@
 #include "../deps/rapidjson/include/rapidjson/writer.h"
 #include "../deps/rapidjson/include/rapidjson/stringbuffer.h"
 
+#include "../deps/spdlog/spdlog.h"
+
 #define MAX_EVENTS 1024                                /*Max. number of events to process at one go*/
 #define LEN_NAME 16                                    /*Assuming that the length of the filename won't exceed 16 bytes*/
 #define EVENT_SIZE (sizeof(struct inotify_event))      /*size of one event*/
@@ -113,20 +115,28 @@ void fakePublishTest(int pubSize)
     //srand(time(0));
     //string metadata = to_string(COMPONENTID) + "metadataTest" + to_string(i);
     //string metadata = to_string(COMPONENTID) + "metadataTest";
-    //vector<string> pubeventList;
+    vector<string> pubeventList;
+    spdlog::debug("id {} the pubsize is {}",gm_rank, pubSize);
     for (i = 0; i < pubSize; i++)
     {
         //int index = (rand() % (pubSize - 0 + 1));
 
         string metadata = to_string(gm_rank) + "metadataTest" + to_string(i);
 
-        vector<string> pubeventList;
-
         string fakePub = to_string(gm_rank) + "fakeSub_" + to_string(i);
 
-        pubeventList.push_back(fakePub);
+        pubeventList.clear();
 
+        pubeventList.push_back(fakePub);
+        
+        spdlog::debug("id {} publish times before eventPublish {}", gm_rank, publishClient);
         eventPublish(pubeventList, metadata);
+        spdlog::debug("id {} publish times after eventPublish {}", gm_rank, publishClient);
+
+
+        publishMutex.lock();
+        publishClient = publishClient+1;
+        publishMutex.unlock();
         //usleep(3000);
     }
     //publish in collective pattern
@@ -288,7 +298,7 @@ void fakegothroughFolderRegister(int subSize, string notifyAddr)
 
     //TODO using distributed lock to get the id from the shared file system
     int i = 0;
-    
+
     string driver = "local";
     //for test using
 
@@ -419,10 +429,10 @@ int main(int argc, char **argv)
 
     EVENTTYPE eventType;
 
-    if (argc != 6)
+    if (argc != 7)
     {
         //printf("<binary> <watchpath> <required number of notification> <notifyserver interfaces><notify server port> <required INIT Number>\n");
-        printf("<binary> <sub number> <required number of notification> <notifyserver interfaces><group number><group size> \n");
+        printf("<binary> <sub number> <required number of notification> <notifyserver interfaces><group number><group size><log level> \n");
         return 0;
     }
 
@@ -447,7 +457,21 @@ int main(int argc, char **argv)
 
     gm_rank = world_rank;
 
-    printf("curr component id %d\n", gm_rank);
+
+    int logLevel = atoi(argv[6]);
+
+    if (logLevel == 0)
+    {
+      spdlog::set_level(spdlog::level::info);
+    } 
+    else
+    {
+      spdlog::set_level(spdlog::level::debug);
+    }
+
+
+    spdlog::info("curr component id {}", gm_rank);
+
 
     //init the worker and coordinator
     //init clients when sending the events

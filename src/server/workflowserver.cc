@@ -310,7 +310,7 @@ void getElementFromNotifyQ()
 
     if (size > 0)
     {
-      printf("current notifyQueue size %d\n", size);
+      //spdlog::debug("server id is {} current notifyQueue size {}", gm_rank, size);
 
       int itervalue = 512;
       if (size < 512)
@@ -323,7 +323,6 @@ void getElementFromNotifyQ()
         //get front
         if (notifyQueue.size() > 0)
         {
-
           //original position of the lock
           NotifyInfo ninfo = notifyQueue.front();
           //send request and notify back
@@ -335,6 +334,7 @@ void getElementFromNotifyQ()
           nqmutex.lock();
           notifyQueue.pop_front();
           nqmutex.unlock();
+        
         }
         else
         {
@@ -386,7 +386,6 @@ void startNotify(string eventwithoutNum)
   pthread_t id;
 
   //range all the client id
-  subtoClientMtx.lock();
   map<string, pubsubWrapper *> subscribedMap = subtoClient[eventwithoutNum];
 
   //printf("debug startnotify server id %d mapsize %d indexEvent %s\n", gm_rank, subscribedMap.size(), eventwithoutNum.data());
@@ -396,9 +395,15 @@ void startNotify(string eventwithoutNum)
 
   for (itmap = subscribedMap.begin(); itmap != subscribedMap.end(); ++itmap)
   {
+
+    subtoClientMtx.lock();
+
     string clientID = itmap->first;
     //pubsubWrapper *psw = subtoClient[eventwithoutNum][clientID];
     pubsubWrapper *psw = itmap->second;
+
+    subtoClientMtx.unlock();
+
     //printf("server %s checking notify for %s\n", ServerIP.data(), eventwithoutNum.data());
     //TODO use thread pool here
     //pthread_create(&id, NULL, checkNotify, (void *)psw);
@@ -411,7 +416,6 @@ void startNotify(string eventwithoutNum)
 
     //delete psw here
   }
-  subtoClientMtx.unlock();
 }
 
 // Logic and data behind the server's behavior.
@@ -539,7 +543,7 @@ class GreeterServiceImpl final : public Greeter::Service
 
     if (subtimes % 128 == 0)
     {
-      printf("debug server id %d for subevent (%s) response time = (%lf) avg time = (%lf) subtimes = (%d)\n", gm_rank, eventList[0].data(), diff, subavg, subtimes);
+      spdlog::info("debug server id {} for subevent {} response time = {} avg time = {} subtimes = {}", gm_rank, eventList[0].data(), diff, subavg, subtimes);
     }
 
     //get coordinator clients
@@ -555,7 +559,7 @@ class GreeterServiceImpl final : public Greeter::Service
     //if still zero, return
     if (coordinatorClients.size() == 0)
     {
-      printf("failed to get coordinate clients for server id %d\n", gm_rank);
+      spdlog::error("failed to get coordinate clients for server id %d\n", gm_rank);
       return Status::OK;
     }
 
@@ -577,14 +581,14 @@ class GreeterServiceImpl final : public Greeter::Service
         string reply = coordinatorClient->RecordSub(eventStr, serverAddr, subNum);
         if (reply.compare("OK") != 0)
         {
-          printf("server %s recorde for coordinator fail\n", eventStr.data());
+          spdlog::debug("server %s record for coordinator fail", eventStr.data());
         }
       }
     }
 
     if (propagateSub == true && source.compare(sourceClient) == 0)
     {
-      printf("propagate subscription to other nodes in group\n");
+      spdlog::debug("propagate subscription to other nodes in group");
 
       //get the client in current group
 
@@ -663,12 +667,12 @@ class GreeterServiceImpl final : public Greeter::Service
 
     vector<SimplepubsubWrapper *> spsw;
 
-    subtoClientMtx.lock();
-
     for (itera = subtoClient[eventStr].begin(); itera != subtoClient[eventStr].end(); ++itera)
     {
+      subtoClientMtx.lock();
       string clientid = itera->first;
       pubsubWrapper *psw = itera->second;
+      subtoClientMtx.unlock();
 
       SimplepubsubWrapper *temppsw = getSimplepubsubWrapper(psw);
       spsw.push_back(temppsw);
@@ -677,8 +681,12 @@ class GreeterServiceImpl final : public Greeter::Service
 
       //delete during traverse
       //refer to https://www.cnblogs.com/zhoulipeng/p/3432009.html
+
+      subtoClientMtx.lock();
+
       delete itera->second;
       subtoClient[eventStr].erase(itera++);
+      subtoClientMtx.unlock();
 
       //unsubscribe current info
       //eventUnSubscribe(eventStr, clientid);
@@ -694,8 +702,6 @@ class GreeterServiceImpl final : public Greeter::Service
     }
 
     printf("debug size for self %d\n", subtoClient[eventStr].size());
-
-    subtoClientMtx.unlock();
 
     clock_gettime(CLOCK_REALTIME, &end);
     difftime = (end.tv_sec - start.tv_sec) * 1.0 + (end.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
@@ -770,11 +776,22 @@ class GreeterServiceImpl final : public Greeter::Service
       //       size, eventList.size(), gm_rank, source.data(), metadata.data(), eventStr.data());
     }
 
+    //bool ifdebug = false;
+
+    //if (eventStr.find("1fake") != std::string::npos)
+    //{
+    //  ifdebug = true;
+    //}
+
+    //spdlog::debug("debug for publish {} current id {}", eventStr.data(), gm_rank);
+
     //publish on one server
 
     pubsubPublish(eventList, matchType, metadata);
 
     //printf("debug publish ok %d pubevent %s pubsubPublish ok\n", gm_rank, eventList[0].data());
+
+    spdlog::debug("debug for afterpublish {} current id {}", eventStr.data(), gm_rank);
 
     //broadcaster to other servers in same group
     if (propagatePub == true && source.compare(sourceClient) == 0)
@@ -832,7 +849,7 @@ class GreeterServiceImpl final : public Greeter::Service
 
     if (pubtimes % 128 == 0)
     {
-      printf("debug for publish (%s) response time = (%lf) avg time = (%lf) pubtimes (%d) current id %d\n", eventStr.data(), pubavg, diff1, pubtimes, gm_rank);
+      spdlog::info("debug for publish {} response time = {} avg time = {} pubtimes {} current id {}", eventStr.data(), pubavg, diff1, pubtimes, gm_rank);
     }
 
     size = eventList.size();
@@ -841,20 +858,21 @@ class GreeterServiceImpl final : public Greeter::Service
     if (size > 0)
     {
       //use first as the index, only start notify when there is sub info on current server process
-      getIndexMtx.lock();
       if (getIndexMap.find(eventStr) != getIndexMap.end())
       {
         //printf("debug start notify event %s source %s peer %s\n", eventStr.data(), source.data(), peerURL.data());
         //outputsubtoClient();
         //get indexEvent
+        getIndexMtx.lock();
         set<string> indexEventSet = getIndexMap[eventStr];
+        getIndexMtx.unlock();
+
         for (set<string>::iterator it = indexEventSet.begin(); it != indexEventSet.end(); ++it)
         {
           string indexEvent = *it;
           startNotify(indexEvent);
         }
       }
-      getIndexMtx.unlock();
     }
 
     reply->set_returnmessage("OK");
@@ -1178,28 +1196,28 @@ int main(int argc, char **argv)
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
   //get wait time ./workflowserver 1000
-  spdlog::info("parameter length {}", argc);
+  spdlog::debug("parameter length {}", argc);
 
   int threadPoolSize = 32;
 
   if (argc == 9)
   {
     waitTime = atoi(argv[1]);
-    printf("chechNotify wait period %d\n", waitTime);
+    spdlog::debug("chechNotify wait period {}", waitTime);
 
     string interfaces = string(argv[2]);
 
     GM_INTERFACE = interfaces;
-    printf("network interfaces is %s\n", interfaces.data());
+    spdlog::debug("network interfaces is {}", interfaces.data());
 
     gm_rank = world_rank;
 
     int groupSize = atoi(argv[3]);
-    printf("group size is %d\n", groupSize);
+    spdlog::debug("group size is {}", groupSize);
     gm_requiredGroupSize = groupSize;
 
     gm_groupNumber = atoi(argv[4]);
-    printf("group number is %d\n", gm_groupNumber);
+    spdlog::debug("group number is {}", gm_groupNumber);
 
     threadPoolSize = atoi(argv[5]);
 
@@ -1212,7 +1230,7 @@ int main(int argc, char **argv)
     if (logLevel == 0)
     {
       spdlog::set_level(spdlog::level::info);
-    } 
+    }
     else
     {
       spdlog::set_level(spdlog::level::debug);
@@ -1251,7 +1269,7 @@ int main(int argc, char **argv)
 
   if (startPeridChecking == true && SERVERSTATUS.compare(status_coor) == 0)
   {
-    spdlog::info("server id {} is coordinator, run group checking\n", gm_rank);
+    spdlog::info("server id {} is coordinator, run group checking", gm_rank);
     thread tCheck(periodChecking);
     tCheck.join();
   }
@@ -1261,6 +1279,5 @@ int main(int argc, char **argv)
   sleep(1);
   updateCoordinatorAddr();
   runServer.join();
-
   return 0;
 }

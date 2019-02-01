@@ -86,7 +86,7 @@ void updateWorkerClients(string groupDir);
 
 void updateCoordinatorClients(string groupDir);
 
-GreeterClient *getClientFromEvent(string eventString);
+GreeterClient *getClientFromEvent(string eventString, int reqNum);
 
 vector<GreeterClient *> getClientsExcept(string groupDir, string ipaddr);
 

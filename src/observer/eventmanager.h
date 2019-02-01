@@ -63,4 +63,7 @@ extern int SubscribedClient;
 extern vector<string> operatorList;
 extern map<string, EventTriggure *> clientIdtoConfig;
 
+extern mutex publishMutex;
+extern int publishClient;
+
 #endif

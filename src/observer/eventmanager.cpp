@@ -18,6 +18,7 @@
 #include <time.h>   /* for clock_gettime */
 #include <pthread.h>
 #include <uuid/uuid.h>
+#include "../../deps/spdlog/spdlog.h"
 
 #define BILLION 1000000000L
 
@@ -108,9 +109,10 @@ void eventPublish(vector<string> pubList, string metadata)
     //GreeterClient *greeter = roundrobinGetClient();
     //only use first event in the list to do the hash mapping
     string eventMsg = pubList[0];
-
-    GreeterClient *greeter = getClientFromEvent(eventMsg);
-
+    
+    //sometimes there is a deadlock here when event is in large number
+    GreeterClient *greeter = getClientFromEvent(eventMsg,publishClient);
+    
     if (greeter == NULL)
     {
         printf("failed to get greeter for event publisher from event %s\n", eventMsg.data());
@@ -119,18 +121,14 @@ void eventPublish(vector<string> pubList, string metadata)
 
     //printf("debug event publish evt msg %s ok to get client\n",eventMsg.data());
 
-    publishMutex.lock();
-    publishClient++;
-    publishMutex.unlock();
-
-    if (publishClient % 100 == 0)
+    if ((publishClient+1) % 128 == 0)
     {
-        printf("publish times %d\n", publishClient);
+        spdlog::info("id {} publish times {}", gm_rank, publishClient);
     }
 
-    string reply = greeter->Publish(pubList, sourceClient, metadata, "NAME" );
+    string reply = greeter->Publish(pubList, sourceClient, metadata, "NAME");
 
-    //printf("debug %s get reply\n",eventMsg.data());
+    spdlog::debug("id {} get reply for publish time {}", gm_rank,publishClient);
 
     if (reply.compare("OK") != 0)
     {
@@ -152,7 +150,7 @@ void eventSubscribe(EventTriggure *etrigger, string clientID, string notifyAddr,
 
     //printf("debug event subscribe\n", eventMsg.data());
 
-    GreeterClient *greeter = getClientFromEvent(eventMsg);
+    GreeterClient *greeter = getClientFromEvent(eventMsg,publishClient);
 
     if (greeter == NULL)
     {
@@ -306,7 +304,7 @@ EventTriggure *fakeaddNewConfig(string driver,
     triggure->eventSubList = eventSubList;
     triggure->eventPubList = eventPubList;
     triggure->actionList = actionList;
-    triggure->matchType="NAME";
+    triggure->matchType = "NAME";
 
     uuid_t uuid;
     char idstr[50];

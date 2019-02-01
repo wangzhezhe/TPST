@@ -30,6 +30,7 @@
 
 #include "./groupManager.h"
 #include "../dlm/dlm.h"
+#include "../../../deps/spdlog/spdlog.h"
 
 using namespace std;
 
@@ -128,7 +129,9 @@ void updateWorkerAddrMap(string clusterDir)
     //number of the cluster in current dir
     //only update specific clusterDir
     int size;
-    getLock(clusterDir, clusterDir);
+    
+    //TODO this lock may cause the deadlock for large parallel
+    //getLock(clusterDir, clusterDir);
 
     string workerDir = clusterDir + "/" + gm_workerDir;
     string coordinatorDir = clusterDir + "/" + gm_coordinatorDir;
@@ -137,7 +140,7 @@ void updateWorkerAddrMap(string clusterDir)
     vector<string> workerAddr = loadAddrInDir(workerDir);
     vector<string> coordinatorAddr = loadAddrInDir(coordinatorDir);
 
-    releaseLock(clusterDir);
+    //releaseLock(clusterDir);
 
     //first time to load
     if (loadCoordinatorMap.find(clusterDir) == loadCoordinatorMap.end() || loadCoordinatorMap[clusterDir] == false)
@@ -181,7 +184,7 @@ void updateCoordinatorAddr()
         }
     }
 
-    printf("debug coor addr set number is %d\n", coordinatorAddrSet.size());
+    spdlog::debug("id {} debug coor addr set number is {}", gm_rank, coordinatorAddrSet.size());
 
     return;
 }
