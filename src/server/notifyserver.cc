@@ -97,8 +97,8 @@ void startAction(string clientID, string metadata)
         for (i = 0; i < actionSize; i++)
         {
 
-            thread py_thread(pythonTaskStart, etrigger->actionList[i].data(), metadata);
-            py_thread.detach();
+            //thread py_thread(pythonTaskStart, etrigger->actionList[i].data(), metadata);
+            //py_thread.detach();
 
             //get the publishEvent from configure and call the publish operation
         }
@@ -156,9 +156,9 @@ class GreeterServiceImplNotify final : public Greeter::Service
         std::string message("OK");
         reply->set_returnmessage(message);
 
-        //don't do this for testing
+        //don't do this for pub/sub performance testing
 
-        //startAction(clientID, metadata);
+        startAction(clientID, metadata);
 
         NotifiedNumMtx.lock();
         NotifiedNum++;
@@ -166,12 +166,12 @@ class GreeterServiceImplNotify final : public Greeter::Service
 
         struct timespec finish;
 
-        if (NotifiedNum % 128 == 0)
-        {
+        //if (NotifiedNum % 128 == 0)
+        //{
         clock_gettime(CLOCK_REALTIME, &finish); /* mark the end time */
         printf("id %d notifynum %d finish time = (%lld.%.9ld)\n",
                gm_rank, NotifiedNum, (long long)finish.tv_sec, finish.tv_nsec);
-        }
+        //}
         return Status::OK;
     }
 };

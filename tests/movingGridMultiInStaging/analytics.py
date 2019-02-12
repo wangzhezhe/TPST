@@ -49,7 +49,6 @@ def getIndex(px, py, pz):
 
     return index
 
-
 def checkAndPublishEvent(gridDataArray_p1, gridDataArray_p2):
     ifTargetEventHappen = True
     massOriginInterest = [6, 0, 6]
@@ -80,6 +79,19 @@ def checkAndPublishEvent(gridDataArray_p1, gridDataArray_p2):
 
 initp =  1.5
 targetValue = 7.5
+
+
+def checkDataPatternCenter(gridDataArray_p1):
+    massOriginInterest = [7, 7, 7]
+    targetValue = 7.5
+
+    index = getIndex(massOriginInterest[0], massOriginInterest[1], massOriginInterest[2])
+    if (gridDataArray_p1[index] == targetValue):
+        return True
+    else:
+        return False
+
+
 
 def checkDataPattern(gridDataArray_p1, gridDataArray_p2):
 
@@ -141,40 +153,38 @@ num_peers = 1
 appid = 2
 
 var_name = "ex1_sample_data"
-#lock_name = "my_test_lock"
+lock_name = "my_test_lock"
 
 if(len(sys.argv)!=2):
-    print("./analytics <version>")
+    print("./analytics <iterations>")
     exit(0)
     
 iteration = int(sys.argv[1])
 
 startanay = timeit.default_timer()
 
-ds = dataspaces.dataspaceClient()
-
-ds.dspaces_init(comm, num_peers, appid)
+ds = dataspaces.dataspaceClient(appid,comm)
 
 for version in range (iteration):
 
-# ds.dspaces_lock_on_read(lock_name)
+
 
     lb = [0]
     ub = [3374]
 
     #print("get version")
     #print(version)
+    ds.lock_on_read(lock_name)
+    getdata_p1 = ds.get(var_name, version, lb, ub)
+    ds.unlock_on_read(lock_name)
 
-    getdata_p1 = ds.dspaces_get_data(var_name, version, lb, ub)
-
-
-    lb = [3380]
-    ub = [3380+3374]
+    #lb = [3380]
+    #ub = [3380+3374]
 
     #print("get version")
     #print(version)
 
-    getdata_p2 = ds.dspaces_get_data(var_name, version, lb, ub)
+    #getdata_p2 = ds.dspaces_get_data(var_name, version, lb, ub)
 
     # time.sleep(1)
     # publishe events to pubsub store
@@ -184,13 +194,13 @@ for version in range (iteration):
 
     #print("get data2")
     #print (getdata_p2)
-    patternHeppen = checkDataPattern(getdata_p1,getdata_p2)
+    patternHeppen = checkDataPatternCenter(getdata_p1)
 
     if(patternHeppen==True):
         print("patternHeppen at ts %d"%(version))
         break
 
-ds.dspaces_wrapper_finalize()
+ds.finalize()
 
 endanay = timeit.default_timer()
 

@@ -7,93 +7,20 @@ import os
 import shutil
 import copy
 import random
-import time
-import ctypes
-from mpi4py import MPI
-import dspaceswrapper.dataspaces as dataspaces
-
 
 import sys
 # insert pubsub and detect the things after every iteration
-#sys.path.append('../../src/publishclient/pythonclient')
-#import pubsub as pubsubclient
+import sys
+
 import timeit
 
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
+
+prifix = "./image"
+if os.path.isdir(prifix):
+    shutil.rmtree(prifix)
 
 
-# init dataspace client
-
-# copy all conf.* file to current dir
-serverdir = "/home1/zw241/dataspaces/tests/C"
-
-confpath = serverdir+"/conf*"
-
-copyCommand = "cp "+confpath+" ."
-
-os.system(copyCommand)
-
-# number of clients at clients end to join server
-num_peers= 2
-appid = 1
-
-var_name = "ex1_sample_data" 
-lock_name = "my_test_lock"
-
-
-ds = dataspaces.dataspaceClient(appid,comm)
-
-#pubsubaddrList = pubsubclient.getServerAddr()
-#print (pubsubaddrList)
-
-#pubsubAddr = pubsubaddrList[0]
-
-def putDataToDataSpaces(gridList,timestep):
-
-    cellDataArray=[]
-    for i in range (len(gridList)):
-        #print gridList[i].p
-        cellDataArray.append(gridList[i].p*1.0)
-
-    #ds.dspaces_lock_on_write(lock_name)
-
-    # elemsize = ctypes.sizeof(ctypes.c_double)
-    # data = ([[1.1,2.2,3.3],[4.4,5.5,6.6]])
-
-    # dataarray = (ver+1)*numpy.asarray(data)
-    ver = timestep
-    
-    # data is 1 d array
-    if(rank==0):
-        lb = [0]
-    if (rank ==1):
-        lb = [3380]
-    
-    ds.lock_on_write(lock_name)
-    ds.put(var_name,ver,lb,cellDataArray)
-    ds.unlock_on_write(lock_name)
-    #print("write to dataspaces for ts %d" % (timestep))
-
-
-def sendEventToPubSub(pubsubAddr, ts):
-
-    eventList = ["variable_1"]
-    # this shoule be deleted
-    clientId = "test" + "_" + str(ts)
-    metainfo = "GRID[<0,0>:<1,1>]%TS["+str(ts)+"]"
-    matchtype= "META_GRID"
-    print("debug clientid %s metainfo %s matchtype %s"%(clientId,metainfo,matchtype))
-    pubsubclient.publishEventList(pubsubAddr,eventList,clientId,metainfo,matchtype)
-    print("pubsubclient %s ok"%(clientId))
-
-
-#prifix = "./image"
-#if os.path.isdir(prifix):
-#    shutil.rmtree(prifix)
-
-
-#os.mkdir(prifix)
+os.mkdir(prifix)
 
 #define grid
 class Grid:
@@ -107,6 +34,10 @@ class Grid:
 
     def __repr__(self):
         return repr((self.p, self.ux, self.uy, self.uz, self.lb,self.ub))
+
+
+
+
 
 
 r = 15
@@ -184,6 +115,8 @@ def checkAndPublishEvent(gridListNew,iteration):
         pubsubclient.initAddrAndPublish(event,meta)
         ifFirstHappen = True
     return
+    
+
 
 # detect if the point is in mass
 def inMassBody(px,py,pz,massOrigin,t,currIndex):
@@ -459,10 +392,6 @@ redmass.massOrigin=[1+redmass.massR/2,1+redmass.massR/2,1+redmass.massR/2]
 redmass.p = initp*(5)
 
 
-bluemass = ColorMass()
-bluemass.massOrigin = [8+bluemass.massR/2,1+bluemass.massR/2,1+bluemass.massR/2]
-bluemass.p = initp*(-5)
-
 
 # generate array of grid and init lb and ub
 for zi in range (gridnum):
@@ -480,78 +409,12 @@ for zi in range (gridnum):
 # show grid data
 plt.axis('scaled')
  
-#plt.show()
- 
-# init the value at the grid center
-for i in range (len(gridList)):
-
-    # add boundry condition
-    #zindex = i / (gridnum*gridnum)
-    #yindex = (i % (gridnum*gridnum))/gridnum
-    #xindex = (i % (gridnum*gridnum) % gridnum)
-
-    zindex = gridList[i].lb[2]
-    yindex = gridList[i].lb[1]
-    xindex = gridList[i].lb[0]
 
 
-    if xindex==0 or xindex ==(gridnum-1) or yindex==0 or yindex==(gridnum-1) or zindex==0 or zindex==(gridnum-1):
-        # boundry condition for p value and v value
-        #gridList[i].p=boundp
-        gridList[i].p=initp
-        #if (xindex==0 or xindex ==(gridnum-1)):
-            #gridList[i].ux = 0
-        #    print "x boundry"
-        #if (yindex==0 or yindex==(gridnum-1)):
-            #gridList[i].uy = 0
-        #    print "y boundry"
-        #if (zindex==0 or zindex==(gridnum-1)):
-            #gridList[i].uz = inituz / 2.0
-            #gridList[i].ux = 1
-        #    print "z boundry"
-            
-
-    # init condition
-    # generate init color mass
-    rmassLb = [redmass.massOrigin[0]-massR/2.0,redmass.massOrigin[1]-massR/2.0,redmass.massOrigin[2]-massR/2.0]
-    rmassUb = [redmass.massOrigin[0]+massR/2.0,redmass.massOrigin[1]+massR/2.0,redmass.massOrigin[2]+massR/2.0]
-
-    if (xindex >= rmassLb[0] and xindex <= rmassUb[0]-deltar and yindex>=rmassLb[1] and yindex<=rmassUb[1]-deltar  and zindex>=rmassLb[2] and zindex<=rmassUb[2]-deltar) :
-        # update p value
-        gridList[i].p=redmass.p
-        # update velocity
-        gridList[i].ux = constantVFiled[0]
-        gridList[i].uy = constantVFiled[1]
-        gridList[i].uz = constantVFiled[2]
-
-
-    bmassLb = [bluemass.massOrigin[0]-massR/2.0,bluemass.massOrigin[1]-massR/2.0,bluemass.massOrigin[2]-massR/2.0]
-    bmassUb = [bluemass.massOrigin[0]+massR/2.0,bluemass.massOrigin[1]+massR/2.0,bluemass.massOrigin[2]+massR/2.0]
-    
-    '''
-    if (xindex >= bmassLb[0] and xindex <= bmassUb[0]-deltar and yindex>=bmassLb[1] and yindex<=bmassUb[1]-deltar  and zindex>=bmassLb[2] and zindex<=bmassUb[2]-deltar) :
-        # update p value
-        gridList[i].p=bluemass.p
-        # update velocity
-        gridList[i].ux = constantVFiled[0]
-        gridList[i].uy = constantVFiled[1]
-        gridList[i].uz = constantVFiled[2]
-    '''
-
-    #print "debug"
-    #print [xindex,yindex,zindex]
-
-    #if (i >=6 and i < 8) :
-    #    gridList[i].p=initp*(-2)
-
-# update the p in grid array
-
-# ten timesteps
 
 gridListNew = gridList
 
-# trace the position of the mass origin
-massOriginNew = redmass.massOrigin
+
 
 def updateGridValueFake(gridListInput,ifcenter):
     if(ifcenter==True):
@@ -574,39 +437,28 @@ def updateGridValueFake(gridListInput,ifcenter):
             # update p value
             gridList[i].p=redmass.p
 
-    # simulate the time to caculate the data
-    time.sleep(0.1)
 
-
-
-if (len(sys.argv)!=3):
-    print("simulation <iteration> <when interesting thing happen>")
-    exit(0)
-
-iteration = int(sys.argv[1])
-
-changeVPeriod = int(sys.argv[2])
-
+changeVPeriod = 10
 vsign = 1
 
-startsim = timeit.default_timer()
+for t in range (changeVPeriod*10):
 
-
-
-for t in range (iteration):
     moveToCenter = False
+
+
     if (t>=changeVPeriod and t%changeVPeriod==0):
         moveToCenter = True
         
     updateGridValueFake(gridList,moveToCenter)
+
+    generateImage(gridList,prifix+"/image"+str(t))
     
-    putDataToDataSpaces(gridListNew,t)
-    
+
         
-ds.finalize()
-MPI.Finalize()
 
-endsim = timeit.default_timer()
 
-print("time span")
-print (endsim-startsim)
+
+
+
+
+

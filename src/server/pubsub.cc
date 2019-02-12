@@ -5,6 +5,7 @@
 #include <omp.h>
 #include "../utils/split/split.h"
 #include "../utils/strparse/strparse.h"
+#include "../../deps/spdlog/spdlog.h"
 
 #include <time.h>
 #include <unistd.h>
@@ -521,7 +522,8 @@ void pubsubPublish(vector<string> eventList, string matchType, string metadata)
                 }
                 else
                 {
-                    printf("unsuported match type %s\n", matchType.data());
+                    spdlog::debug("unsuported match type {}", matchType.data());
+
                 }
 
                 //if (ifdebug)
@@ -535,6 +537,7 @@ void pubsubPublish(vector<string> eventList, string matchType, string metadata)
                     //TODO update the metadata storing published events
                     //if there are multiple pub for same key in small range of time
                     //some of metadata will missed
+                    spdlog::debug("tempiftrigure is true for indexEvent {}", indexEvent.data());
                     subtoClientMtx.lock();
                     subtoClient[indexEvent][clientId]->pubMetadata = metadata;
                     subtoClient[indexEvent][clientId]->iftrigure = tempiftrigure;

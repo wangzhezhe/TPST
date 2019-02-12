@@ -43,7 +43,7 @@ THREAD_POOL=64
 NOTIFY_SLEEP=10000
 COORDINATOR_THRESHOLD=1024
 
-mpirun --map-by ppr:16:node -n $NUM_SERVER  ./workflowserver 1500 eno1 $NUM_GROUPSIZE $NUM_GROUP $THREAD_POOL $NOTIFY_SLEEP $COORDINATOR_THRESHOLD >& $PRJPATH/wftest_wfserver.log  &
+mpirun --map-by ppr:16:node -n $NUM_SERVER  ./workflowserver 1500 eno1 $NUM_GROUPSIZE $NUM_GROUP $THREAD_POOL $NOTIFY_SLEEP $COORDINATOR_THRESHOLD 1 >& $PRJPATH/wftest_wfserver.log  &
 
 # check if start ok
 /bin/bash serverStartOk.sh 1

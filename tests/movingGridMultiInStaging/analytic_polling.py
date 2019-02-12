@@ -8,13 +8,12 @@ import math
 import timeit
 import sys
 
-sys.path.append('/project1/parashar-001/zw241/software/eventDrivenWorkflow/src/publishclient/pythonclient')
+sys.path.append('../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 
 # input the coordinate of the points and return the index of grid in array
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
-
 
 def sendEventToPubSub(ts):
 
@@ -49,7 +48,6 @@ def getIndex(px, py, pz):
     index = int(gnumz*gridnum*gridnum + gnumy*gridnum+gnumx)
 
     return index
-
 
 def checkAndPublishEvent(gridDataArray_p1, gridDataArray_p2):
     ifTargetEventHappen = True
@@ -128,7 +126,6 @@ def checkDataPattern(gridDataArray_p1, gridDataArray_p2):
     else:
         return False
 
-
 def checkDataPatternCenter(gridDataArray_p1):
     massOriginInterest = [7, 7, 7]
     targetValue = 7.5
@@ -141,71 +138,88 @@ def checkDataPatternCenter(gridDataArray_p1):
 
 
 
+# copy all conf.* file to current dir
+serverdir = "/home1/zw241/dataspaces/tests/C"
 
-def checkIteration(vs):
+confpath = serverdir+"/conf*"
 
-    # copy all conf.* file to current dir
-    serverdir = "/home1/zw241/dataspaces/tests/C"
+copyCommand = "cp "+confpath+" ."
 
-    confpath = serverdir+"/conf*"
+os.system(copyCommand)
 
-    copyCommand = "cp "+confpath+" ."
+# number of clients at clients end to join server
+num_peers = 1
+appid = 2
 
-    os.system(copyCommand)
-
-    # number of clients at clients end to join server
-
-    var_name = "ex1_sample_data"
-    lock_name = "my_test_lock"
-
-    #if(len(sys.argv)!=2):
-    #    print("./analytics <version>")
-    #    exit(0)
-    
-    #vs = int(sys.argv[1])
-
-    appid = vs
-    ds = dataspaces.dataspaceClient(appid,comm)
-
-
-    vsLb = vs-9
-
-    startanay = timeit.default_timer()
-
-    #ds.dspaces_init(comm, num_peers, appid)
-
-    for version in range (vsLb, vs+1):
-        lb = [0]
-        ub = [3374]
-
-        #print("get version")
-        #print(version)
-        #ds.lock_on_read(lock_name)
-        getdata_p1 = ds.get(var_name, version, lb, ub)
-        #ds.unlock_on_read(lock_name)
-
-        patternHeppen = checkDataPatternCenter(getdata_p1)
-
-        if(patternHeppen==True):
-            print("------------------")
-            print("patternHeppen at ts %d"%(version))
-            print("------------------")
-            print("send data patten and ts to operator")
-
-            sendEventToPubSub(vs)
-            break
-
-    ds.dspaces_wrapper_finalize()
-
-    endanay = timeit.default_timer()
-
-    print("time span")
-    print(endanay-startanay)
-
+var_name = "ex1_sample_data"
+lock_name = "my_test_lock"
 
 if(len(sys.argv)!=2):
-    print("./analytics <version>")
+    print("./analytics <iteration>")
     exit(0)
-vs = int(sys.argv[1])
+    
+iteration = int(sys.argv[1])
 
-checkIteration(vs)
+startanay = timeit.default_timer()
+
+ds = dataspaces.dataspaceClient(appid,comm)
+
+currIter = 0
+
+
+while (True):
+#for version in range(iteration):
+    # ds.lock_on_read(lock_name)
+
+    version = currIter
+
+    lb = [0]
+    ub = [3374]
+
+    #print("get version")
+    #print(version)
+    ds.lock_on_read(lock_name)
+    # use lock type  = 1
+    getdata_p1 = ds.get(var_name, version, lb, ub)
+    ds.unlock_on_read(lock_name)
+    # check if data ok
+
+    if(getdata_p1[0]==0):
+        print("data not avaliable")
+        time.sleep(0.5)
+        continue
+
+
+    #lb = [3380]
+    #ub = [3380+3374]
+
+    #print("get version")
+    #print(version)
+
+    #getdata_p2 = ds.dspaces_get_data(var_name, version, lb, ub)
+
+    # time.sleep(1)
+    # publishe events to pubsub store
+
+    #print("get data1")
+    #print (getdata_p1)
+
+    #print("get data2")
+    #print (getdata_p2)
+    #patternHeppen = checkDataPattern(getdata_p1,getdata_p2)
+    patternHeppen = checkDataPatternCenter(getdata_p1)
+    currIter=currIter+1
+
+    #if(currIter>=iteration):
+    #    break
+
+    if(patternHeppen==True):
+        print("patternHeppen at ts %d"%(version))
+        break
+
+ds.finalize()
+
+endanay = timeit.default_timer()
+
+print("time span")
+print(endanay-startanay)

@@ -5,14 +5,14 @@
 #include "../utils/strparse/strparse.h"
 #include <string>
 #include <mutex>
-#include <Python.h>
+//#include <Python.h>
 #include <thread>
 
 using namespace std;
 
 mutex testNotifiedNumMtx;
 int localFinishNum = 0;
-
+/*
 double call_func(PyObject *func, double x, double y)
 {
     PyObject *args;
@@ -20,43 +20,43 @@ double call_func(PyObject *func, double x, double y)
     PyObject *result = 0;
     double retval;
 
-    /* Make sure we own the GIL */
+    // Make sure we own the GIL 
     PyGILState_STATE state = PyGILState_Ensure();
 
-    /* Verify that func is a proper callable */
+    // Verify that func is a proper callable 
     if (!PyCallable_Check(func))
     {
         fprintf(stderr, "call_func: expected a callable\n");
         goto fail;
     }
-    /* Build arguments */
+    // Build arguments 
     args = Py_BuildValue("(dd)", x, y);
     kwargs = NULL;
 
-    /* Call the function */
+    // Call the function 
     result = PyObject_Call(func, args, kwargs);
     Py_DECREF(args);
     Py_XDECREF(kwargs);
 
-    /* Check for Python exceptions (if any) */
+    // Check for Python exceptions (if any) 
     if (PyErr_Occurred())
     {
         PyErr_Print();
         goto fail;
     }
 
-    /* Verify the result is a float object */
+    // Verify the result is a float object 
     if (!PyFloat_Check(result))
     {
         fprintf(stderr, "call_func: callable didn't return a float\n");
         goto fail;
     }
 
-    /* Create the return value */
+    // Create the return value 
     retval = PyFloat_AsDouble(result);
     Py_DECREF(result);
 
-    /* Restore previous GIL state and return */
+    // Restore previous GIL state and return 
     PyGILState_Release(state);
     return retval;
 
@@ -66,7 +66,7 @@ fail:
     abort(); // Change to something more appropriate
 }
 
-/* Load a symbol from a module */
+//Load a symbol from a module 
 PyObject *import_name(const char *modname)
 {
     PyObject *u_name, *module = NULL;
@@ -107,12 +107,12 @@ void callPythonCode(int ts)
     if (py_func == NULL)
     {
         Py_Initialize();
-        /* Get a reference to the math.pow function */
+        // Get a reference to the math.pow function 
         //pow_func = import_name("math","pow");
         printf("before import\n");
         py_func = import_name("analytics");
         //py_func = import_name("testPythonFunc");
-        /* Call it using our call_func() code */
+        // Call it using our call_func() code 
         printf("after import\n");
     }
 
@@ -123,7 +123,7 @@ void callPythonCode(int ts)
 
     kwargs = NULL;
 
-    /* Call the function */
+    // Call the function 
     PyObject *result = PyObject_Call(py_func, args, kwargs);
 
     if (!result)
@@ -131,10 +131,11 @@ void callPythonCode(int ts)
         printf("invoke function fail\n");
     }
 
-    /* Done */
+    /* Done 
     //Py_DECREF(py_func);
     //Py_Finalize();
 }
+
 
 int pythonTaskStart(string batchPath, string metadata)
 {
@@ -159,6 +160,7 @@ int pythonTaskStart(string batchPath, string metadata)
     //test using
     system(command);
 }
+*/
 
 int localTaskStart(string batchPath, string metadata)
 {

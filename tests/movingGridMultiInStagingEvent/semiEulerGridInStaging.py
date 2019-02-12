@@ -13,6 +13,7 @@ from mpi4py import MPI
 import dspaceswrapper.dataspaces as dataspaces
 
 
+
 import sys
 # insert pubsub and detect the things after every iteration
 sys.path.append('../../src/publishclient/pythonclient')
@@ -42,14 +43,15 @@ var_name = "ex1_sample_data"
 lock_name = "my_test_lock"
 
 
-ds = dataspaces.dataspaceClient()
-
-ds.dspaces_init(comm,num_peers,appid)
-
+ds = dataspaces.dataspaceClient(appid,comm)
 pubsubaddrList = pubsubclient.getServerAddr()
 print (pubsubaddrList)
-
 pubsubAddr = pubsubaddrList[0]
+
+#pubsubaddrList = pubsubclient.getServerAddr()
+#print (pubsubaddrList)
+
+#pubsubAddr = pubsubaddrList[0]
 
 def putDataToDataSpaces(gridList,timestep):
 
@@ -72,14 +74,14 @@ def putDataToDataSpaces(gridList,timestep):
     if (rank ==1):
         lb = [3380]
     
-    
-    ds.dspaces_put_data(var_name,ver,lb,cellDataArray)
-    #ds.dspaces_unlock_on_write(lock_name)
+    #ds.lock_on_write(lock_name)
+    ds.put(var_name,ver,lb,cellDataArray)
+    #ds.unlock_on_write(lock_name)
     #print("write to dataspaces for ts %d" % (timestep))
 
 
 def sendEventToPubSub(pubsubAddr, ts):
-  
+
     eventList = ["variable_1"]
     # this shoule be deleted
     clientId = "test" + "_" + str(ts)
@@ -186,8 +188,6 @@ def checkAndPublishEvent(gridListNew,iteration):
         pubsubclient.initAddrAndPublish(event,meta)
         ifFirstHappen = True
     return
-    
-
 
 # detect if the point is in mass
 def inMassBody(px,py,pz,massOrigin,t,currIndex):
@@ -557,172 +557,59 @@ gridListNew = gridList
 # trace the position of the mass origin
 massOriginNew = redmass.massOrigin
 
+def updateGridValueFake(gridListInput,ifcenter):
+    if(ifcenter==True):
+        # update center other parts is init value
+        massOriginInterest=[7,7,7]
+    else:
+        # update left, center part is red
+        # update center other parts is init value
+        massOriginInterest=[2,2,2]
 
-if (len(sys.argv)!=2):
-    print("simulation <iteration>")
+    rmassLb = [massOriginInterest[0]-massR/2.0,massOriginInterest[1]-massR/2.0,massOriginInterest[2]-massR/2.0]
+        
+    for i in range (len(gridList)):
+        zindex = gridList[i].lb[2]
+        yindex = gridList[i].lb[1]
+        xindex = gridList[i].lb[0]
+
+        gridList[i].p = initp*(-5)
+        if (xindex >= rmassLb[0] and xindex <= rmassLb[0]+massR and yindex>=rmassLb[1] and yindex<=rmassLb[1]+massR  and zindex>=rmassLb[2] and zindex<=rmassLb[2]+massR) :
+            # update p value
+            gridList[i].p=redmass.p
+
+    # simulate the time to caculate the data
+    time.sleep(0.1)
+
+
+
+if (len(sys.argv)!=3):
+    print("simulation <iteration> <when interesting thing happen>")
     exit(0)
 
 iteration = int(sys.argv[1])
 
-changeVPeriod = 5
+changeVPeriod = int(sys.argv[2])
+
 vsign = 1
-
-if(rank==0):
-    changeVPeriod = 5
-if(rank==1):
-    changeVPeriod = 10
-
 
 startsim = timeit.default_timer()
 
+
+
 for t in range (iteration):
-
-    # update velocity field after several iteration
-    '''
-    if (t>15 and t%15==0):
-        print "iteration t %d" % t
-        print "vz"
-        print constantVFiled[2]
-        constantVFiled[2] = -1*constantVFiled[2]
-    '''
-    
-    '''
-    if (t>changeVPeriod and t%changeVPeriod==0):
-        # only works well for velocity field 
-        # which has velocity for one direaction
-
-        # which direaction
-        sign = random.randint(0,1)
-        rd = random.randint(0,2)
-
-        if sign == 0:
-            vsign = 1
-        else:
-            vsign = -1
+    moveToCenter = False
+    if (t>=changeVPeriod and t%changeVPeriod==0):
+        moveToCenter = True
         
-        if rd == 0 :
-            constantVFiled = [vsign,0,0]
-        elif rd == 1:
-            constantVFiled = [0,vsign,0]
-        else:
-            constantVFiled = [0,0,vsign]
-    '''
-
-    if (t>changeVPeriod and t%changeVPeriod==0):
-        
-        if (t%(changeVPeriod*2)==0):
-            vsign = vsign * (-1)
-        
-        if (constantVFiled[0]!=0):
-            constantVFiled = [0,vsign,0]
-        elif (constantVFiled[1]!=0):
-            constantVFiled = [0,0,vsign]
-        elif (constantVFiled[2]!=0):
-            constantVFiled = [vsign,0,0]
-        
-
-    #don't do this checking at simulation part
-    #if(ifFirstHappen==False):
-        # only check when event thing not happen        
-        # checkAndPublishEvent(gridListNew,t)
-
-    # generateImage(gridListNew,prifix+"/image"+str(t))
+    updateGridValueFake(gridList,moveToCenter)
     
     putDataToDataSpaces(gridListNew,t)
+
+    sendEventToPubSub(pubsubAddr,t)
     
-    #print("debug before sening to pubsub %d"%(t))
-    comm.Barrier()
-    if(rank==0):
-        sendEventToPubSub(pubsubAddr,t)
-    
-   
-    #print("debug after sending to pubsub %d"%(t))
-
-    '''
-    if(t == 41):
-        for i in range (0,gridnum):
-            for j in range (0,gridnum):
-                for k in range (0,gridnum):
-                    #print "index i j k (%d %d %d)" % (i,j,k)
-                    #print  nparray[i][j][k]
-                    #if (gridListNew[i*gridnum*gridnum+j*gridnum+k]==7.5):
-                    
-                    if (gridListNew[i*gridnum*gridnum+j*gridnum+k].p == 7.5):
-                        print ("index i j k (%d %d %d)" % (i,j,k))
-                        print gridListNew[i*gridnum*gridnum+j*gridnum+k].p
-    '''
-
-    gridListOld = copy.deepcopy(gridListNew)
-  
-    
-    # TODO it is better to use for loop here
-
-    rlbx = redmass.massOrigin[0] - redmass.massR/2.0
-    rlby = redmass.massOrigin[1] - redmass.massR/2.0
-    rlbz = redmass.massOrigin[2] - redmass.massR/2.0
-
-    # the index of the grid should be the low left corner
-    rubx = redmass.massOrigin[0] + redmass.massR/2.0 - deltar
-    ruby = redmass.massOrigin[1] + redmass.massR/2.0 - deltar
-    rubz = redmass.massOrigin[2] + redmass.massR/2.0 - deltar
-
-    rlbIndex = getIndex(rlbx,rlby,rlbz)
-    rubIndex = getIndex(rubx,ruby,rubz)
-
-    rlbOldPValue = gridListOld[rlbIndex].p
-    rubOldPValue = gridListOld[rubIndex].p
-
-    # update the blue mass
-    blbx = bluemass.massOrigin[0] - bluemass.massR/2.0
-    blby = bluemass.massOrigin[1] - bluemass.massR/2.0
-    blbz = bluemass.massOrigin[2] - bluemass.massR/2.0
-
-    # the index of the grid should be the low left corner
-    bubx = bluemass.massOrigin[0] + bluemass.massR/2.0 - deltar
-    buby = bluemass.massOrigin[1] + bluemass.massR/2.0 - deltar
-    bubz = bluemass.massOrigin[2] + bluemass.massR/2.0 - deltar
-
-    blbIndex = getIndex(blbx,blby,blbz)
-    bubIndex = getIndex(bubx,buby,bubz)
-
-    blbOldPValue = gridListOld[blbIndex].p
-    bubOldPValue = gridListOld[bubIndex].p
-
-
-    for i in range (len(gridListOld)):
-        # update velocity field
-        # update grid value
-        updateGridValue(gridListOld,gridListNew,i,t,redmass.massOrigin,bluemass.massOrigin)
-
-            
-
-    # origin is the real coordinate (use updated velocity field)
-    # BUG if the mass stop, the massOrigin should not move further!!!
-    # The updateGridFunction should return if the origin should be updated! for this range
-
-    # if the value of the origin position is changed
-    # move the origin if the value changed
-    rlbNewPValue = gridListNew[rlbIndex].p
-    rubNewPValue = gridListNew[rubIndex].p
-
-
-    blbNewPValue = gridListNew[blbIndex].p
-    bubNewPValue = gridListNew[bubIndex].p
-
-    # check the value at the originNew if it changed(both lb and up shoule be detected )
-    if (rlbNewPValue!=rlbOldPValue or rubNewPValue!=rubOldPValue ):
-        redmass.massOrigin[0] = redmass.massOrigin[0] + deltat*constantVFiled[0]
-        redmass.massOrigin[1] = redmass.massOrigin[1] + deltat*constantVFiled[1]
-        redmass.massOrigin[2] = redmass.massOrigin[2] + deltat*constantVFiled[2]
-
-    if (blbNewPValue!=blbOldPValue or bubNewPValue!=bubOldPValue ):
-        bluemass.massOrigin[0] = bluemass.massOrigin[0] + deltat*constantVFiled[0]
-        bluemass.massOrigin[1] = bluemass.massOrigin[1] + deltat*constantVFiled[1]
-        bluemass.massOrigin[2] = bluemass.massOrigin[2] + deltat*constantVFiled[2]
-    
-
         
-ds.dspaces_wrapper_finalize()
+ds.finalize()
 MPI.Finalize()
 
 endsim = timeit.default_timer()

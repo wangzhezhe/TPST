@@ -216,7 +216,7 @@ void *checkNotify(void *arguments)
 
   //while (1)
   //{
-  //printf("notifyflag for client id (%s) status (%d)\n", clientidstr.data(), notifyFlag);
+  //spdlog::debug("notifyflag for clientid {} iftrigure {} ", clientidstr.data(), psw->iftrigure);
 
   psw->pswmtx.lock();
 
@@ -244,8 +244,6 @@ void *checkNotify(void *arguments)
   ninfo.addr = peerURL.data();
   ninfo.metaInfo = psw->pubMetadata;
   ninfo.clientid = clientidstr;
-
-  //printf("debug prepare to notify psw p1\n");
 
   nqmutex.lock();
   //printf("debug prepare to notify psw lock\n");
@@ -541,6 +539,7 @@ class GreeterServiceImpl final : public Greeter::Service
     subtimes++;
     subtimesMtx.unlock();
 
+    spdlog::debug("debug server id {} for subevent {} response time = {} avg time = {} subtimes = {}", gm_rank, eventList[0].data(), diff, subavg, subtimes);
     if (subtimes % 128 == 0)
     {
       spdlog::info("debug server id {} for subevent {} response time = {} avg time = {} subtimes = {}", gm_rank, eventList[0].data(), diff, subavg, subtimes);
@@ -745,8 +744,8 @@ class GreeterServiceImpl final : public Greeter::Service
     string metadata = request->metadata();
 
     string matchType = request->matchtype();
-    //printf("testMatchType %s\n",matchType.data());
-    if (matchType.compare(""))
+    spdlog::debug("testMatchType {}",matchType.data());
+    if (matchType.compare("")==0)
     {
       matchType = "NAME";
     }
@@ -783,10 +782,9 @@ class GreeterServiceImpl final : public Greeter::Service
     //  ifdebug = true;
     //}
 
-    //spdlog::debug("debug for publish {} current id {}", eventStr.data(), gm_rank);
+    spdlog::debug("debug for publish current id {} event {} matchtype {} metadata {}", gm_rank, eventStr.data(),matchType.data(),metadata.data());
 
     //publish on one server
-
     pubsubPublish(eventList, matchType, metadata);
 
     //printf("debug publish ok %d pubevent %s pubsubPublish ok\n", gm_rank, eventList[0].data());
