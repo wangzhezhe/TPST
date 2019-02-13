@@ -42,6 +42,8 @@
 #include "workflowserver.grpc.pb.h"
 #endif
 
+#include "../../deps/spdlog/spdlog.h"
+
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
@@ -158,7 +160,7 @@ class GreeterServiceImplNotify final : public Greeter::Service
 
         //don't do this for pub/sub performance testing
 
-        startAction(clientID, metadata);
+        //startAction(clientID, metadata);
 
         NotifiedNumMtx.lock();
         NotifiedNum++;
@@ -166,7 +168,9 @@ class GreeterServiceImplNotify final : public Greeter::Service
 
         struct timespec finish;
 
-        //if (NotifiedNum % 128 == 0)
+        spdlog::debug("debug id {} notifynum {}",gm_rank,NotifiedNum);
+
+        //if (NotifiedNum %  == 0)
         //{
         clock_gettime(CLOCK_REALTIME, &finish); /* mark the end time */
         printf("id %d notifynum %d finish time = (%lld.%.9ld)\n",

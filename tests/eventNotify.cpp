@@ -42,6 +42,7 @@
 #define LEN_NAME 16                                    /*Assuming that the length of the filename won't exceed 16 bytes*/
 #define EVENT_SIZE (sizeof(struct inotify_event))      /*size of one event*/
 #define BUF_LEN (MAX_EVENTS * (EVENT_SIZE + LEN_NAME)) /*buffer to store the data of events*/
+#define BILLION 1000000000L
 
 using namespace rapidjson;
 using namespace std;
@@ -116,7 +117,7 @@ void fakePublishTest(int pubSize)
     //string metadata = to_string(COMPONENTID) + "metadataTest" + to_string(i);
     //string metadata = to_string(COMPONENTID) + "metadataTest";
     vector<string> pubeventList;
-    spdlog::debug("id {} the pubsize is {}",gm_rank, pubSize);
+    spdlog::debug("id {} the pubsize is {}", gm_rank, pubSize);
     for (i = 0; i < pubSize; i++)
     {
         //int index = (rand() % (pubSize - 0 + 1));
@@ -128,14 +129,13 @@ void fakePublishTest(int pubSize)
         pubeventList.clear();
 
         pubeventList.push_back(fakePub);
-        
+
         spdlog::debug("id {} publish times before eventPublish {}", gm_rank, publishClient);
         eventPublish(pubeventList, metadata);
         spdlog::debug("id {} publish times after eventPublish {}", gm_rank, publishClient);
 
-
         publishMutex.lock();
-        publishClient = publishClient+1;
+        publishClient = publishClient + 1;
         publishMutex.unlock();
         //usleep(3000);
     }
@@ -304,6 +304,11 @@ void fakegothroughFolderRegister(int subSize, string notifyAddr)
 
     printf("call fakegothroughFolderRegister, subsize is %d\n", subSize);
 
+    struct timespec startsub;
+    struct timespec aftersub;
+
+    clock_gettime(CLOCK_REALTIME, &startsub); /* mark the end time */
+
     for (i = 0; i < subSize; i++)
     {
         vector<string> pubeventList;
@@ -331,14 +336,24 @@ void fakegothroughFolderRegister(int subSize, string notifyAddr)
 
         // printf("sub id %d ok\n",i);
     }
-
-    sleep(5);
-    struct timespec start;
-    clock_gettime(CLOCK_REALTIME, &start); /* mark the end time */
-    printf("start id %d start pub time = (%lld.%.9ld)\n", gm_rank, (long long)start.tv_sec, start.tv_nsec);
+    clock_gettime(CLOCK_REALTIME, &aftersub); /* mark the end time */
+    double subdiff = (aftersub.tv_sec - startsub.tv_sec) * 1.0 + (aftersub.tv_nsec - startsub.tv_nsec) * 1.0 / BILLION;
+    spdlog::info("id {} total subtime {}", gm_rank, subdiff);
 
     //sleep some time then publish
+    sleep(5);
+
+    struct timespec startpub, afterpub;
+
+    clock_gettime(CLOCK_REALTIME, &startpub); /* mark the end time */
+
+    printf("start id %d start pub time = (%lld.%.9ld)\n", gm_rank, (long long)startpub.tv_sec, startpub.tv_nsec);
+
     fakePublishTest(subSize);
+
+    clock_gettime(CLOCK_REALTIME, &afterpub); /* mark the end time */
+    double pubdiff = (afterpub.tv_sec - startpub.tv_sec) * 1.0 + (afterpub.tv_nsec - startpub.tv_nsec) * 1.0 / BILLION;
+    spdlog::info("id {} total pubtime {}", gm_rank, pubdiff);
 
     return;
 }
@@ -457,21 +472,18 @@ int main(int argc, char **argv)
 
     gm_rank = world_rank;
 
-
     int logLevel = atoi(argv[6]);
 
     if (logLevel == 0)
     {
-      spdlog::set_level(spdlog::level::info);
-    } 
+        spdlog::set_level(spdlog::level::info);
+    }
     else
     {
-      spdlog::set_level(spdlog::level::debug);
+        spdlog::set_level(spdlog::level::debug);
     }
 
-
     spdlog::info("curr component id {}", gm_rank);
-
 
     //init the worker and coordinator
     //init clients when sending the events

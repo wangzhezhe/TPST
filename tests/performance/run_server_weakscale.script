@@ -17,25 +17,25 @@ rm -rf multinodeip
 
 
 PRJPATH=/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/performance
-
+          
 cd $PRJPATH
-
-NUM_SERVER=32
-NUM_CLIENT=32
+          
+NUM_SERVER=8
+NUM_CLIENT=4
 NUM_CLIENT_TASK=256
-NUM_GROUPSIZE=1
-NUM_GROUP=32
-THREAD_POOL=512
-NOTIFY_SLEEP=500000
+NUM_GROUPSIZE=16
+NUM_GROUP=2 
+THREAD_POOL=256
+NOTIFY_SLEEP=500000 
 COORDINATOR_THRESHOLD=1024
 DIR=.
 
-mpirun --map-by ppr:16:node -n $NUM_SERVER  ./workflowserver 1500 eno1 $NUM_GROUPSIZE $NUM_GROUP $THREAD_POOL $NOTIFY_SLEEP $COORDINATOR_THRESHOLD >& $DIR/server_"$NUM_SERVER"_"$NUM_CLIENT"_"$NUM_CLIENT_TASK".log  &
-
+mpirun --map-by ppr:16:node -n $NUM_SERVER  ./workflowserver 1500 eno1 $NUM_GROUPSIZE $NUM_GROUP $THREAD_POOL $NOTIFY_SLEEP $COORDINATOR_THRESHOLD 1 >& $DIR/server_"$NUM_SERVER"_"$NUM_CLIENT"_"$NUM_CLIENT_TASK".log  &
+    
 # check if start ok
-/bin/bash serverStartOk.sh 32
+/bin/bash serverStartOk.sh 8
 
 
-mpirun --map-by ppr:16:node -n $NUM_CLIENT ./eventNotify $NUM_CLIENT_TASK 10 eno1 $NUM_GROUP $NUM_GROUPSIZE >& $DIR/client_"$NUM_SERVER"_"$NUM_CLIENT"_"$NUM_CLIENT_TASK".log  &
+mpirun --map-by ppr:16:node -n $NUM_CLIENT ./eventNotify $NUM_CLIENT_TASK 10 eno1 $NUM_GROUP $NUM_GROUPSIZE 1 >& $DIR/client_"$NUM_SERVER"_"$NUM_CLIENT"_"$NUM_CLIENT_TASK".log  &
 
 wait

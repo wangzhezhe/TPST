@@ -308,7 +308,7 @@ void getElementFromNotifyQ()
 
     if (size > 0)
     {
-      //spdlog::debug("server id is {} current notifyQueue size {}", gm_rank, size);
+      spdlog::debug("server id is {} current notifyQueue size {}", gm_rank, size);
 
       int itervalue = 512;
       if (size < 512)
@@ -943,10 +943,6 @@ void RunServer(string serverIP, string serverPort, int threadPool)
   //init thread pool
   ThreadPool threadPoolInstance(threadPool);
   globalThreadPool = &threadPoolInstance;
-  //start check()
-  thread tcheck(check);
-  thread notifycheck(getElementFromNotifyQ);
-
   string socketAddr = serverIP + ":" + serverPort;
   //ServerAddr is global value
   ServerAddr = socketAddr;
@@ -964,6 +960,9 @@ void RunServer(string serverIP, string serverPort, int threadPool)
   std::unique_ptr<Server> server(builder.BuildAndStart());
   //std::cout << "Server listening on " << server_address << std::endl;
 
+  //start check()
+  thread tcheck(check);
+  thread notifycheck(getElementFromNotifyQ);
   tcheck.join();
   notifycheck.join();
   // Wait for the server to shutdown. Note that some other thread must be
@@ -1257,13 +1256,12 @@ int main(int argc, char **argv)
 
   propagateSub = false;
 
-  propagatePub = false;
+  propagatePub = true;
 
   const bool startPeridChecking = false;
 
   spdlog::info("server id {} server status {}", gm_rank, SERVERSTATUS.data());
 
-  thread runServer(RunServer, ServerIP, ServerPort, threadPoolSize);
 
   if (startPeridChecking == true && SERVERSTATUS.compare(status_coor) == 0)
   {
@@ -1271,11 +1269,13 @@ int main(int argc, char **argv)
     thread tCheck(periodChecking);
     tCheck.join();
   }
-
+  
+  updateCoordinatorAddr();
   //update the coordinator addr
   //wait all server to write data into dir
   sleep(1);
-  updateCoordinatorAddr();
+
+  thread runServer(RunServer, ServerIP, ServerPort, threadPoolSize);
   runServer.join();
   return 0;
 }

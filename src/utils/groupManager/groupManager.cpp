@@ -130,8 +130,7 @@ void updateWorkerAddrMap(string clusterDir)
     //only update specific clusterDir
     int size;
     
-    //TODO this lock may cause the deadlock for large parallel
-    //getLock(clusterDir, clusterDir);
+    getLock(clusterDir, clusterDir);
 
     string workerDir = clusterDir + "/" + gm_workerDir;
     string coordinatorDir = clusterDir + "/" + gm_coordinatorDir;
@@ -140,8 +139,7 @@ void updateWorkerAddrMap(string clusterDir)
     vector<string> workerAddr = loadAddrInDir(workerDir);
     vector<string> coordinatorAddr = loadAddrInDir(coordinatorDir);
 
-    //releaseLock(clusterDir);
-
+    releaseLock(clusterDir);
     //first time to load
     if (loadCoordinatorMap.find(clusterDir) == loadCoordinatorMap.end() || loadCoordinatorMap[clusterDir] == false)
     {
