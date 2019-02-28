@@ -1,6 +1,6 @@
 from mpi4py import MPI
 import numpy as np
-import dspaceswrapper.dataspaces as dataspaces
+import dataspaces.dataspaceClient as dataspaces
 import ctypes
 import os
 import time
@@ -152,7 +152,7 @@ num_peers = 1
 appid = 2
 
 var_name = "ex1_sample_data"
-lock_name = "my_test_lock"
+lock_name = "my_test_lock_"+str(rank)
 
 if(len(sys.argv)!=2):
     print("./analytics <iteration>")
@@ -166,18 +166,20 @@ ds = dataspaces.dataspaceClient(appid,comm)
 
 currIter = 0
 
+lb = [15*15*15*rank]
+ub = [15*15*15*(rank+1)-1]
 
-while (True):
-#for version in range(iteration):
+#while (True):
+for version in range(iteration):
     # ds.lock_on_read(lock_name)
 
-    version = currIter
+    # version = currIter
 
-    lb = [0]
-    ub = [3374]
+
 
     #print("get version")
     #print(version)
+    #use read write lock here
     ds.lock_on_read(lock_name)
     # use lock type  = 1
     getdata_p1 = ds.get(var_name, version, lb, ub)
@@ -185,7 +187,7 @@ while (True):
     # check if data ok
 
     if(getdata_p1[0]==0):
-        print("data not avaliable")
+        print("data not avaliable for ts %d"%(version))
         time.sleep(0.5)
         continue
 
@@ -208,14 +210,16 @@ while (True):
     #print (getdata_p2)
     #patternHeppen = checkDataPattern(getdata_p1,getdata_p2)
     patternHeppen = checkDataPatternCenter(getdata_p1)
-    currIter=currIter+1
+    #currIter=currIter+1
 
     #if(currIter>=iteration):
     #    break
 
     if(patternHeppen==True):
-        print("patternHeppen at ts %d"%(version))
-        break
+        print("---------patternHeppen at ts %d----------"%(version))
+        # simulate the vis time
+        time.sleep(0.1)
+        # break
 
 ds.finalize()
 
