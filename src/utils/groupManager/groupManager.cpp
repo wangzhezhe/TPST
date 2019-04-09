@@ -236,7 +236,7 @@ int getFileNumInDir(string DirPath)
     return FileNum;
 }
 
-void recordIPPortWithoutFile(string &ipstr, string port)
+void recordIPPortWithoutFile(string &ipstr)
 {
     int n;
     struct ifreq ifr;
@@ -254,8 +254,6 @@ void recordIPPortWithoutFile(string &ipstr, string port)
     char *ip = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 
     ipstr = string(ip);
-
-    printf("debug ipstr %s", ipstr.data());
     return;
 }
 

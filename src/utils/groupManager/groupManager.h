@@ -27,13 +27,15 @@ string parsePort(string peerURL);
 
 vector<string> loadAddrInDir(string Dir);
 
-void recordIPPortWithoutFile(string &ipstr, string port);
+void recordIPPortWithoutFile(string &ipstr);
 
 vector<string> getFreeNodeList(int needNum);
 
 bool nodeAttach(string dir, string nodeAddr);
 
 void updateCoordinatorAddr();
+
+void createDir(string DirPath);
 
 extern const string gm_multinodeip;
 
