@@ -21,5 +21,5 @@ string getNotifyServerAddr();
 
 extern int NotifiedNum;
 extern int COMPONENTID;
-extern string NOTIFYADDR;
+//extern string NOTIFYADDR;
 #endif

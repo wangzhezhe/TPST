@@ -1,3 +1,5 @@
+# write to staging service
+
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import math
@@ -15,8 +17,8 @@ import dataspaces.dataspaceClient as dataspaces
 
 import sys
 # insert pubsub and detect the things after every iteration
-#sys.path.append('../../src/publishclient/pythonclient')
-#import pubsub as pubsubclient
+sys.path.append('../../src/publishclient/pythonclient')
+import pubsub as pubsubclient
 import timeit
 
 comm = MPI.COMM_WORLD
@@ -39,10 +41,13 @@ num_peers= 2
 appid = 1
 
 var_name = "ex1_sample_data" 
-lock_name = "my_test_lock_"+str(rank)
+lock_name = "my_test_lock"
 
 
 ds = dataspaces.dataspaceClient(appid,comm)
+pubsubaddrList = pubsubclient.getServerAddr()
+print (pubsubaddrList)
+pubsubAddr = pubsubaddrList[0]
 
 #pubsubaddrList = pubsubclient.getServerAddr()
 #print (pubsubaddrList)
@@ -65,12 +70,14 @@ def putDataToDataSpaces(gridList,timestep):
     ver = timestep
     
     # data is 1 d array
-    lb = [15*15*15*rank]
-
+    if(rank==0):
+        lb = [0]
+    if (rank ==1):
+        lb = [3380]
     
-    ds.lock_on_write(lock_name)
+    #ds.lock_on_write(lock_name)
     ds.put(var_name,ver,lb,cellDataArray)
-    ds.unlock_on_write(lock_name)
+    #ds.unlock_on_write(lock_name)
     #print("write to dataspaces for ts %d" % (timestep))
 
 
@@ -588,8 +595,6 @@ changeVPeriod = int(sys.argv[2])
 vsign = 1
 
 startsim = timeit.default_timer()
-
-
 
 for t in range (iteration):
     moveToCenter = False

@@ -1,6 +1,6 @@
 from mpi4py import MPI
 import numpy as np
-import dspaceswrapper.dataspaces as dataspaces
+import dataspaces.dataspaceClient as dataspaces
 import ctypes
 import os
 import time
@@ -80,19 +80,6 @@ def checkAndPublishEvent(gridDataArray_p1, gridDataArray_p2):
 initp =  1.5
 targetValue = 7.5
 
-
-def checkDataPatternCenter(gridDataArray_p1):
-    massOriginInterest = [7, 7, 7]
-    targetValue = 7.5
-
-    index = getIndex(massOriginInterest[0], massOriginInterest[1], massOriginInterest[2])
-    if (gridDataArray_p1[index] == targetValue):
-        return True
-    else:
-        return False
-
-
-
 def checkDataPattern(gridDataArray_p1, gridDataArray_p2):
 
     coord1 = []
@@ -139,6 +126,18 @@ def checkDataPattern(gridDataArray_p1, gridDataArray_p2):
     else:
         return False
 
+def checkDataPatternCenter(gridDataArray_p1):
+    massOriginInterest = [7, 7, 7]
+    targetValue = 7.5
+
+    index = getIndex(massOriginInterest[0], massOriginInterest[1], massOriginInterest[2])
+    if (gridDataArray_p1[index] == targetValue):
+        return True
+    else:
+        return False
+
+
+
 # copy all conf.* file to current dir
 serverdir = "/home1/zw241/dataspaces/tests/C"
 
@@ -153,10 +152,10 @@ num_peers = 1
 appid = 2
 
 var_name = "ex1_sample_data"
-lock_name = "my_test_lock"
+lock_name = "my_test_lock_"+str(rank)
 
 if(len(sys.argv)!=2):
-    print("./analytics <iterations>")
+    print("./analytics <iteration>")
     exit(0)
     
 iteration = int(sys.argv[1])
@@ -165,18 +164,33 @@ startanay = timeit.default_timer()
 
 ds = dataspaces.dataspaceClient(appid,comm)
 
-for version in range (iteration):
+currIter = 0
+
+lb = [15*15*15*rank]
+ub = [15*15*15*(rank+1)-1]
+
+#while (True):
+for version in range(iteration):
+    # ds.lock_on_read(lock_name)
+
+    # version = currIter
 
 
-
-    lb = [0]
-    ub = [3374]
 
     #print("get version")
     #print(version)
+    #use read write lock here
     ds.lock_on_read(lock_name)
+    # use lock type  = 1
     getdata_p1 = ds.get(var_name, version, lb, ub)
     ds.unlock_on_read(lock_name)
+    # check if data ok
+
+    if(getdata_p1[0]==0):
+        print("data not avaliable for ts %d"%(version))
+        time.sleep(0.5)
+        continue
+
 
     #lb = [3380]
     #ub = [3380+3374]
@@ -194,11 +208,19 @@ for version in range (iteration):
 
     #print("get data2")
     #print (getdata_p2)
+    #patternHeppen = checkDataPattern(getdata_p1,getdata_p2)
     patternHeppen = checkDataPatternCenter(getdata_p1)
+    #the time used for predicates every time
+    time.sleep(0.01)
+
+    #if(currIter>=iteration):
+    #    break
 
     if(patternHeppen==True):
-        print("patternHeppen at ts %d"%(version))
-        break
+        print("---------patternHeppen at ts %d----------"%(version))
+        # vis time
+        time.sleep(0.05)
+        # break
 
 ds.finalize()
 

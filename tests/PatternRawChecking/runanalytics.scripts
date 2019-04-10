@@ -31,10 +31,10 @@ sleep 1
 cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/movingGridMultiInStaging
 
 # start simulation
-mpirun -n 2 python semiEulerGridInStaging.py $ITERATION $RATIO >& $DIR/con_sim.log  &
+mpirun -n 2 python sim.py $ITERATION $RATIO >& $DIR/con_sim.log  &
 
 
 # start analytics
-mpirun -n 2 python analytic_polling.py $ITERATION >& $DIR/con_analy.log  &
+mpirun -n 2 python predicatAna.py $ITERATION >& $DIR/con_analy.log  &
 
 wait

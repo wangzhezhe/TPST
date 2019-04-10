@@ -73,6 +73,19 @@ set<string> coordinatorAddrSet;
 
 map<string, bool> loadCoordinatorMap;
 
+//only get the address of the cluster0 worker 0
+string getSingleClientFromDir()
+{
+    string baseDir = "/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/performance/multinodeip";
+    string dir = baseDir + "/cluster0/worker";
+    vector<string> serverAddrList = loadAddrInDir(dir);
+    if(serverAddrList.size()>0){
+        return serverAddrList[0];
+    }else{
+        return "";
+    }
+}
+
 //the Dir could be the coordinator or the worker ./multinodeip/cluster0/worker
 vector<string> loadAddrInDir(string Dir)
 {
@@ -129,7 +142,7 @@ void updateWorkerAddrMap(string clusterDir)
     //number of the cluster in current dir
     //only update specific clusterDir
     int size;
-    
+
     getLock(clusterDir, clusterDir);
 
     string workerDir = clusterDir + "/" + gm_workerDir;
@@ -178,7 +191,6 @@ void updateCoordinatorAddr()
             coorAddrSetLock.lock();
             coordinatorAddrSet.insert(coorStr[0]);
             coorAddrSetLock.unlock();
-            
         }
     }
 

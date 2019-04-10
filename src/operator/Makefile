@@ -37,7 +37,7 @@ PROTOS_PATH = ../proto
 
 vpath %.proto $(PROTOS_PATH)
 
-all: operator
+all: notifyserver
 
 
 strparse.o:
@@ -58,8 +58,8 @@ dlm.o:
 eventmanager.o:
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../observer/eventmanager.cpp -o eventmanager.o
 
-notifyserver.o:
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ../server/notifyserver.cc -o notifyserver.o
+operator.o:
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) ./operator.cc -o operator.o
 
 groupManager.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o groupManager.o ../utils/groupManager/groupManager.cpp
@@ -70,7 +70,7 @@ split.o:
 pubsubclient.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o pubsubclient.o ../publishclient/pubsubclient.cc
 
-operator: workflowserver.pb.o workflowserver.grpc.pb.o pubsubclient.o split.o notifyserver.o groupManager.o eventmanager.o dlm.o dht.o loaddata.o local.o operator.o strparse.o
+notifyserver: workflowserver.pb.o workflowserver.grpc.pb.o pubsubclient.o split.o notifyserver.o groupManager.o eventmanager.o dlm.o dht.o loaddata.o local.o operator.o strparse.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc
@@ -82,7 +82,7 @@ operator: workflowserver.pb.o workflowserver.grpc.pb.o pubsubclient.o split.o no
 	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=. $<
 
 clean:
-	rm -f *.o *.pb.cc *.pb.h operator
+	rm -f *.o *.pb.cc *.pb.h notifyserver
 
 
 # The following is to test your system and ensure a smoother experience.

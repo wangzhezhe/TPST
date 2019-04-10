@@ -11,7 +11,10 @@
 #include <set>
 
 
+
 using namespace std;
+
+string getSingleClientFromDir();
 
 void recordIPortIntoClusterDir(string &ipstr, string port, string clusterDir, int RequiredDirSize);
 

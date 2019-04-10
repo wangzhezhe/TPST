@@ -23,7 +23,7 @@
 #include <grpc++/grpc++.h>
 #include <uuid/uuid.h>
 
-#include "pubsub.h"
+#include "../server/pubsub.h"
 #include "unistd.h"
 #include <mutex>
 #include <thread>
@@ -31,11 +31,14 @@
 #include "../observer/eventmanager.h"
 #include "../runtime/local.h"
 #include "../../src/publishclient/pubsubclient.h"
+#include "operator.h"
 
 #include <stdint.h> /* for uint64 definition */
 #include <stdlib.h> /* for exit() definition */
 #include <time.h>   /* for clock_gettime */
 #define BILLION 1000000000L
+
+
 
 #ifdef BAZEL_BUILD
 #else
@@ -63,6 +66,24 @@ int NotifiedNum = 0;
 //string NOTIFYPORT("50052");
 
 string NOTIFYADDR;
+
+
+void startActionByOperator(string clientID, string metadata)
+{
+
+    printf("debug start operation id (%s) and meta (%s)\n", clientID.data(), metadata.data());
+
+    //map the clientID into the triggure map
+
+    //if the triggure is pre or post
+
+    //if pre get the bundle and execute the task template
+
+    //update task runningid
+
+    //if post do operation on task
+    return;
+}
 
 void startAction(string clientID, string metadata)
 {
@@ -161,6 +182,8 @@ class GreeterServiceImplNotify final : public Greeter::Service
         //don't do this for pub/sub performance testing
 
         //startAction(clientID, metadata);
+        startActionByOperator(clientID, metadata);
+
 
         NotifiedNumMtx.lock();
         NotifiedNum++;
@@ -212,7 +235,7 @@ string getNotifyServerAddr()
     string ip;
     //printf("record ip\n");
 
-    recordIPPortWithoutFile(ip, serverPort);
+    recordIPPortWithoutFile(ip);
     //TODO send ip:port to workflowserver
 
     string socketAddr = ip + ":" + serverPort;
@@ -226,7 +249,7 @@ void runNotifyServer()
     //os will assign a free port
 
     //string serverPort = NOTIFYPORT;
-
+    //tell this to pubsub.h
     printf("notify server addr %s\n", NOTIFYADDR.data());
     std::string server_address(NOTIFYADDR);
     GreeterServiceImplNotify service;
@@ -255,4 +278,68 @@ void *RunNotifyServer(void *arg)
     //printf("start new thread %ld for notifyserver\n",id);
     runNotifyServer();
     return NULL;
+}
+
+
+
+//using self defined pub sub server
+int main(int argc, char **argv)
+{
+
+    //start the notify server
+
+    pthread_t notifyserverid;
+    int status;
+
+    //get notify server addr
+    string notifyAddr = getNotifyServerAddr();
+    NOTIFYADDR = notifyAddr;
+    //send value to server addr
+
+    //TODO send this parameter from outside
+    gm_groupNumber = 1;
+
+    //start the server
+    pthread_create(&notifyserverid, NULL, &RunNotifyServer, NULL);
+
+    //wait the notify server start
+    sleep(1);
+
+    printf("the address of notify server is %s\n", NOTIFYADDR.data());
+
+    //parse the files in runtimeScripts
+    //parseScript();
+
+    string pserverAddr = getSingleClientFromDir();
+
+    if (pserverAddr == "")
+    {
+        printf("failed to get the pubsub server address\n");
+        return 0;
+    }
+
+    GreeterClient *greeter = new GreeterClient(grpc::CreateChannel(
+        pserverAddr.data(), grpc::InsecureChannelCredentials()));
+
+    if (greeter == NULL)
+    {
+        printf("failed to get the client\n");
+        return 0;
+    }
+
+    testBundleRegister(greeter,NOTIFYADDR);
+
+    sleep(2);
+
+    //test bundle post triggure
+    testPublishTgRegister(greeter);
+
+    //test bundle pre triggure
+
+    while (1)
+    {
+        usleep(1000);
+    }
+
+    return 0;
 }

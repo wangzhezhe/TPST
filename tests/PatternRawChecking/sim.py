@@ -1,3 +1,5 @@
+# write to staging service
+
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import math
@@ -15,8 +17,8 @@ import dataspaces.dataspaceClient as dataspaces
 
 import sys
 # insert pubsub and detect the things after every iteration
-#sys.path.append('../../src/publishclient/pythonclient')
-#import pubsub as pubsubclient
+sys.path.append('../../src/publishclient/pythonclient')
+import pubsub as pubsubclient
 import timeit
 
 comm = MPI.COMM_WORLD
@@ -39,10 +41,13 @@ num_peers= 2
 appid = 1
 
 var_name = "ex1_sample_data" 
-lock_name = "my_test_lock_"+str(rank)
+lock_name = "my_test_lock"
 
 
 ds = dataspaces.dataspaceClient(appid,comm)
+pubsubaddrList = pubsubclient.getServerAddr()
+print (pubsubaddrList)
+pubsubAddr = pubsubaddrList[0]
 
 #pubsubaddrList = pubsubclient.getServerAddr()
 #print (pubsubaddrList)
@@ -65,12 +70,14 @@ def putDataToDataSpaces(gridList,timestep):
     ver = timestep
     
     # data is 1 d array
-    lb = [15*15*15*rank]
-
+    if(rank==0):
+        lb = [0]
+    if (rank ==1):
+        lb = [3380]
     
-    ds.lock_on_write(lock_name)
+    #ds.lock_on_write(lock_name)
     ds.put(var_name,ver,lb,cellDataArray)
-    ds.unlock_on_write(lock_name)
+    #ds.unlock_on_write(lock_name)
     #print("write to dataspaces for ts %d" % (timestep))
 
 
@@ -562,15 +569,15 @@ def updateGridValueFake(gridListInput,ifcenter):
 
     rmassLb = [massOriginInterest[0]-massR/2.0,massOriginInterest[1]-massR/2.0,massOriginInterest[2]-massR/2.0]
         
-    for i in range (len(gridListInput)):
-        zindex = gridListInput[i].lb[2]
-        yindex = gridListInput[i].lb[1]
-        xindex = gridListInput[i].lb[0]
+    for i in range (len(gridList)):
+        zindex = gridList[i].lb[2]
+        yindex = gridList[i].lb[1]
+        xindex = gridList[i].lb[0]
 
-        gridListInput[i].p = initp*(-5)
+        gridList[i].p = initp*(-5)
         if (xindex >= rmassLb[0] and xindex <= rmassLb[0]+massR and yindex>=rmassLb[1] and yindex<=rmassLb[1]+massR  and zindex>=rmassLb[2] and zindex<=rmassLb[2]+massR) :
             # update p value
-            gridListInput[i].p=redmass.p
+            gridList[i].p=redmass.p
 
     # simulate the time to caculate the data
     time.sleep(0.1)
@@ -589,60 +596,15 @@ vsign = 1
 
 startsim = timeit.default_timer()
 
-
-
-def getIndexNew(px, py, pz):
-    # TODO should add all boundry case
-    # only for lower case
-    r = 15
-    gridnum = 15
-    deltar = 1.0*r/gridnum
-
-    if (px < 0 or py < 0 or pz < 0 or px > gridnum*deltar or py > gridnum*deltar or pz > gridnum*deltar):
-        #print "out of the box "
-        #print [px,py,pz]
-        return -1
-
-    gnumx = math.floor((px-0)/deltar)
-    gnumy = math.floor((py-0)/deltar)
-    gnumz = math.floor((pz-0)/deltar)
-
-    index = int(gnumz*gridnum*gridnum + gnumy*gridnum+gnumx)
-
-    return index
-
-
-def checkDataPatternCenter(gridDataArray_p1):
-    massOriginInterest = [7, 7, 7]
-    targetValue = 7.5
-
-    index = getIndexNew(massOriginInterest[0], massOriginInterest[1], massOriginInterest[2])
-    if (gridDataArray_p1[index] == targetValue):
-        return True
-    else:
-        return False
-
 for t in range (iteration):
     moveToCenter = False
     if (t>=changeVPeriod and t%changeVPeriod==0):
         moveToCenter = True
         
-    updateGridValueFake(gridListNew,moveToCenter)
+    updateGridValueFake(gridList,moveToCenter)
     
     putDataToDataSpaces(gridListNew,t)
     
-    # use in-situ indicator analytics to check the data, if the interesting thing happen, send out events
-    patternHeppen = checkDataPatternCenter(getdata_p1)
-    #currIter=currIter+1
-
-    #if(currIter>=iteration):
-    #    break
-
-    if(patternHeppen==True):
-        print("---------patternHeppen at ts %d----------"%(version))
-        # send event
-
-
         
 ds.finalize()
 MPI.Finalize()

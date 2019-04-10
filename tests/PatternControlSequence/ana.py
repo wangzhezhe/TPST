@@ -1,3 +1,5 @@
+# check the all timestep data after sim finish
+
 from mpi4py import MPI
 import numpy as np
 import dataspaces.dataspaceClient as dataspaces
@@ -130,6 +132,8 @@ def checkDataPatternCenter(gridDataArray_p1):
     massOriginInterest = [7, 7, 7]
     targetValue = 7.5
 
+
+
     index = getIndex(massOriginInterest[0], massOriginInterest[1], massOriginInterest[2])
     if (gridDataArray_p1[index] == targetValue):
         return True
@@ -171,14 +175,7 @@ ub = [15*15*15*(rank+1)-1]
 
 #while (True):
 for version in range(iteration):
-    # ds.lock_on_read(lock_name)
 
-    # version = currIter
-
-
-
-    #print("get version")
-    #print(version)
     #use read write lock here
     ds.lock_on_read(lock_name)
     # use lock type  = 1
@@ -191,35 +188,17 @@ for version in range(iteration):
         time.sleep(0.5)
         continue
 
-
-    #lb = [3380]
-    #ub = [3380+3374]
-
-    #print("get version")
-    #print(version)
-
-    #getdata_p2 = ds.dspaces_get_data(var_name, version, lb, ub)
-
-    # time.sleep(1)
-    # publishe events to pubsub store
-
-    #print("get data1")
-    #print (getdata_p1)
-
-    #print("get data2")
-    #print (getdata_p2)
-    #patternHeppen = checkDataPattern(getdata_p1,getdata_p2)
     patternHeppen = checkDataPatternCenter(getdata_p1)
-    #currIter=currIter+1
-
-    #if(currIter>=iteration):
-    #    break
-
+    #the time used for predicates every time
+    time.sleep(0.01)
+   
     if(patternHeppen==True):
         print("---------patternHeppen at ts %d----------"%(version))
         # simulate the vis time
-        time.sleep(0.1)
-        # break
+        # execute the following part for the task
+        # the time used for predicates checking
+        
+        break
 
 ds.finalize()
 

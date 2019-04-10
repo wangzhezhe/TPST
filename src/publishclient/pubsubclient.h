@@ -101,4 +101,6 @@ extern vector<GreeterClient *> coordinatorClients;;
 
 extern mutex coordinatorClientsLock;
 
+extern 
+
 #endif
