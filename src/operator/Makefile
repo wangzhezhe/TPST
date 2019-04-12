@@ -70,7 +70,10 @@ split.o:
 pubsubclient.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o pubsubclient.o ../publishclient/pubsubclient.cc
 
-notifyserver: workflowserver.pb.o workflowserver.grpc.pb.o pubsubclient.o split.o notifyserver.o groupManager.o eventmanager.o dlm.o dht.o loaddata.o local.o operator.o strparse.o
+metaclient.o: metaserver.pb.o metaserver.grpc.pb.o
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o metaclient.o ../metadatamanagement/metaclient.cc
+
+notifyserver: metaserver.pb.o metaserver.grpc.pb.o workflowserver.pb.o workflowserver.grpc.pb.o pubsubclient.o split.o groupManager.o eventmanager.o dlm.o dht.o loaddata.o local.o operator.o strparse.o metaclient.o notifyserver.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc

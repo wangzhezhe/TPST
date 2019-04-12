@@ -27,26 +27,10 @@
 
 #include "metaserver.grpc.pb.h"
 #include "../utils/groupManager/groupManager.h"
+#include "metaclient.h"
 
-using grpc::Channel;
-using grpc::ClientContext;
-using grpc::Status;
-
-using metaserver::Meta;
-
-using metaserver::HelloReply;
-using metaserver::HelloRequest;
-
-using metaserver::PutReply;
-using metaserver::PutRequest;
-
-using metaserver::GetReply;
-using metaserver::GetRequest;
-
-using metaserver::TimeReply;
-using metaserver::TimeRequest;
-
-const string metaserverDir = "Metaserver";
+const string projectDir = "/project1/parashar-001/zw241/software/eventDrivenWorkflow/src/metadatamanagement";
+const string metaserverDir = projectDir+"/Metaserver";
 
 class MetaClient
 {
@@ -56,34 +40,7 @@ class MetaClient
 
     // Assembles the client's payload, sends it and presents the response back
     // from the server.
-    std::string SayHello(const std::string &user)
-    {
-        // Data we are sending to the server.
-        HelloRequest request;
-        request.set_name(user);
 
-        // Container for the data we expect from the server.
-        HelloReply reply;
-
-        // Context for the client. It could be used to convey extra information to
-        // the server and/or tweak certain RPC behaviors.
-        ClientContext context;
-
-        // The actual RPC.
-        Status status = stub_->SayHello(&context, request, &reply);
-
-        // Act upon its status.
-        if (status.ok())
-        {
-            return reply.message();
-        }
-        else
-        {
-            std::cout << status.error_code() << ": " << status.error_message()
-                      << std::endl;
-            return "RPC failed";
-        }
-    }
 
     std::string Recordtime(const std::string &key)
     {
@@ -142,8 +99,8 @@ class MetaClient
             return "RPC failed";
         }
     }
-    
-    std::string Putmeta(const std::string &key,const std::string &value)
+
+    std::string Putmeta(const std::string &key, const std::string &value)
     {
         // Data we are sending to the server.
         PutRequest request;
@@ -189,6 +146,27 @@ string getAddr()
     return "";
 }
 
+void recordKey(string key)
+{
+
+    string serverAddr = getAddr();
+
+    if (serverAddr == "")
+    {
+        printf("failed to get server addr\n");
+        return;
+    }
+
+    MetaClient metaclient(grpc::CreateChannel(
+        serverAddr, grpc::InsecureChannelCredentials()));
+
+    string reply = metaclient.Recordtime(key);
+    std::cout << "Timer received: " << reply << std::endl;
+
+    return;
+}
+
+/*
 int main(int argc, char **argv)
 {
     // Instantiate the client. It requires a channel, out of which the actual RPCs
@@ -241,9 +219,9 @@ int main(int argc, char **argv)
     std::cout << "Get pattern1 recieve: " << reply << std::endl;
     reply = metaclient.Getmeta(key);
     std::cout << "Get pattern1 recieve: " << reply << std::endl;
-
     reply = metaclient.Getmeta(key);
     std::cout << "Get pattern1 recieve: " << reply << std::endl;
 
     return 0;
 }
+*/

@@ -1,0 +1,32 @@
+#!/bin/sh
+#SBATCH -J ED_SERVER
+#SBATCH -o ED_SERVER.%J.stdout
+#SBATCH -e ED_SERVER.%J.stderr
+#SBATCH -N 4
+#SBATCH -p short
+#SBATCH --qos short-award
+#SBATCH -t 00:03:00
+#SBATCH --ntasks-per-node=18
+
+
+module load mpich
+module load python/3.6.3
+cd ~/pythonWorkSpace/nbodysimulation/
+source ./bin/activate
+DIR=.
+
+# start ds
+
+cd /home1/zw241/dataspaces/tests/C/
+
+mpirun -n 16 ./dataspaces_server -s 16  >& $DIR/event_dsserver.log  &
+
+
+sleep 1
+
+
+cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/PatternEventNotification
+
+python sim.py 300 250 >& $DIR/event_sim.log
+
+wait

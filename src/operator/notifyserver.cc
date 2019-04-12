@@ -38,8 +38,6 @@
 #include <time.h>   /* for clock_gettime */
 #define BILLION 1000000000L
 
-
-
 #ifdef BAZEL_BUILD
 #else
 #include "workflowserver.grpc.pb.h"
@@ -67,24 +65,6 @@ int NotifiedNum = 0;
 
 string NOTIFYADDR;
 
-
-void startActionByOperator(string clientID, string metadata)
-{
-
-    printf("debug start operation id (%s) and meta (%s)\n", clientID.data(), metadata.data());
-
-    //map the clientID into the triggure map
-
-    //if the triggure is pre or post
-
-    //if pre get the bundle and execute the task template
-
-    //update task runningid
-
-    //if post do operation on task
-    return;
-}
-
 void startAction(string clientID, string metadata)
 {
 
@@ -102,7 +82,7 @@ void startAction(string clientID, string metadata)
     int actionSize = etrigger->actionList.size();
     int i;
 
-    printf("debug current driver %s\n",etrigger->driver.data());
+    printf("debug current driver %s\n", etrigger->driver.data());
 
     if (etrigger->driver.compare("local") == 0)
     {
@@ -182,8 +162,7 @@ class GreeterServiceImplNotify final : public Greeter::Service
         //don't do this for pub/sub performance testing
 
         //startAction(clientID, metadata);
-        startActionByOperator(clientID, metadata);
-
+        ActionByOperator(clientID, metadata);
 
         NotifiedNumMtx.lock();
         NotifiedNum++;
@@ -191,7 +170,7 @@ class GreeterServiceImplNotify final : public Greeter::Service
 
         struct timespec finish;
 
-        spdlog::debug("debug id {} notifynum {}",gm_rank,NotifiedNum);
+        spdlog::debug("debug id {} notifynum {}", gm_rank, NotifiedNum);
 
         //if (NotifiedNum %  == 0)
         //{
@@ -280,8 +259,6 @@ void *RunNotifyServer(void *arg)
     return NULL;
 }
 
-
-
 //using self defined pub sub server
 int main(int argc, char **argv)
 {
@@ -327,12 +304,41 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    testBundleRegister(greeter,NOTIFYADDR);
+    //three parameters: pre, post task name
 
-    sleep(2);
+    /*
+void testBundleRegister(GreeterClient *greeter,
+                        string notifyaddr,
+                        string taskName,
+                        string taskTemplates,
+                        string preTopic,
+                        string preMeta,
+                        string postTopic,
+                        string postMeta);
+
+*/
+
+    string prjDir = "/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/PatternEventNotification";
+
+    string simTemplate = prjDir + "/simTp.scripts";
+    string checkingTemplate = prjDir + "/checkTp.scripts";
+    string anaTemplate = prjDir + "/anaTp.scripts";
+
+    //register sim
+    testBundleRegister(greeter, NOTIFYADDR, "SIM", simTemplate, "INIT", "testsimstart", "MEANINGLESS", "POSTNONE");
+
+    //register checking
+    //publish ANASTART in program
+    testBundleRegister(greeter, NOTIFYADDR, "CHECKING", checkingTemplate, "INIT", "testcheckingstart", "NONE", "POSTNONE");
+
+    //register Ana
+    //publish MEANINGLESS in program
+    testBundleRegister(greeter, NOTIFYADDR, "ANA", anaTemplate, "ANASTART", "testanastart", "NONE", "POSTNONE");
+
+    //sleep(2);
 
     //test bundle post triggure
-    testPublishTgRegister(greeter);
+    //testPublishTgRegister(greeter);
 
     //test bundle pre triggure
 

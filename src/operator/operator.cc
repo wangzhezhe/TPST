@@ -27,6 +27,10 @@
 #include <string>
 #include <uuid/uuid.h>
 
+#include <cstdlib>
+#include <fstream>
+#include <sstream>
+
 #include "../publishclient/pubsubclient.h"
 #include "../utils/split/split.h"
 #include "../utils/groupManager/groupManager.h"
@@ -37,7 +41,98 @@
 #include "workflowserver.grpc.pb.h"
 
 #include "operator.h"
+#include "../../src/metadatamanagement/metaclient.h"
 
+mutex bmapMutex;
+map<string, Bundle> bmap;
+
+//from the sub id to the triggure
+mutex submapMutex;
+map<string, Triggure> submap;
+
+// call slurm templates and get the id
+string runTaskByTemplateSlurm(string templateName)
+{
+
+    //default driver is the slurm
+
+    string command = "sbatch " + templateName + " >syscommand.txt";
+
+    std::system(command.data()); // execute the UNIX command "ls -l >test.txt"
+    std::stringstream buffer;
+    buffer << std::ifstream("syscommand.txt").rdbuf();
+    std::string str = buffer.str();
+    printf("execute results : %s", str.data());
+
+    //Submitted batch job 43942
+    //filter out the id from the string
+
+    int len = str.length();
+    string taskID = str.substr(len - 5, len);
+
+    //scancel 43942
+
+    return taskID;
+}
+
+void stopTaskBySlurm(string taskName)
+{
+    printf("execute slurm stop for %s\n",taskName.data());
+    //record time for task stop
+    recordKey(taskName);
+    
+    bmapMutex.lock();
+    string taskID = bmap[taskName].taskRunningID;
+    bmapMutex.unlock();
+    string command = "scancel " + taskID;
+    std::system(command.data());
+
+    return;
+}
+
+void ActionByOperator(string clientID, string metadata)
+{
+
+    printf("debug start operation id (%s) and meta (%s)\n", clientID.data(), metadata.data());
+
+    //map the clientID into the triggure map
+    submapMutex.lock();
+    Triggure triggure = submap[clientID];
+    submapMutex.unlock();
+
+    string triggureType = triggure.type;
+
+    string taskName = triggure.taskName;
+
+    bmapMutex.lock();
+    string taskTemplates = bmap[taskName].taskTemplates;
+    bmapMutex.unlock();
+    //if the triggure is pre or post (according to metadata)
+
+    if (triggureType == preTrg)
+    {
+        //pre triggure
+        runTaskByTemplateSlurm(taskTemplates);
+    }
+    else if (triggureType == postTrg)
+    {
+        //post triggure
+        //if the post type is the stop, than stop the task
+        stopTaskBySlurm(taskName);
+    }
+    else
+    {
+        //unsopported triggure
+        printf("unsupported triggure type (%s)\n", triggureType.data());
+    }
+
+    //if pre get the bundle and execute the task template
+
+    //update task runningid
+
+    //if post do operation on task
+    return;
+}
 
 void testPublishTgRegister(GreeterClient *greeter)
 {
@@ -45,7 +140,7 @@ void testPublishTgRegister(GreeterClient *greeter)
     printf("------test testPublishTgRegister------\n");
     vector<string> postPublishList;
     postPublishList.push_back("testposttopic");
-    string publishMeta = "publish post triggure meta\n";
+    string publishMeta = "publish post triggure meta";
     string reply = greeter->Publish(postPublishList, sourceClient, publishMeta, "NAME");
 
     if (reply.compare("OK") != 0)
@@ -56,22 +151,33 @@ void testPublishTgRegister(GreeterClient *greeter)
     return;
 }
 
-void testBundleRegister(GreeterClient *greeter,string notifyaddr)
+void testBundleRegister(GreeterClient *greeter,
+                        string notifyaddr,
+                        string taskName,
+                        string taskTemplates,
+                        string preTopic,
+                        string preMeta,
+                        string postTopic,
+                        string postMeta)
 {
     printf("------test bundle register ok------\n");
     //generate the task and the triggure
     Bundle *b = new (Bundle);
-    b->taskName = "testTaskName";
-    b->taskTemplates = "testTemplates";
+    b->taskName = taskName;
+    b->taskTemplates = taskTemplates;
 
     b->pretg.type = preTrg;
-    b->pretg.subMeta = "testpresubmeta";
-    b->pretg.subtopic = "testpretopic";
+    //b->pretg.subMeta = "testpresubmeta";
+
+    b->pretg.subtopic = preTopic;
+    b->pretg.subMeta = preMeta;
     b->pretg.taskName = b->taskName;
 
     b->posttg.type = postTrg;
-    b->posttg.subMeta = "testpostsubmeta";
-    b->posttg.subtopic = "testposttopic";
+
+    b->posttg.subtopic = postTopic;
+    b->posttg.subMeta = postMeta;
+
     b->posttg.taskName = b->taskName;
 
     //put them into the map
@@ -104,19 +210,22 @@ void testBundleRegister(GreeterClient *greeter,string notifyaddr)
 
     string matchType = "NAME";
 
-    vector<string> postTgList;
-    postTgList.push_back(b->posttg.subtopic);
-
-    string replypost = greeter->Subscribe(postTgList, postSubID, notifyaddr, sourceClient, matchType, b->posttg.subMeta);
-
-    if (replypost.compare("SUBSCRIBED") != 0)
+    if (b->posttg.subtopic.compare("NONE") != 0)
     {
-        printf("rpc replypost failed\n");
+        vector<string> postTgList;
+        postTgList.push_back(b->posttg.subtopic);
+
+        string replypost = greeter->Subscribe(postTgList, postSubID, notifyaddr, sourceClient, matchType, b->posttg.subMeta);
+
+        if (replypost.compare("SUBSCRIBED") != 0)
+        {
+            printf("rpc replypost failed\n");
+        }
     }
 
     //register the pre triggure
     //if it is init, execute the task direactly
-    if (b->pretg.subMeta.compare("INIT") != 0)
+    if (b->pretg.subtopic.compare("INIT") != 0)
     {
         vector<string> preTgList;
         preTgList.push_back(b->pretg.subtopic);
@@ -130,10 +239,14 @@ void testBundleRegister(GreeterClient *greeter,string notifyaddr)
     {
         //start the task
         printf("pretag for task (%s) is INIT, start task directly\n", b->taskName.data());
+        string taskRunningID = runTaskByTemplateSlurm(taskTemplates);
+        //get the task id and update the map
+        bmapMutex.lock();
+        bmap[b->taskName].taskRunningID = taskRunningID;
+        bmapMutex.unlock();
     }
 
     printf("ok to sub the pre triggure and post triggure for (%s)\n", b->taskName.data());
 
     return;
 }
-

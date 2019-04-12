@@ -1,3 +1,5 @@
+# write to staging service
+
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import math
@@ -10,8 +12,7 @@ import random
 import time
 import ctypes
 from mpi4py import MPI
-import dspaceswrapper.dataspaces as dataspaces
-
+import dataspaces.dataspaceClient as dataspaces
 
 
 import sys
@@ -19,6 +20,9 @@ import sys
 sys.path.append('../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 import timeit
+
+sys.path.append('../../src/metadatamanagement/pythonclient')
+import metaclient
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -40,6 +44,7 @@ num_peers= 2
 appid = 1
 
 var_name = "ex1_sample_data" 
+#lock_name = "my_test_lock_"+str(rank)
 lock_name = "my_test_lock"
 
 
@@ -595,7 +600,11 @@ vsign = 1
 
 startsim = timeit.default_timer()
 
+# send record to clock service
 
+addrList=metaclient.getServerAddr()
+addr = addrList[0]
+metaclient.Recordtime(addr, "SIM")
 
 for t in range (iteration):
     moveToCenter = False
@@ -605,8 +614,6 @@ for t in range (iteration):
     updateGridValueFake(gridList,moveToCenter)
     
     putDataToDataSpaces(gridListNew,t)
-
-    sendEventToPubSub(pubsubAddr,t)
     
         
 ds.finalize()

@@ -33,18 +33,18 @@ typedef struct Bundle{
     Triggure posttg;
 }Bundle;
 
-mutex bmapMutex;
-map<string,Bundle> bmap;
-
-//from the sub id to the triggure
-mutex submapMutex;
-map<string,Triggure> submap;
 
 
-void testPublishTgRegister(GreeterClient *greeter);
+void ActionByOperator(string clientID, string metadata);
 
-
-void testBundleRegister(GreeterClient *greeter);
+void testBundleRegister(GreeterClient *greeter,
+                        string notifyaddr,
+                        string taskName,
+                        string taskTemplates,
+                        string preTopic,
+                        string preMeta,
+                        string postTopic,
+                        string postMeta);
 
 
 #endif

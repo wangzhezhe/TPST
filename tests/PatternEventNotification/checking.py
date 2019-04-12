@@ -1,3 +1,9 @@
+# simplified data checking
+# the checking operation is hardcoded into the checking
+
+print ("start the checking")
+
+
 # check the staging service
 
 # if check the data 
@@ -155,7 +161,9 @@ num_peers = 1
 appid = 2
 
 var_name = "ex1_sample_data"
+#lock_name = "my_test_lock_"+str(rank)
 lock_name = "my_test_lock"
+
 
 if(len(sys.argv)!=2):
     print("./analytics <iteration>")
@@ -172,45 +180,13 @@ currIter = 0
 lb = [15*15*15*rank]
 ub = [15*15*15*(rank+1)-1]
 
-
-
-
-def threadFunction():
-
-    # check the meta periodically
-    addrList =metaclient.getServerAddr()
-    addr = addrList[0]
-
-    # if the value is not NULL
-
-    while(1):
-        value=metaclient.getMeta(addr, "simend")
-        if(value=="NULL"):
-            time.sleep(0.1)
-            continue
-        else:
-            break
-        
-    endsim = timeit.default_timer()
-    print("sim end, stop the ana")
-    os._exit(0)
-
-
-thread = Thread(target = threadFunction)
-thread.start()
-
-
-
-
-#while (True):
 version = 0
-while (version<iteration):
+#while (True):
 #for version in range(iteration):
+while (version<iteration):
     # ds.lock_on_read(lock_name)
 
     # version = currIter
-
-
 
     #print("get version")
     #print(version)
@@ -220,6 +196,7 @@ while (version<iteration):
     getdata_p1,rcode = ds.get(var_name, version, lb, ub)
     #ds.unlock_on_read(lock_name)
     # check if data ok
+    # print("debug", rcode, rcode == -11)
     if(rcode == -11):
         print("data not avaliable for ts %d"%(version))
         time.sleep(0.1)
@@ -245,20 +222,30 @@ while (version<iteration):
     #patternHeppen = checkDataPattern(getdata_p1,getdata_p2)
     patternHeppen = checkDataPatternCenter(getdata_p1)
 
-
     #if(currIter>=iteration):
     #    break
+
     version=version+1
 
     if(patternHeppen==True):
-        #the time used for data analysis
+        
         #fack calling the analytics here and find the data is meaningless after analysing
         time.sleep(0.05)
-        print("---------patternHeppen at ts %d, simulation data is meaningless----------"%(version))
-        # write to the meta server (the data is meaningless)
-        addrList =metaclient.getServerAddr()
+        print("---------patternHeppen at ts %d, simulation data is meaningless (publish data)----------"%(version))
+        # write to the pubsub server
+
+        addrList = pubsubclient.getServerAddr()
+        print (addrList)
+
         addr = addrList[0]
-        metaclient.putMeta(addr, "meaningless", "meaningless info")
+
+        eventList = ["MEANINGLESS"]
+        # this shoule be deleted
+        clientId = "test" + "_" + str(version)
+        # it is better to update meta into json format
+        metainfo = "GRID[<-1,-1>:<-1,-1>]%TS["+str(version)+"]"
+        matchtype = "NAME"
+        pubsubclient.publishEventList(addr,eventList,clientId,metainfo,matchtype)
         break
 
 
@@ -270,8 +257,3 @@ endanay = timeit.default_timer()
 
 print("time span")
 print(endanay-startanay)
-
-addrList =metaclient.getServerAddr()
-
-addr = addrList[0]
-print("test get: ", metaclient.getMeta(addr, "testkey"))

@@ -13,7 +13,7 @@ import time
 import ctypes
 from mpi4py import MPI
 import dataspaces.dataspaceClient as dataspaces
-import timeit
+
 
 import sys
 # insert pubsub and detect the things after every iteration
@@ -21,12 +21,9 @@ sys.path.append('../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 import timeit
 
-
 sys.path.append('../../src/metadatamanagement/pythonclient')
 import metaclient
-
 from threading import Thread
-import os
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -48,13 +45,14 @@ num_peers= 2
 appid = 1
 
 var_name = "ex1_sample_data" 
+#lock_name = "my_test_lock_"+str(rank)
 lock_name = "my_test_lock"
 
 
 ds = dataspaces.dataspaceClient(appid,comm)
-#pubsubaddrList = pubsubclient.getServerAddr()
-#print (pubsubaddrList)
-#pubsubAddr = pubsubaddrList[0]
+pubsubaddrList = pubsubclient.getServerAddr()
+print (pubsubaddrList)
+pubsubAddr = pubsubaddrList[0]
 
 #pubsubaddrList = pubsubclient.getServerAddr()
 #print (pubsubaddrList)
@@ -87,6 +85,17 @@ def putDataToDataSpaces(gridList,timestep):
     #ds.unlock_on_write(lock_name)
     #print("write to dataspaces for ts %d" % (timestep))
 
+
+def sendEventToPubSub(pubsubAddr, ts):
+
+    eventList = ["variable_1"]
+    # this shoule be deleted
+    clientId = "test" + "_" + str(ts)
+    metainfo = "GRID[<0,0>:<1,1>]%TS["+str(ts)+"]"
+    matchtype= "META_GRID"
+    print("debug clientid %s metainfo %s matchtype %s"%(clientId,metainfo,matchtype))
+    pubsubclient.publishEventList(pubsubAddr,eventList,clientId,metainfo,matchtype)
+    print("pubsubclient %s ok"%(clientId))
 
 
 #prifix = "./image"
@@ -593,11 +602,6 @@ vsign = 1
 startsim = timeit.default_timer()
 
 
-
-# start a new thread to check the meta, if there is info
-# exit the program (because the data is becoming meaninless)
-
-
 def threadFunction():
 
     # check the meta periodically
@@ -623,7 +627,20 @@ def threadFunction():
 
 thread = Thread(target = threadFunction)
 thread.start()
+print("start the thread watching the metaserver")
 
+
+
+
+
+
+
+
+# send record to clock service
+
+addrList=metaclient.getServerAddr()
+addr = addrList[0]
+metaclient.Recordtime(addr, "SIM")
 
 for t in range (iteration):
     moveToCenter = False

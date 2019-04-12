@@ -31,6 +31,22 @@ import metaserver_pb2
 import metaserver_pb2_grpc
 
 
+def Recordtime(addr,key):
+    # NOTE(gRPC Python Team): .close() is possible on a channel and should be
+    # used in circumstances in which the with statement does not fit the needs
+    # of the code.
+    
+    with grpc.insecure_channel(addr) as channel:
+        stub = metaserver_pb2_grpc.MetaStub(channel)
+
+        request = metaserver_pb2.TimeRequest()
+
+        # refer to https://developers.google.com/protocol-buffers/docs/reference/python-generated#embedded_message
+
+        request.key=key
+        response = stub.Recordtime(request)
+   
+    print("Recordtime client received: " + response.message)
 
 def putMeta(addr,key,metainfo):
     # NOTE(gRPC Python Team): .close() is possible on a channel and should be
