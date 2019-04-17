@@ -31,6 +31,40 @@ import metaserver_pb2
 import metaserver_pb2_grpc
 
 
+def Recordtimetick(addr,key):
+    # NOTE(gRPC Python Team): .close() is possible on a channel and should be
+    # used in circumstances in which the with statement does not fit the needs
+    # of the code.
+    
+    with grpc.insecure_channel(addr) as channel:
+        stub = metaserver_pb2_grpc.MetaStub(channel)
+
+        request = metaserver_pb2.TimeRequest()
+
+        # refer to https://developers.google.com/protocol-buffers/docs/reference/python-generated#embedded_message
+
+        request.key=key
+        response = stub.Recordtimetick(request)
+   
+    print("Recordtimetick client received: " + response.message)
+
+def Recordtimestart(addr,key):
+    # NOTE(gRPC Python Team): .close() is possible on a channel and should be
+    # used in circumstances in which the with statement does not fit the needs
+    # of the code.
+    
+    with grpc.insecure_channel(addr) as channel:
+        stub = metaserver_pb2_grpc.MetaStub(channel)
+
+        request = metaserver_pb2.TimeRequest()
+
+        # refer to https://developers.google.com/protocol-buffers/docs/reference/python-generated#embedded_message
+
+        request.key=key
+        response = stub.Recordtimestart(request)
+   
+    print("Recordtimestart client received: " + response.message)
+
 def Recordtime(addr,key):
     # NOTE(gRPC Python Team): .close() is possible on a channel and should be
     # used in circumstances in which the with statement does not fit the needs
@@ -91,6 +125,48 @@ def getMeta(addr, key):
    
     return response.message
     
+def putMetaspace(addr,key,metainfo):
+    # NOTE(gRPC Python Team): .close() is possible on a channel and should be
+    # used in circumstances in which the with statement does not fit the needs
+    # of the code.
+    
+    with grpc.insecure_channel(addr) as channel:
+        stub = metaserver_pb2_grpc.MetaStub(channel)
+
+        request = metaserver_pb2.PutRequest()
+
+        # refer to https://developers.google.com/protocol-buffers/docs/reference/python-generated#embedded_message
+
+        request.key=key
+        request.value=metainfo
+
+        
+        print("debug put request")
+        print(metainfo)
+        response = stub.Putmetaspace(request)
+        #send the publish event
+   
+    print("PutRequest client received: " + response.message)
+
+
+def getMetaspace(addr, key):
+    # NOTE(gRPC Python Team): .close() is possible on a channel and should be
+    # used in circumstances in which the with statement does not fit the needs
+    # of the code.
+    
+    with grpc.insecure_channel(addr) as channel:
+        stub = metaserver_pb2_grpc.MetaStub(channel)
+
+        request = metaserver_pb2.GetRequest()
+
+        # refer to https://developers.google.com/protocol-buffers/docs/reference/python-generated#embedded_message
+
+        request.key=key
+
+        response = stub.Getmetaspace(request)
+        #send the publish event
+   
+    return response.message
 
 
 
@@ -121,4 +197,13 @@ if __name__ == '__main__':
 
     meta=getMeta(addr, "emptykey")
     print("get meta", meta)
+
+    
+    reply=getMetaspace(addr,"testkey")
+    print("test get metaspace reply:",reply)
+    reply=putMetaspace(addr,"testkey","testmetainfo")
+    print("test put metaspace reply:",reply)
+    reply=getMetaspace(addr,"testkey")
+    print("test get metaspace reply:",reply)
+
 

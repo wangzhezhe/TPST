@@ -48,7 +48,7 @@ rm -rf Metaserver
 
 sleep 1
 
-cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/PatternMetaChecking
+cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_whenInterestingPatten/PatternMetaChecking
 
 # start simulation
 python sim.py $ITERATION $RATIO >& $DIR/con_sim.log  &

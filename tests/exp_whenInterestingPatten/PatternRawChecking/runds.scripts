@@ -19,14 +19,16 @@ DIR=.
 
 cd /home1/zw241/dataspaces/tests/C/
 
-mpirun -n 16 ./dataspaces_server -s 16  >& $DIR/event_dsserver.log  &
-
+mpirun -n 16 ./dataspaces_server -s 16  >& $DIR/meta_dsserver.log  &
 
 sleep 1
 
+# start metadata 
 
-cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/PatternEventNotification
+#cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/src/metadatamanagement
 
-python sim.py 300 250 >& $DIR/event_sim.log
+#rm -rf Metaserver
+
+#./metaserver >& $DIR/meta_server.log  &
 
 wait

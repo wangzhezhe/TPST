@@ -78,14 +78,16 @@ string runTaskByTemplateSlurm(string templateName)
 void stopTaskBySlurm(string taskName)
 {
     printf("execute slurm stop for %s\n",taskName.data());
+    
     //record time for task stop
     recordKey(taskName);
-    
+
     bmapMutex.lock();
     string taskID = bmap[taskName].taskRunningID;
     bmapMutex.unlock();
     string command = "scancel " + taskID;
     std::system(command.data());
+    printf("%s\n",command.data());
 
     return;
 }

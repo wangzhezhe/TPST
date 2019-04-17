@@ -26,7 +26,16 @@ service Meta {
   rpc Putmeta (PutRequest) returns (PutReply) {}
   rpc Getmeta (GetRequest) returns (GetReply) {}
 
+  rpc Putmetaspace (PutRequest) returns (PutReply) {}
+  rpc Getmetaspace (GetRequest) returns (GetReply) {}
+
   rpc Recordtime (TimeRequest) returns (TimeReply) {}
+
+  rpc Recordtimestart (TimeRequest) returns (TimeReply) {}
+
+  rpc Recordtimetick (TimeRequest) returns (TimeReply) {}
+
+
 
 }
 

@@ -25,11 +25,11 @@ import sys
 from threading import Thread
 import os
 
-sys.path.append('../../src/publishclient/pythonclient')
+sys.path.append('../../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 
 
-sys.path.append('../../src/metadatamanagement/pythonclient')
+sys.path.append('../../../src/metadatamanagement/pythonclient')
 import metaclient
 
 
@@ -221,7 +221,8 @@ while (version<iteration):
     #print (getdata_p2)
     #patternHeppen = checkDataPattern(getdata_p1,getdata_p2)
     patternHeppen = checkDataPatternCenter(getdata_p1)
-
+    #extra data read time is not being counted
+    time.sleep(0.01)
     #if(currIter>=iteration):
     #    break
 

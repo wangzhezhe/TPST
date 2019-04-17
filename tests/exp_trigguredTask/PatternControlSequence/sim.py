@@ -17,9 +17,12 @@ import dataspaces.dataspaceClient as dataspaces
 
 import sys
 # insert pubsub and detect the things after every iteration
-sys.path.append('../../src/publishclient/pythonclient')
+sys.path.append('../../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 import timeit
+
+sys.path.append('../../../src/metadatamanagement/pythonclient')
+import metaclient
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -41,6 +44,7 @@ num_peers= 2
 appid = 1
 
 var_name = "ex1_sample_data" 
+#lock_name = "my_test_lock_"+str(rank)
 lock_name = "my_test_lock"
 
 
@@ -68,12 +72,12 @@ def putDataToDataSpaces(gridList,timestep):
 
     # dataarray = (ver+1)*numpy.asarray(data)
     ver = timestep
-    
+    lb = [0]
     # data is 1 d array
-    if(rank==0):
-        lb = [0]
-    if (rank ==1):
-        lb = [3380]
+    #if(rank==0):
+    #    lb = [0]
+    #if (rank ==1):
+    #    lb = [3380]
     
     #ds.lock_on_write(lock_name)
     ds.put(var_name,ver,lb,cellDataArray)
@@ -583,7 +587,6 @@ def updateGridValueFake(gridListInput,ifcenter):
     time.sleep(0.1)
 
 
-
 if (len(sys.argv)!=3):
     print("simulation <iteration> <when interesting thing happen>")
     exit(0)
@@ -598,13 +601,19 @@ startsim = timeit.default_timer()
 
 for t in range (iteration):
     moveToCenter = False
-    if (t>=changeVPeriod and t%changeVPeriod==0):
+    #if (t>=changeVPeriod and t%changeVPeriod==0):
+    if (t==changeVPeriod):
         moveToCenter = True
         
     updateGridValueFake(gridList,moveToCenter)
     
     putDataToDataSpaces(gridListNew,t)
-    
+
+    if (moveToCenter):
+        addrList=metaclient.getServerAddr()
+        addr = addrList[0]
+        metaclient.Recordtimestart(addr, "SIMDATAOK")
+
         
 ds.finalize()
 MPI.Finalize()

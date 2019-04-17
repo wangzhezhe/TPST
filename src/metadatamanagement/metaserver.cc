@@ -63,6 +63,9 @@ map<string, timespec> timerMap;
 mutex metaMutex;
 map<string, queue<string>> metaMap;
 
+mutex metaSpaceMutex;
+map<string, string> metaSpace;
+
 // Logic and data behind the server's behavior.
 class MetaServiceImpl final : public Meta::Service
 {
@@ -114,6 +117,74 @@ class MetaServiceImpl final : public Meta::Service
 
             diff = (end.tv_sec - start.tv_sec) * 1.0 + (end.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
             printf("key (%s) end timing, time (%lf)\n", key.data(), diff);
+        }
+
+        reply->set_message("OK");
+        return Status::OK;
+    }
+
+    Status Recordtimestart(ServerContext *context, const TimeRequest *request,
+                           TimeReply *reply) override
+
+    {
+
+        //extract the key
+        string key = request->key();
+
+        //record the time
+        struct timespec start, end;
+        double diff;
+        if (timerMap.find(key) == timerMap.end())
+        {
+            // not found
+            // insert key
+
+            clock_gettime(CLOCK_REALTIME, &start);
+            tmutex.lock();
+            timerMap[key] = start;
+            tmutex.unlock();
+
+            printf("key (%s) start timing\n", key.data());
+        }
+        else
+        {
+            printf("key (%s) is timing\n", key.data());
+        }
+        reply->set_message("OK");
+        return Status::OK;
+    }
+
+    Status Recordtimetick(ServerContext *context, const TimeRequest *request,
+                          TimeReply *reply) override
+    {
+
+        //extract the key
+        string key = request->key();
+
+        //record the time
+        struct timespec start, tick;
+        clock_gettime(CLOCK_REALTIME, &tick);
+
+        double diff;
+        if (timerMap.find(key) == timerMap.end())
+        {
+            // not found
+            // insert key
+            printf("key (%s) is not start timing yet\n", key.data());
+        }
+        else
+        {
+            // tick time again
+            // caculate the difference
+            // output
+
+            clock_gettime(CLOCK_REALTIME, &tick);
+            tmutex.lock();
+            start = timerMap[key];
+            tmutex.unlock();
+
+            diff = (tick.tv_sec - start.tv_sec) * 1.0 + (tick.tv_nsec - start.tv_nsec) * 1.0 / BILLION;
+            printf("key (%s) tick, time (%lf)\n", key.data(), diff);
         }
 
         reply->set_message("OK");
@@ -183,6 +254,56 @@ class MetaServiceImpl final : public Meta::Service
                 reply->set_message(meta);
                 return Status::OK;
             }
+        }
+    }
+
+    Status Putmetaspace(ServerContext *context, const PutRequest *request,
+                        PutReply *reply) override
+    {
+        //extract the key
+        string key = request->key();
+        string meta = request->value();
+
+        //if key not exist in metamap, insert key value pair
+        if (metaSpace.find(key) == metaSpace.end())
+        {
+            // not found
+
+            metaSpaceMutex.lock();
+            metaSpace[key] = meta;
+            metaSpaceMutex.unlock();
+        }
+        else
+        {
+
+            printf("key (%s) with meta (%s) is stored yet\n", key.data(), meta.data());
+        }
+
+        reply->set_message("OK");
+        return Status::OK;
+    }
+
+    Status Getmetaspace(ServerContext *context, const GetRequest *request,
+                        GetReply *reply) override
+    {
+        //extract the key
+        string key = request->key();
+
+        if (metaSpace.find(key) == metaSpace.end())
+        {
+            // not found
+            reply->set_message("NULL");
+            return Status::OK;
+        }
+        else
+        {
+
+            metaSpaceMutex.lock();
+            string meta = metaSpace[key];
+            metaSpaceMutex.unlock();
+
+            reply->set_message(meta);
+            return Status::OK;
         }
     }
 };

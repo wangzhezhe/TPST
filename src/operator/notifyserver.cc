@@ -318,11 +318,13 @@ void testBundleRegister(GreeterClient *greeter,
 
 */
 
-    string prjDir = "/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/PatternEventNotification";
+/*  for dunamic workflow testing
+    string prjDir = "/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_whenInterestingPatten/PatternEventNotification";
 
     string simTemplate = prjDir + "/simTp.scripts";
     string checkingTemplate = prjDir + "/checkTp.scripts";
     string anaTemplate = prjDir + "/anaTp.scripts";
+
 
     //register sim
     testBundleRegister(greeter, NOTIFYADDR, "SIM", simTemplate, "INIT", "testsimstart", "MEANINGLESS", "POSTNONE");
@@ -334,13 +336,18 @@ void testBundleRegister(GreeterClient *greeter,
     //register Ana
     //publish MEANINGLESS in program
     testBundleRegister(greeter, NOTIFYADDR, "ANA", anaTemplate, "ANASTART", "testanastart", "NONE", "POSTNONE");
+*/
 
-    //sleep(2);
 
-    //test bundle post triggure
-    //testPublishTgRegister(greeter);
+//  for triggure time testing
 
-    //test bundle pre triggure
+    string prjDir = "/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_trigguredTask/PatternEvent";
+
+    string anaTemplate = prjDir + "/runana.scripts";
+
+    testBundleRegister(greeter, NOTIFYADDR, "ANA", anaTemplate, "ANASTART", "testanastart", "NONE", "POSTNONE");
+
+
 
     while (1)
     {

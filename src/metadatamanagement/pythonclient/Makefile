@@ -28,4 +28,4 @@ metaclient_pb2.py: ../../proto/metaserver.proto
 		--plugin=protoc-gen-grpc=$(GRPC_PYTHON_PLUGIN_PATH) $<
 
 clean:
-	rm -f $(EXECUTABLES) *.pb.cc *.pb.h *.pb.o *.o *_pb2.py *.pyc
+	rm -rf $(EXECUTABLES) *.pb.cc *.pb.h *.pb.o *.o *_pb2.py *.pyc __pycache__ *_pb2_grpc.py

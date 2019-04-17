@@ -17,12 +17,13 @@ import dataspaces.dataspaceClient as dataspaces
 
 import sys
 # insert pubsub and detect the things after every iteration
-sys.path.append('../../src/publishclient/pythonclient')
+sys.path.append('../../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 import timeit
 
-sys.path.append('../../src/metadatamanagement/pythonclient')
+sys.path.append('../../../src/metadatamanagement/pythonclient')
 import metaclient
+from threading import Thread
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -599,6 +600,41 @@ changeVPeriod = int(sys.argv[2])
 vsign = 1
 
 startsim = timeit.default_timer()
+
+
+def threadFunction():
+
+    # check the meta periodically
+    addrList =metaclient.getServerAddr()
+    addr = addrList[0]
+
+    # if the value is not NULL
+
+    while(1):
+        value=metaclient.getMeta(addr, "meaningless")
+        if(value=="NULL"):
+            time.sleep(0.1)
+            continue
+        else:
+            break
+        
+    endsim = timeit.default_timer()
+    print("data is becoming meaningless, time span")
+    print (endsim-startsim)
+    metaclient.putMeta(addr, "simend", "simendInfo")
+    os._exit(0)
+
+
+thread = Thread(target = threadFunction)
+thread.start()
+print("start the thread watching the metaserver")
+
+
+
+
+
+
+
 
 # send record to clock service
 

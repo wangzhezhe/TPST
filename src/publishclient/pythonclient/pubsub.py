@@ -157,7 +157,8 @@ def getServerAddr():
     # only for one server test case
     # don't use this for scale test
     addrCategory="/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/performance/multinodeip"
-    serverAddrDir  = addrCategory+"/"+"cluster0"+"/"+"coordinator"
+    serverAddrDir  = addrCategory+"/"+"cluster0"+"/"+"worker"
+
     onlyfiles = [f for f in listdir(serverAddrDir) if isfile(join(serverAddrDir, f))]
     return onlyfiles
 

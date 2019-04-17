@@ -30,7 +30,7 @@
 #include "metaclient.h"
 
 const string projectDir = "/project1/parashar-001/zw241/software/eventDrivenWorkflow/src/metadatamanagement";
-const string metaserverDir = projectDir+"/Metaserver";
+const string metaserverDir = projectDir + "/Metaserver";
 
 class MetaClient
 {
@@ -40,7 +40,6 @@ class MetaClient
 
     // Assembles the client's payload, sends it and presents the response back
     // from the server.
-
 
     std::string Recordtime(const std::string &key)
     {
@@ -57,6 +56,64 @@ class MetaClient
 
         // The actual RPC.
         Status status = stub_->Recordtime(&context, request, &reply);
+
+        // Act upon its status.
+        if (status.ok())
+        {
+            return reply.message();
+        }
+        else
+        {
+            std::cout << status.error_code() << ": " << status.error_message()
+                      << std::endl;
+            return "RPC failed";
+        }
+    }
+
+    std::string Recordtimestart(const std::string &key)
+    {
+        // Data we are sending to the server.
+        TimeRequest request;
+        request.set_key(key);
+
+        // Container for the data we expect from the server.
+        TimeReply reply;
+
+        // Context for the client. It could be used to convey extra information to
+        // the server and/or tweak certain RPC behaviors.
+        ClientContext context;
+
+        // The actual RPC.
+        Status status = stub_->Recordtimestart(&context, request, &reply);
+
+        // Act upon its status.
+        if (status.ok())
+        {
+            return reply.message();
+        }
+        else
+        {
+            std::cout << status.error_code() << ": " << status.error_message()
+                      << std::endl;
+            return "RPC failed";
+        }
+    }
+
+    std::string Recordtimetick(const std::string &key)
+    {
+        // Data we are sending to the server.
+        TimeRequest request;
+        request.set_key(key);
+
+        // Container for the data we expect from the server.
+        TimeReply reply;
+
+        // Context for the client. It could be used to convey extra information to
+        // the server and/or tweak certain RPC behaviors.
+        ClientContext context;
+
+        // The actual RPC.
+        Status status = stub_->Recordtimetick(&context, request, &reply);
 
         // Act upon its status.
         if (status.ok())
@@ -166,6 +223,46 @@ void recordKey(string key)
     return;
 }
 
+void recordKeyStart(string key)
+{
+
+    string serverAddr = getAddr();
+
+    if (serverAddr == "")
+    {
+        printf("failed to get server addr\n");
+        return;
+    }
+
+    MetaClient metaclient(grpc::CreateChannel(
+        serverAddr, grpc::InsecureChannelCredentials()));
+
+    string reply = metaclient.Recordtimestart(key);
+    std::cout << "Timer received: " << reply << std::endl;
+
+    return;
+}
+
+void recordKeyTick(string key)
+{
+
+    string serverAddr = getAddr();
+
+    if (serverAddr == "")
+    {
+        printf("failed to get server addr\n");
+        return;
+    }
+
+    MetaClient metaclient(grpc::CreateChannel(
+        serverAddr, grpc::InsecureChannelCredentials()));
+
+    string reply = metaclient.Recordtimetick(key);
+    std::cout << "Timer received: " << reply << std::endl;
+
+    return;
+}
+
 /*
 int main(int argc, char **argv)
 {
@@ -185,12 +282,12 @@ int main(int argc, char **argv)
 
     MetaClient metaclient(grpc::CreateChannel(
         serverAddr, grpc::InsecureChannelCredentials()));
-    std::string user("world");
-    std::string reply = metaclient.SayHello(user);
-    std::cout << "Greeter received: " << reply << std::endl;
+    //std::string user("world");
+    //std::string reply = metaclient.SayHello(user);
+    //std::cout << "Greeter received: " << reply << std::endl;
 
     std::string key("world");
-    reply = metaclient.Recordtime(key);
+    string reply = metaclient.Recordtime(key);
     std::cout << "Timer received: " << reply << std::endl;
 
     sleep(1);
@@ -221,6 +318,18 @@ int main(int argc, char **argv)
     std::cout << "Get pattern1 recieve: " << reply << std::endl;
     reply = metaclient.Getmeta(key);
     std::cout << "Get pattern1 recieve: " << reply << std::endl;
+
+    printf("------test tick------\n");
+    key = "pattern_tick";
+    reply = metaclient.Recordtimestart(key);
+    std::cout << "Put pattern_tick 1st recieve: " << reply << std::endl;
+    reply = metaclient.Recordtimestart(key);
+    std::cout << "Put pattern_tick 2st recieve: " << reply << std::endl;
+    reply = metaclient.Recordtimetick(key);
+    std::cout << "Put pattern_tick 3st recieve: " << reply << std::endl;
+
+    reply = metaclient.Recordtimetick(key);
+    std::cout << "Put pattern_tick 4st recieve: " << reply << std::endl;
 
     return 0;
 }

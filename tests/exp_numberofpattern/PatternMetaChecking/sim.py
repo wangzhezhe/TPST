@@ -17,13 +17,12 @@ import dataspaces.dataspaceClient as dataspaces
 
 import sys
 # insert pubsub and detect the things after every iteration
-sys.path.append('../../src/publishclient/pythonclient')
+sys.path.append('../../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 import timeit
 
-sys.path.append('../../src/metadatamanagement/pythonclient')
+sys.path.append('../../../src/metadatamanagement/pythonclient')
 import metaclient
-from threading import Thread
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -73,12 +72,12 @@ def putDataToDataSpaces(gridList,timestep):
 
     # dataarray = (ver+1)*numpy.asarray(data)
     ver = timestep
-    
+    lb = [0]
     # data is 1 d array
-    if(rank==0):
-        lb = [0]
-    if (rank ==1):
-        lb = [3380]
+    #if(rank==0):
+    #    lb = [0]
+    #if (rank ==1):
+    #    lb = [3380]
     
     #ds.lock_on_write(lock_name)
     ds.put(var_name,ver,lb,cellDataArray)
@@ -585,8 +584,7 @@ def updateGridValueFake(gridListInput,ifcenter):
             gridList[i].p=redmass.p
 
     # simulate the time to caculate the data
-    time.sleep(0.1)
-
+    time.sleep(1)
 
 
 if (len(sys.argv)!=3):
@@ -601,47 +599,6 @@ vsign = 1
 
 startsim = timeit.default_timer()
 
-
-def threadFunction():
-
-    # check the meta periodically
-    addrList =metaclient.getServerAddr()
-    addr = addrList[0]
-
-    # if the value is not NULL
-
-    while(1):
-        value=metaclient.getMeta(addr, "meaningless")
-        if(value=="NULL"):
-            time.sleep(0.1)
-            continue
-        else:
-            break
-        
-    endsim = timeit.default_timer()
-    print("data is becoming meaningless, time span")
-    print (endsim-startsim)
-    metaclient.putMeta(addr, "simend", "simendInfo")
-    os._exit(0)
-
-
-thread = Thread(target = threadFunction)
-thread.start()
-print("start the thread watching the metaserver")
-
-
-
-
-
-
-
-
-# send record to clock service
-
-addrList=metaclient.getServerAddr()
-addr = addrList[0]
-metaclient.Recordtime(addr, "SIM")
-
 for t in range (iteration):
     moveToCenter = False
     if (t>=changeVPeriod and t%changeVPeriod==0):
@@ -650,7 +607,12 @@ for t in range (iteration):
     updateGridValueFake(gridList,moveToCenter)
     
     putDataToDataSpaces(gridListNew,t)
-    
+
+    if (moveToCenter):
+        addrList=metaclient.getServerAddr()
+        addr = addrList[0]
+        metaclient.Recordtimestart(addr, "SIMDATAOK")
+
         
 ds.finalize()
 MPI.Finalize()
@@ -659,3 +621,6 @@ endsim = timeit.default_timer()
 
 print("time span")
 print (endsim-startsim)
+
+
+

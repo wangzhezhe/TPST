@@ -1,0 +1,59 @@
+#!/bin/sh
+#SBATCH -J ED_SERVER
+#SBATCH -o ED_SERVER.%J.stdout
+#SBATCH -e ED_SERVER.%J.stderr
+#SBATCH -N 2
+#SBATCH -p short
+#SBATCH --qos short-award
+#SBATCH -t 00:01:00
+#SBATCH --ntasks-per-node=18
+
+
+module load python/3.6.3
+
+sleep 1
+
+cd /home1/zw241/pythonWorkSpace/nbodysimulation
+source ./bin/activate
+
+module load mpich
+
+sleep 1
+
+source /home1/zw241/.grpc
+
+
+
+# start dataspace
+
+
+ITERATION=50
+RATIO=10
+DIR=.
+
+
+cd /home1/zw241/dataspaces/tests/C/
+
+./dataspaces_server -s 1 -c 2 >& $DIR/con_dsserver.log  &
+
+sleep 1
+
+# start meta server
+
+cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/src/metadatamanagement/
+
+rm -rf Metaserver
+
+./metaserver >& $DIR/con_meta.log &
+
+sleep 1
+
+cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_whenInterestingPatten/PatternMetaChecking
+
+# start simulation
+python sim.py $ITERATION $RATIO >& $DIR/con_sim.log  &
+
+# start analytics
+python ana.py $ITERATION >& $DIR/con_ana.log  &
+
+wait
