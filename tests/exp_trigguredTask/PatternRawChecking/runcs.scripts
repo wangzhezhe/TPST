@@ -2,20 +2,14 @@
 #SBATCH -J ED_SERVER
 #SBATCH -o ED_SERVER.%J.stdout
 #SBATCH -e ED_SERVER.%J.stderr
-#SBATCH -N 8
+#SBATCH -N 4
 #SBATCH -p short
 #SBATCH --qos short-award
-#SBATCH -t 00:03:00
-#SBATCH --ntasks-per-node=18
+#SBATCH -t 00:05:00
 
-
-module unload openmpi/1.10.1
-module load mpich
-sleep 1
-
+module load openmpi
 module load python/3.6.3
 
-sleep 1
 
 cd ~/pythonWorkSpace/nbodysimulation/
 
@@ -30,9 +24,9 @@ DIR=.
 
 # start ds
 
-cd /home1/zw241/dataspaces/tests/C/
+#cd /home1/zw241/dataspaces/tests/C/
 
-mpirun -n 128 ./dataspaces_server -s 128  >& $DIR/meta_dsserver.log  &
+#mpirun -n 128 ./dataspaces_server -s 128  >& $DIR/meta_dsserver.log  &
 
 # sleep 1
 
@@ -44,15 +38,16 @@ mpirun -n 128 ./dataspaces_server -s 128  >& $DIR/meta_dsserver.log  &
 
 #./metaserver >& $DIR/meta_server.log  &
 
-
-#cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_trigguredTask/PatternRawChecking
-
-# start ana
-
-#mpirun -n 4 python ana.py 300 >& $DIR/ex2_con_ana.log &
+cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_trigguredTask/PatternRawChecking
 
 # start sim
 
-#python sim.py 300 10 >& $DIR/ex2_con_sim.log 
+python sim.py 20 10 >& $DIR/con_sim.log &
+
+# start ana
+
+mpirun --map-by node -np 2 python ana.py 20 >& $DIR/con_ana.log &
+
+
 
 wait

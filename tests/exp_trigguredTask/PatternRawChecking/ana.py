@@ -20,6 +20,15 @@ import pubsub as pubsubclient
 sys.path.append('../../../src/metadatamanagement/pythonclient')
 import metaclient
 
+startanay = timeit.default_timer()
+
+r = 15
+gridnum = 50
+deltar = 1.0*r/gridnum
+
+lb=[0]
+ub=[gridnum*gridnum*gridnum*(1)-1]
+
 # input the coordinate of the points and return the index of grid in array
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
@@ -42,9 +51,7 @@ def sendEventToPubSub(ts):
 def getIndex(px, py, pz):
     # TODO should add all boundry case
     # only for lower case
-    r = 15
-    gridnum = 15
-    deltar = 1.0*r/gridnum
+
 
     if (px < 0 or py < 0 or pz < 0 or px > gridnum*deltar or py > gridnum*deltar or pz > gridnum*deltar):
         #print "out of the box "
@@ -140,8 +147,6 @@ def checkDataPatternCenter(gridDataArray_p1):
     massOriginInterest = [7, 7, 7]
     targetValue = 7.5
 
-
-
     index = getIndex(massOriginInterest[0], massOriginInterest[1], massOriginInterest[2])
     if (gridDataArray_p1[index] == targetValue):
         return True
@@ -172,17 +177,11 @@ if(len(sys.argv)!=2):
     
 iteration = int(sys.argv[1])
 
-startanay = timeit.default_timer()
+
 
 ds = dataspaces.dataspaceClient(appid,comm)
 
 currIter = 0
-
-#lb = [15*15*15*rank]
-#ub = [15*15*15*(rank+1)-1]
-
-lb=[0]
-ub=[15*15*15*(1)-1]
 
 #while (True):
 version = 0
@@ -203,7 +202,7 @@ while (version<iteration):
 
     patternHeppen = checkDataPatternCenter(getdata_p1)
     #the time used for predicates every time
-    time.sleep(0.01)
+    time.sleep(0.5)
 
     version=version+1
    
@@ -214,7 +213,7 @@ while (version<iteration):
         # the time used for predicates checking
         addrList=metaclient.getServerAddr()
         addr = addrList[0]
-        metaclient.Recordtimetick(addr, "SIMDATAOK")
+        metaclient.Recordtimetick(addr, "TIMET")
         break
 
 ds.finalize()

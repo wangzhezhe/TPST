@@ -42,7 +42,7 @@ def getIndex(px, py, pz):
     # TODO should add all boundry case
     # only for lower case
     r = 15
-    gridnum = 15
+    gridnum = 50
     deltar = 1.0*r/gridnum
 
     if (px < 0 or py < 0 or pz < 0 or px > gridnum*deltar or py > gridnum*deltar or pz > gridnum*deltar):
@@ -179,9 +179,9 @@ currIter = 0
 
 #lb = [15*15*15*rank]
 #ub = [15*15*15*(rank+1)-1]
-
+gridnum=50
 lb=[0]
-ub=[15*15*15*(1)-1]
+ub=[gridnum*gridnum*gridnum*(1)-1]
 
 #while (True):
 version = 0

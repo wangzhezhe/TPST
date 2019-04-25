@@ -25,6 +25,9 @@ sys.path.append('../../../src/metadatamanagement/pythonclient')
 import metaclient
 
 
+addrList =metaclient.getServerAddr()
+addr = addrList[0]
+metaclient.Recordtimestart(addr, "centick")
 
 startsim = timeit.default_timer()
 
@@ -129,7 +132,7 @@ xlimit = r
 ylimit = r 
 zlimit = r 
 
-gridnum=50
+gridnum=150
 
 deltar=1.0*r/gridnum
 
@@ -198,7 +201,7 @@ def updateGridValueFake(gridListInput,ifcenter):
             gridList[i].p=initp*(5)
 
     # simulate the time to caculate the data
-    time.sleep(0.5)
+    # time.sleep(0.1)
 
 
 
@@ -212,21 +215,28 @@ changeVPeriod = int(sys.argv[2])
 
 vsign = 1
 
+
+
 for t in range (iteration):
+    loopstart = timeit.default_timer()
     moveToCenter = False
     #if (t>=changeVPeriod and t%changeVPeriod==0):
-    if (t==changeVPeriod):
+    if (t>=0 and t<10):
         moveToCenter = True
         
     updateGridValueFake(gridList,moveToCenter)
     
+    loopend = timeit.default_timer()
+
+    print("time span1",loopend-loopstart)
+
+    putstart = timeit.default_timer()
     putDataToDataSpaces(gridList,t)
-
-    if (moveToCenter):
-        addrList=metaclient.getServerAddr()
-        addr = addrList[0]
-        metaclient.Recordtimestart(addr, "TIMET")
-
+    putend = timeit.default_timer()
+    print("time span2",putend-putstart)
+    
+    print("ts %d"%(t))
+    
         
 ds.finalize()
 MPI.Finalize()
@@ -235,3 +245,8 @@ endsim = timeit.default_timer()
 
 print("time span")
 print (endsim-startsim)
+
+# record time tick
+addrList =metaclient.getServerAddr()
+addr = addrList[0]
+metaclient.Recordtimetick(addr, "centick")

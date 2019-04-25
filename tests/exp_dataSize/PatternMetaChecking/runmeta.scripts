@@ -47,7 +47,7 @@ sleep 1
 
 # start checking
 
-cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_trigguredTask/PatternMetaChecking
+cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_dataSize/PatternMetaChecking
 
 # start sim
 

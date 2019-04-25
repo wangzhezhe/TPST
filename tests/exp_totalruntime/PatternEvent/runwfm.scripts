@@ -1,0 +1,56 @@
+#!/bin/sh
+#SBATCH -J ED_SERVER
+#SBATCH -o ED_SERVER.%J.stdout
+#SBATCH -e ED_SERVER.%J.stderr
+#SBATCH -N 4
+#SBATCH -p short
+#SBATCH --qos short-award
+#SBATCH -t 00:03:00
+
+module load openmpi
+module load python/3.6.3
+
+
+cd ~/pythonWorkSpace/nbodysimulation/
+
+source ./bin/activate
+
+sleep 1
+source /home1/zw241/.grpc
+
+module load python/3.6.3
+
+DIR=.
+
+# start ds
+
+cd /home1/zw241/dataspaces/tests/C/
+
+mpirun --map-by node -np 16 ./dataspaces_server -s 16  >& $DIR/dsserver.log  &
+
+# start metadata management
+
+cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/src/metadatamanagement
+
+rm -rf Metaserver
+
+./metaserver >& $DIR/meta_server.log  &
+
+# start the event pub/sub server
+
+PRJPATH=/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/performance
+
+cd $PRJPATH
+
+rm -rf multinodeip          
+NUM_SERVER=2
+NUM_GROUPSIZE=2
+NUM_GROUP=1
+THREAD_POOL=32
+NOTIFY_SLEEP=1000
+COORDINATOR_THRESHOLD=1024
+    
+# make sure THREAD_POOL*NUM_SERVER < 512*4
+mpirun -n $NUM_SERVER ./workflowserver 1500 eno1 $NUM_GROUPSIZE $NUM_GROUP $THREAD_POOL $NOTIFY_SLEEP $COORDINATOR_THRESHOLD 1
+
+wait

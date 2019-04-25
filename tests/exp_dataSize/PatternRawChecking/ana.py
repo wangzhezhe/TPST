@@ -1,11 +1,8 @@
-# check the staging service
+# check data from ts 0
+# when data is ok 
+# send tick to the metaserver
 
-# if check the data 
-
-# if the data become meaningless
-
-# write info to meta server
-
+# check the all timestep data after sim finish
 
 from mpi4py import MPI
 import numpy as np
@@ -16,28 +13,45 @@ import time
 import math
 import timeit
 import sys
-from threading import Thread
-import os
 
 sys.path.append('../../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 
-
 sys.path.append('../../../src/metadatamanagement/pythonclient')
 import metaclient
 
+startanay = timeit.default_timer()
+
+r = 15
+gridnum = 50
+deltar = 1.0*r/gridnum
+
+lb=[0]
+ub=[gridnum*gridnum*gridnum*(1)-1]
 
 # input the coordinate of the points and return the index of grid in array
 comm = MPI.COMM_WORLD
+size = comm.Get_size()
 rank = comm.Get_rank()
 
+def sendEventToPubSub(ts):
+
+    addrList = pubsubclient.getServerAddr()
+    print (addrList)
+
+    addr = addrList[0]
+
+    eventList = ["dataPattern_1"]
+    # this shoule be deleted
+    clientId = "test" + "_" + str(ts)
+    metainfo = "GRID[<-1,-1>:<-1,-1>]%TS["+str(ts)+"]"
+    matchtype = "NAME"
+    pubsubclient.publishEventList(addr,eventList,clientId,metainfo,matchtype)
 
 def getIndex(px, py, pz):
     # TODO should add all boundry case
     # only for lower case
-    r = 15
-    gridnum = 15
-    deltar = 1.0*r/gridnum
+
 
     if (px < 0 or py < 0 or pz < 0 or px > gridnum*deltar or py > gridnum*deltar or pz > gridnum*deltar):
         #print "out of the box "
@@ -151,7 +165,7 @@ copyCommand = "cp "+confpath+" ."
 os.system(copyCommand)
 
 # number of clients at clients end to join server
-num_peers = 1
+num_peers = rank
 appid = 2
 
 var_name = "ex1_sample_data"
@@ -163,110 +177,44 @@ if(len(sys.argv)!=2):
     
 iteration = int(sys.argv[1])
 
-startanay = timeit.default_timer()
+
 
 ds = dataspaces.dataspaceClient(appid,comm)
 
 currIter = 0
 
-lb = [15*15*15*rank]
-ub = [15*15*15*(rank+1)-1]
-
-
-
-
-def threadFunction():
-
-    # check the meta periodically
-    addrList =metaclient.getServerAddr()
-    addr = addrList[0]
-
-    # if the value is not NULL
-
-    while(1):
-        value=metaclient.getMeta(addr, "simend")
-        if(value=="NULL"):
-            time.sleep(0.1)
-            continue
-        else:
-            break
-        
-    endsim = timeit.default_timer()
-    print("sim end, stop the ana")
-    os._exit(0)
-
-
-thread = Thread(target = threadFunction)
-thread.start()
-
-
-
-
 #while (True):
 version = 0
-while (version<iteration):
 #for version in range(iteration):
-    # ds.lock_on_read(lock_name)
+while (version<iteration):
 
-    # version = currIter
-
-
-
-    #print("get version")
-    #print(version)
     #use read write lock here
     #ds.lock_on_read(lock_name)
     # use lock type  = 1
     getdata_p1,rcode = ds.get(var_name, version, lb, ub)
     #ds.unlock_on_read(lock_name)
     # check if data ok
+
     if(rcode == -11):
         print("data not avaliable for ts %d"%(version))
-        time.sleep(0.1)
+        time.sleep(0.25)
         continue
 
-
-    #lb = [3380]
-    #ub = [3380+3374]
-
-    #print("get version")
-    #print(version)
-
-    #getdata_p2 = ds.dspaces_get_data(var_name, version, lb, ub)
-
-    # time.sleep(1)
-    # publishe events to pubsub store
-
-    #print("get data1")
-    #print (getdata_p1)
-
-    #print("get data2")
-    #print (getdata_p2)
-    #patternHeppen = checkDataPattern(getdata_p1,getdata_p2)
     patternHeppen = checkDataPatternCenter(getdata_p1)
-    #extra data read time is not being counted
+    #the time used for predicates every time
     time.sleep(0.01)
 
-    #if(currIter>=iteration):
-    #    break
     version=version+1
-
+   
     if(patternHeppen==True):
-        #the time used for data analysis
-        #fack calling the analytics here and find the data is meaningless after analysing
-        time.sleep(0.05)
-        print("---------patternHeppen at ts %d, simulation data is meaningless----------"%(version))
-        # write to the meta server (the data is meaningless)
-        #addrList =metaclient.getServerAddr()
-        #addr = addrList[0]
-        #metaclient.putMeta(addr, "meaningless", "meaningless info")
-        #break
-
-
-addrList=metaclient.getServerAddr()
-addr = addrList[0]
-metaclient.Recordtime(addr, "SIM")
-        
+        print("---------patternHeppen at ts %d for rank %d----------"%(version,rank))
+        # simulate the vis time
+        # execute the following part for the task
+        # the time used for predicates checking
+        addrList=metaclient.getServerAddr()
+        addr = addrList[0]
+        metaclient.Recordtimetick(addr, "TIMET")
+        break
 
 ds.finalize()
 
@@ -274,8 +222,3 @@ endanay = timeit.default_timer()
 
 print("time span")
 print(endanay-startanay)
-
-addrList =metaclient.getServerAddr()
-
-addr = addrList[0]
-print("test get: ", metaclient.getMeta(addr, "testkey"))

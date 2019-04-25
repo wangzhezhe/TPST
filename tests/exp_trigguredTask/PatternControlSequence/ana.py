@@ -20,6 +20,11 @@ import pubsub as pubsubclient
 sys.path.append('../../../src/metadatamanagement/pythonclient')
 import metaclient
 
+
+addrList=metaclient.getServerAddr()
+addr = addrList[0]
+metaclient.Recordtimetick(addr, "TIMET")
+
 # input the coordinate of the points and return the index of grid in array
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -180,11 +185,16 @@ currIter = 0
 #lb = [15*15*15*rank]
 #ub = [15*15*15*(rank+1)-1]
 
+grid = 50
+
 lb=[0]
-ub=[15*15*15*(1)-1]
+ub=[grid*grid*grid*(1)-1]
 
 #while (True):
 version=0
+
+pullstart = timeit.default_timer()
+# pull data
 for version in range(iteration):
 
     #use read write lock here
@@ -199,25 +209,26 @@ for version in range(iteration):
         time.sleep(0.1)
         continue
 
-    patternHeppen = checkDataPatternCenter(getdata_p1)
-    #the time used for predicates every time
+pullend = timeit.default_timer()
+print("pulling data ", pullend-pullstart)
+
+
+for version in range(iteration):
+
     time.sleep(0.01)
 
     version=version+1
-   
-    if(patternHeppen==True):
+    
+    # assume there is checking operation here
+    if(version==10):
         print("---------patternHeppen at ts %d for rank %d----------"%(version,rank))
         # simulate the vis time
         # execute the following part for the task
         # the time used for predicates checking
-        addrList=metaclient.getServerAddr()
-        addr = addrList[0]
-        metaclient.Recordtimetick(addr, "SIMDATAOK")
         break
 
 ds.finalize()
 
 endanay = timeit.default_timer()
 
-print("time span")
-print(endanay-startanay)
+print("time span ", endanay-startanay)

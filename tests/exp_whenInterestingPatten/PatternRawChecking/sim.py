@@ -615,6 +615,7 @@ for t in range (iteration):
         
     updateGridValueFake(gridList,moveToCenter)
     
+    
     putDataToDataSpaces(gridListNew,t)
     
         

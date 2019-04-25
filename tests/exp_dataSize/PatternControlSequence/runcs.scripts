@@ -39,7 +39,7 @@ DIR=.
 
 # start sim(when finish)
 
-cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_trigguredTask/PatternControlSequence
+cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_dataSize/PatternControlSequence
 
 python sim.py 20 10 >& $DIR/con_sim.log 
 

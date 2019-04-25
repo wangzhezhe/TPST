@@ -23,7 +23,7 @@ import pubsub as pubsubclient
 sys.path.append('../../../src/metadatamanagement/pythonclient')
 import metaclient
 
-
+gridnum=50
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -61,7 +61,7 @@ print("rank %d get meta %s"%(rank,value))
 ts = 11
 
 lb=[0]
-gridnum=50
+
 ub=[gridnum*gridnum*gridnum*(1)-1]
 
 var_name = "ex1_sample_data"

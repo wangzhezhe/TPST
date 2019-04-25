@@ -29,6 +29,11 @@ module load python/3.6.3
 DIR=.
 
 
+# start workflowserver manually
+
+# start notifyserver
+# /project1/parashar-001/zw241/software/eventDrivenWorkflow/src/operator
+
 # start ds
 
 cd /home1/zw241/dataspaces/tests/C/
@@ -37,27 +42,23 @@ mpirun -n 16 ./dataspaces_server -s 16  >& $DIR/ex2_meta_dsserver.log  &
 
 sleep 1
 
-# start metadata 
+#start metadata 
 
 #cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/src/metadatamanagement
 
 #rm -rf Metaserver
 
-#./metaserver >& $DIR/meta_server.log  &
+#./metaserver >& $DIR/event_server.log  &
 
 # start checking
 
-cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_trigguredTask/PatternMetaChecking
+cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_trigguredTask/PatternEvent
+
+python checking.py 300 >& $DIR/ex2_event_check.log &
 
 # start sim
 
-python sim.py 20 10 >& $DIR/meta_sim.log &
-
-# start check
-python checking.py 20 >& $DIR/meta_check.log &
-
-# start ana
-
-mpirun --map-by node -np 2 python ana.py 20 >& $DIR/meta_ana.log &
+python sim.py 300 10 >& $DIR/ex2_event_sim.log 
 
 wait
+

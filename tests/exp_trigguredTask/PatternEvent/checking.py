@@ -1,4 +1,5 @@
 # check data from ts 0
+# check data from ts 0
 # when data is ok 
 # send tick to the metaserver
 
@@ -42,7 +43,7 @@ def getIndex(px, py, pz):
     # TODO should add all boundry case
     # only for lower case
     r = 15
-    gridnum = 15
+    gridnum = 50
     deltar = 1.0*r/gridnum
 
     if (px < 0 or py < 0 or pz < 0 or px > gridnum*deltar or py > gridnum*deltar or pz > gridnum*deltar):
@@ -139,8 +140,6 @@ def checkDataPatternCenter(gridDataArray_p1):
     massOriginInterest = [7, 7, 7]
     targetValue = 7.5
 
-
-
     index = getIndex(massOriginInterest[0], massOriginInterest[1], massOriginInterest[2])
     if (gridDataArray_p1[index] == targetValue):
         return True
@@ -179,9 +178,9 @@ currIter = 0
 
 #lb = [15*15*15*rank]
 #ub = [15*15*15*(rank+1)-1]
-
+gridnum=50
 lb=[0]
-ub=[15*15*15*(1)-1]
+ub=[gridnum*gridnum*gridnum*(1)-1]
 
 #while (True):
 version = 0
