@@ -57,7 +57,7 @@ string runTaskByTemplateSlurm(string templateName)
     //default driver is the slurm
 
     string command = "sbatch " + templateName + " >syscommand.txt";
-
+    printf("execute command : %s", command.data());
     std::system(command.data()); // execute the UNIX command "ls -l >test.txt"
     std::stringstream buffer;
     buffer << std::ifstream("syscommand.txt").rdbuf();
@@ -120,7 +120,7 @@ void ActionByOperator(string clientID, string metadata)
     {
         //post triggure
         //if the post type is the stop, than stop the task
-        stopTaskBySlurm(taskName);
+        //stopTaskBySlurm(taskName);
     }
     else
     {

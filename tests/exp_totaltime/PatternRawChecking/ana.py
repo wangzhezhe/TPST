@@ -1,3 +1,7 @@
+# check data from ts 0
+# when data is ok 
+# send tick to the metaserver
+
 # check the all timestep data after sim finish
 
 from mpi4py import MPI
@@ -9,12 +13,26 @@ import time
 import math
 import timeit
 import sys
+import threading
 
 sys.path.append('../../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 
+sys.path.append('../../../src/metadatamanagement/pythonclient')
+import metaclient
+
+startanay = timeit.default_timer()
+
+r = 15
+gridnum = 50
+deltar = 1.0*r/gridnum
+
+lb=[0]
+ub=[gridnum*gridnum*gridnum*(1)-1]
+
 # input the coordinate of the points and return the index of grid in array
 comm = MPI.COMM_WORLD
+size = comm.Get_size()
 rank = comm.Get_rank()
 
 def sendEventToPubSub(ts):
@@ -34,9 +52,7 @@ def sendEventToPubSub(ts):
 def getIndex(px, py, pz):
     # TODO should add all boundry case
     # only for lower case
-    r = 15
-    gridnum = 150
-    deltar = 1.0*r/gridnum
+
 
     if (px < 0 or py < 0 or pz < 0 or px > gridnum*deltar or py > gridnum*deltar or pz > gridnum*deltar):
         #print "out of the box "
@@ -132,8 +148,6 @@ def checkDataPatternCenter(gridDataArray_p1):
     massOriginInterest = [7, 7, 7]
     targetValue = 7.5
 
-
-
     index = getIndex(massOriginInterest[0], massOriginInterest[1], massOriginInterest[2])
     if (gridDataArray_p1[index] == targetValue):
         return True
@@ -152,11 +166,11 @@ copyCommand = "cp "+confpath+" ."
 os.system(copyCommand)
 
 # number of clients at clients end to join server
-num_peers = 1
+num_peers = rank
 appid = 2
 
 var_name = "ex1_sample_data"
-lock_name = "my_test_lock_"+str(rank)
+lock_name = "my_test_lock"
 
 if(len(sys.argv)!=2):
     print("./analytics <iteration>")
@@ -164,60 +178,71 @@ if(len(sys.argv)!=2):
     
 iteration = int(sys.argv[1])
 
-startanay = timeit.default_timer()
+
 
 ds = dataspaces.dataspaceClient(appid,comm)
 
 currIter = 0
 
-
-gridnum=150
-lb = [gridnum*gridnum*gridnum*rank]
-ub = [gridnum*gridnum*gridnum*(rank+1)-1]
-
 #while (True):
 version = 0
+#for version in range(iteration):
+
+runTask=0
+
+def actualWork():
+    global runTask
+    time.sleep(1)
+    runTask=runTask-1
+
 while (version<iteration):
 
-    #startrd = timeit.default_timer()
     #use read write lock here
     #ds.lock_on_read(lock_name)
     # use lock type  = 1
     getdata_p1,rcode = ds.get(var_name, version, lb, ub)
     #ds.unlock_on_read(lock_name)
     # check if data ok
-    #endrd = timeit.default_timer()
-
-    #print("data read ", endrd-startrd)
 
     if(rcode == -11):
-        print("data is not avaliable for ts %d"%(version))
-        time.sleep(0.5)
+        print("data not avaliable for ts %d"%(version))
+        time.sleep(0.25)
         continue
 
-    if (version==0):
-        initendanay = timeit.default_timer()
-        print("whole init time span")
-        print(initendanay-startanay)
-
-
-    patternHeppen = checkDataPatternCenter(getdata_p1)
+    patternHappen = checkDataPatternCenter(getdata_p1)
     #the time used for predicates every time
-    time.sleep(0.1)
+    time.sleep(0.01)
 
     version=version+1
    
-    if(patternHeppen==True):
-        print("---------patternHeppen at ts %d----------"%(version))
+    if(patternHappen==True):
+        print("---------patternHappen at ts %d for rank %d----------"%(version,rank))
         # simulate the vis time
         # execute the following part for the task
         # the time used for predicates checking
-        time.sleep(5.0)
+        #addrList=metaclient.getServerAddr()
+        #addr = addrList[0]
+        #metaclient.Recordtimetick(addr, "TIMET")
         #break
+        #execute actual work
+        thread = threading.Thread(target = actualWork) 
+        thread.start()
+        runTask=runTask+1
+
+
+while(1):
+    if(runTask==0):
+        break
+    else:
+        continue
 
 ds.finalize()
-
 endanay = timeit.default_timer()
 
-print("whole time span")
+addrList=metaclient.getServerAddr()
+addr = addrList[0]
+metaclient.Recordtimetick(addr, "TIMET")
+ 
+
+print("time span")
 print(endanay-startanay)

@@ -21,12 +21,21 @@ sys.path.append('../../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 import timeit
 
-initstart = timeit.default_timer()
+sys.path.append('../../../src/metadatamanagement/pythonclient')
+import metaclient
+
+
+addrList=metaclient.getServerAddr()
+addr = addrList[0]
+metaclient.Recordtimestart(addr, "TOTAL")
+
 
 startsim = timeit.default_timer()
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
+
+
 
 
 # init dataspace client
@@ -124,7 +133,7 @@ xlimit = r
 ylimit = r 
 zlimit = r 
 
-gridnum=150
+gridnum=50
 
 deltar=1.0*r/gridnum
 
@@ -169,8 +178,6 @@ for zi in range (gridnum):
 
 print("data init ok")
 
-
-
 def updateGridValueFake(gridListInput,ifcenter):
     if(ifcenter==True):
         # update center other parts is init value
@@ -193,7 +200,7 @@ def updateGridValueFake(gridListInput,ifcenter):
             gridList[i].p=initp*(5)
 
     # simulate the time to caculate the data
-    # time.sleep(0.1)
+    time.sleep(6)
 
 
 
@@ -207,38 +214,30 @@ changeVPeriod = int(sys.argv[2])
 
 vsign = 1
 
-initend = timeit.default_timer()
-
-
-
 for t in range (iteration):
-    loopstart = timeit.default_timer()
     moveToCenter = False
-    #if (t>=changeVPeriod and t%changeVPeriod==0):
-    if (t>=0 and t<10):
+    if (t>=changeVPeriod and t%changeVPeriod==0):
+    #if (t==changeVPeriod):
         moveToCenter = True
         
     updateGridValueFake(gridList,moveToCenter)
-    
-    loopend = timeit.default_timer()
 
-    print("time span1",loopend-loopstart)
 
-    putstart = timeit.default_timer()
     putDataToDataSpaces(gridList,t)
-    putend = timeit.default_timer()
-    print("time span2",putend-putstart)
     
-    print("ts %d"%(t))
-    
+    #if (moveToCenter):
+        #addrList=metaclient.getServerAddr()
+        #addr = addrList[0]
+        #metaclient.Recordtimestart(addr, "TIMET")
         
 ds.finalize()
 MPI.Finalize()
 
-# write data to management service
-
-
 endsim = timeit.default_timer()
+
+addrList=metaclient.getServerAddr()
+addr = addrList[0]
+metaclient.putMeta(addr, "FINISH", "taskfinish")
 
 print("time span")
 print (endsim-startsim)

@@ -1,0 +1,53 @@
+#!/bin/sh
+#SBATCH -J ED_SERVER
+#SBATCH -o ED_SERVER.%J.stdout
+#SBATCH -e ED_SERVER.%J.stderr
+#SBATCH -N 4
+#SBATCH -p short
+#SBATCH --qos short-award
+#SBATCH -t 00:05:00
+
+module load openmpi
+module load python/3.6.3
+
+
+cd ~/pythonWorkSpace/nbodysimulation/
+
+source ./bin/activate
+
+sleep 1
+source /home1/zw241/.grpc
+
+module load python/3.6.3
+
+DIR=.
+
+# start ds
+
+#cd /home1/zw241/dataspaces/tests/C/
+
+#mpirun -n 128 ./dataspaces_server -s 128  >& $DIR/meta_dsserver.log  &
+
+# sleep 1
+
+# start metadata 
+
+#cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/src/metadatamanagement
+
+#rm -rf Metaserver
+
+#./metaserver >& $DIR/meta_server.log  &
+
+cd /project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_totaltime/PatternRawChecking
+
+# start sim
+
+python sim.py 20 10 >& $DIR/con_sim.log &
+
+# start ana
+
+mpirun --map-by node -np 4 python ana.py 20 >& $DIR/con_ana.log &
+
+
+
+wait

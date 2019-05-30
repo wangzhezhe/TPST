@@ -212,7 +212,7 @@ while (version<iteration):
         #write meta data into server <ts lb ub>
         addrList =metaclient.getServerAddr()
         addr = addrList[0]
-        metaclient.putMetaspace(addr, "DATAOK", "testmeta:"+str(version))
+        metaclient.putMeta(addr, "DATAOK", "testmeta:"+str(version))
         break
 
 

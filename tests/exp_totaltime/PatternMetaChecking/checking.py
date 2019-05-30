@@ -1,3 +1,7 @@
+# check data from ts 0
+# when data is ok 
+# send tick to the metaserver
+
 # check the all timestep data after sim finish
 
 from mpi4py import MPI
@@ -16,10 +20,10 @@ import pubsub as pubsubclient
 sys.path.append('../../../src/metadatamanagement/pythonclient')
 import metaclient
 
-
 # input the coordinate of the points and return the index of grid in array
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
+gridnum = 50
 
 def sendEventToPubSub(ts):
 
@@ -39,7 +43,7 @@ def getIndex(px, py, pz):
     # TODO should add all boundry case
     # only for lower case
     r = 15
-    gridnum = 150
+    
     deltar = 1.0*r/gridnum
 
     if (px < 0 or py < 0 or pz < 0 or px > gridnum*deltar or py > gridnum*deltar or pz > gridnum*deltar):
@@ -147,13 +151,13 @@ def checkDataPatternCenter(gridDataArray_p1):
 
 
 # copy all conf.* file to current dir
-#serverdir = "/home1/zw241/dataspaces/tests/C"
+serverdir = "/home1/zw241/dataspaces/tests/C"
 
-#confpath = serverdir+"/conf*"
+confpath = serverdir+"/conf*"
 
-#copyCommand = "cp "+confpath+" ."
+copyCommand = "cp "+confpath+" ."
 
-#os.system(copyCommand)
+os.system(copyCommand)
 
 # number of clients at clients end to join server
 num_peers = 1
@@ -174,60 +178,47 @@ ds = dataspaces.dataspaceClient(appid,comm)
 
 currIter = 0
 
-
-gridnum=150
-lb = [gridnum*gridnum*gridnum*rank]
-ub = [gridnum*gridnum*gridnum*(rank+1)-1]
+#lb = [15*15*15*rank]
+#ub = [15*15*15*(rank+1)-1]
+lb=[0]
+ub=[gridnum*gridnum*gridnum*(1)-1]
 
 #while (True):
 version = 0
+#for version in range(iteration):
 while (version<iteration):
 
-    #startrd = timeit.default_timer()
     #use read write lock here
     #ds.lock_on_read(lock_name)
     # use lock type  = 1
     getdata_p1,rcode = ds.get(var_name, version, lb, ub)
     #ds.unlock_on_read(lock_name)
     # check if data ok
-    #endrd = timeit.default_timer()
-
-    #print("data read ", endrd-startrd)
 
     if(rcode == -11):
-        print("data is not avaliable for ts %d"%(version))
-        time.sleep(0.5)
+        print("data not avaliable for ts %d"%(version))
+        time.sleep(0.25)
         continue
-
-    if (version==0):
-        initendanay = timeit.default_timer()
-        print("whole init time span")
-        print(initendanay-startanay)
-
 
     patternHeppen = checkDataPatternCenter(getdata_p1)
     #the time used for predicates every time
-    time.sleep(0.1)
+    time.sleep(0.01)
 
     version=version+1
    
     if(patternHeppen==True):
-        print("---------patternHeppen at ts %d----------"%(version))
-        # simulate the vis time
-        # execute the following part for the task
-        # the time used for predicates checking
-        #time.sleep(0.5)
-        #break
-        # write data to meta service (producer and consumer)
+        print("---------patternHeppen at ts %d , write info to meta----------"%(version))
+        #only start on checking service
+        #write meta data into server <ts lb ub>
         addrList =metaclient.getServerAddr()
         addr = addrList[0]
         metaclient.putMeta(addr, "DATAOK", "testmeta:"+str(version))
+        #break
+
 
 ds.finalize()
 
+endanay = timeit.default_timer()
 
-addrList =metaclient.getServerAddr()
-addr = addrList[0]
-metaclient.putMeta(addr, "FINISH","taskfinish")
-metaclient.Recordtimetick(addr, "centick")
-
+print("time span")
+print(endanay-startanay)

@@ -341,7 +341,7 @@ void testBundleRegister(GreeterClient *greeter,
 
 //  for triggure time testing
 
-    string prjDir = "/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_dataSize/PatternEvent";
+    string prjDir = "/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_totaltime/PatternEvent";
 
     //string prjDir = "/project1/parashar-001/zw241/software/eventDrivenWorkflow/tests/exp_totalruntime/PatternEvent";
 

@@ -1,3 +1,8 @@
+# check data from ts 0
+# check data from ts 0
+# when data is ok 
+# send tick to the metaserver
+
 # check the all timestep data after sim finish
 
 from mpi4py import MPI
@@ -13,9 +18,13 @@ import sys
 sys.path.append('../../../src/publishclient/pythonclient')
 import pubsub as pubsubclient
 
+sys.path.append('../../../src/metadatamanagement/pythonclient')
+import metaclient
+
 # input the coordinate of the points and return the index of grid in array
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
+gridnum = 50
 
 def sendEventToPubSub(ts):
 
@@ -35,7 +44,7 @@ def getIndex(px, py, pz):
     # TODO should add all boundry case
     # only for lower case
     r = 15
-    gridnum = 150
+
     deltar = 1.0*r/gridnum
 
     if (px < 0 or py < 0 or pz < 0 or px > gridnum*deltar or py > gridnum*deltar or pz > gridnum*deltar):
@@ -132,8 +141,6 @@ def checkDataPatternCenter(gridDataArray_p1):
     massOriginInterest = [7, 7, 7]
     targetValue = 7.5
 
-
-
     index = getIndex(massOriginInterest[0], massOriginInterest[1], massOriginInterest[2])
     if (gridDataArray_p1[index] == targetValue):
         return True
@@ -156,7 +163,7 @@ num_peers = 1
 appid = 2
 
 var_name = "ex1_sample_data"
-lock_name = "my_test_lock_"+str(rank)
+lock_name = "my_test_lock"
 
 if(len(sys.argv)!=2):
     print("./analytics <iteration>")
@@ -170,25 +177,22 @@ ds = dataspaces.dataspaceClient(appid,comm)
 
 currIter = 0
 
-
-gridnum=150
-lb = [gridnum*gridnum*gridnum*rank]
-ub = [gridnum*gridnum*gridnum*(rank+1)-1]
+#lb = [15*15*15*rank]
+#ub = [15*15*15*(rank+1)-1]
+lb=[0]
+ub=[gridnum*gridnum*gridnum*(1)-1]
 
 #while (True):
-version=0
-for version in range(iteration):
+version = 0
+#for version in range(iteration):
+while (version<iteration):
 
-    startrd = timeit.default_timer()
     #use read write lock here
     #ds.lock_on_read(lock_name)
     # use lock type  = 1
     getdata_p1,rcode = ds.get(var_name, version, lb, ub)
     #ds.unlock_on_read(lock_name)
     # check if data ok
-    endrd = timeit.default_timer()
-
-    print("data read ", endrd-startrd)
 
     if(rcode == -11):
         print("data not avaliable for ts %d"%(version))
@@ -197,21 +201,32 @@ for version in range(iteration):
 
     patternHeppen = checkDataPatternCenter(getdata_p1)
     #the time used for predicates every time
-    time.sleep(0.1)
+    time.sleep(0.01)
 
     version=version+1
    
     if(patternHeppen==True):
-        print("---------patternHeppen at ts %d----------"%(version))
-        # simulate the vis time
-        # execute the following part for the task
-        # the time used for predicates checking
-        time.sleep(5.0)
+        print("---------patternHeppen at ts %d , write info to meta----------"%(version))
+        # publish event to pubsub broker
+
+        addrList = pubsubclient.getServerAddr()
+        print ("addrlist is",addrList)
+
+        addr = addrList[0]
+        eventList = ["ANASTART"]
+        # this shoule be deleted
+        clientId = "test" + "_" + str(version)
+        # it is better to update meta into json format
+        metainfo = "GRID[<-1,-1>:<-1,-1>]%TS["+str(version)+"]"
+        matchtype = "NAME"
+        pubsubclient.publishEventList(addr,eventList,clientId,metainfo,matchtype)
         #break
+
+
 
 ds.finalize()
 
 endanay = timeit.default_timer()
 
-print("whole time span")
+print("time span")
 print(endanay-startanay)
