@@ -287,6 +287,25 @@ void *checkNotify(void *arguments)
   //printf("checknotify (%s) checking finish time = (%lf) second serverip %s\n", satisfiedStr.data(), diff, ServerIP.data());
 }
 
+void startTask(string peerURL, string metadatats, string clientidstr)
+{
+
+  spdlog::info("start mpi task based on metainfo {} for client {}", metadatats, clientidstr);
+  //start an MPI task here
+
+  char command[200];
+
+  sprintf(command, "%s %s", "./anastartbyevent", metadatats.data());
+
+  printf("execute command by local way:(%s)\n", command);
+
+  //test using
+
+  system(command);
+
+  return;
+}
+
 void notifyback(string peerURL, string metadata, string clientidstr)
 {
   //example: ipv4:192.168.11.4:59488
@@ -326,13 +345,14 @@ void getElementFromNotifyQ()
           //send request and notify back
           //if there are lots of thread at operator end
           //the speed of notifyback will decrease
-          thread notifyThread(notifyback, ninfo.addr, ninfo.metaInfo, ninfo.clientid);
+          //TODO trigger the registered tasks here for testing
+          //thread notifyThread(notifyback, ninfo.addr, ninfo.metaInfo, ninfo.clientid);
+          thread notifyThread(startTask, ninfo.addr, ninfo.metaInfo, ninfo.clientid);
           notifyThread.detach();
           //notifyback(ninfo.addr, ninfo.metaInfo, ninfo.clientid);
           nqmutex.lock();
           notifyQueue.pop_front();
           nqmutex.unlock();
-        
         }
         else
         {
@@ -744,8 +764,8 @@ class GreeterServiceImpl final : public Greeter::Service
     string metadata = request->metadata();
 
     string matchType = request->matchtype();
-    spdlog::debug("testMatchType {}",matchType.data());
-    if (matchType.compare("")==0)
+    spdlog::debug("testMatchType {}", matchType.data());
+    if (matchType.compare("") == 0)
     {
       matchType = "NAME";
     }
@@ -782,7 +802,7 @@ class GreeterServiceImpl final : public Greeter::Service
     //  ifdebug = true;
     //}
 
-    spdlog::debug("debug for publish current id {} event {} matchtype {} metadata {}", gm_rank, eventStr.data(),matchType.data(),metadata.data());
+    spdlog::debug("debug for publish current id {} event {} matchtype {} metadata {}", gm_rank, eventStr.data(), matchType.data(), metadata.data());
 
     //publish on one server
     pubsubPublish(eventList, matchType, metadata);
@@ -960,6 +980,21 @@ void RunServer(string serverIP, string serverPort, int threadPool)
   std::unique_ptr<Server> server(builder.BuildAndStart());
   //std::cout << "Server listening on " << server_address << std::endl;
 
+  //testing subscribe topic by user configuration
+  //todo, use configuration to represents this
+  std::string topic = "INTERESTINGTOPIC1";
+
+  int subNum = 10;
+  for (int i = 0; i < subNum; i++)
+  {
+    std::string testClientId = "testclientId" + std::to_string(i);
+    std::vector<std::string> eventLists;
+    eventLists.push_back(topic);
+
+    spdlog::debug("subscribe topic for testing: {} from client: {} ", topic, testClientId);
+    pubsubSubscribe(eventLists, testClientId, "testNotifyAddr", "NAME", "testMeta");
+  }
+
   //start check()
   thread tcheck(check);
   thread notifycheck(getElementFromNotifyQ);
@@ -967,6 +1002,7 @@ void RunServer(string serverIP, string serverPort, int threadPool)
   notifycheck.join();
   // Wait for the server to shutdown. Note that some other thread must be
   // responsible for shutting down the server for this call to ever return.
+
   server->Wait();
 }
 
@@ -981,9 +1017,9 @@ void RedistributeByPlan(vector<Plan> planList)
   //omp_lock_t writelock;
 
   //omp_init_lock(&writelock);
-//#pragma omp parallel
+  //#pragma omp parallel
   {
-//#pragma omp for
+    //#pragma omp for
     for (int i = 0; i < size; i++)
     {
       //int num_threads = omp_get_num_threads();
@@ -1262,14 +1298,13 @@ int main(int argc, char **argv)
 
   spdlog::info("server id {} server status {}", gm_rank, SERVERSTATUS.data());
 
-
   if (startPeridChecking == true && SERVERSTATUS.compare(status_coor) == 0)
   {
     spdlog::info("server id {} is coordinator, run group checking", gm_rank);
     thread tCheck(periodChecking);
     tCheck.join();
   }
-  
+
   updateCoordinatorAddr();
   //update the coordinator addr
   //wait all server to write data into dir
