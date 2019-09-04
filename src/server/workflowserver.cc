@@ -978,16 +978,16 @@ void RedistributeByPlan(vector<Plan> planList)
   //get greeter for src (src are same)
 
   printf("plan size is %d\n", size);
-  omp_lock_t writelock;
+  //omp_lock_t writelock;
 
-  omp_init_lock(&writelock);
-#pragma omp parallel
+  //omp_init_lock(&writelock);
+//#pragma omp parallel
   {
-#pragma omp for
+//#pragma omp for
     for (int i = 0; i < size; i++)
     {
-      int num_threads = omp_get_num_threads();
-      printf("Thread rank: %d\n", num_threads);
+      //int num_threads = omp_get_num_threads();
+      //printf("Thread rank: %d\n", num_threads);
       Plan plan = planList[i];
       string moveEvent = plan.moveSubscription;
       string srcaddr = plan.srcAddr;
@@ -1013,17 +1013,17 @@ void RedistributeByPlan(vector<Plan> planList)
       int newSubTime = subtoClient[moveEvent].size();
 
       printf("newsize after redistribution %d for str %s for server %s\n", newSubTime, moveEvent.data(), ServerAddr.data());
-      omp_set_lock(&writelock);
+      //omp_set_lock(&writelock);
 
       eventRecordMapLock.lock();
       eventRecordMap[moveEvent][srcaddr] = newSubTime;
       eventRecordMapLock.unlock();
       // one thread at a time stuff
-      omp_unset_lock(&writelock);
+      //omp_unset_lock(&writelock);
       printf("finish plan\n");
     }
   }
-  omp_destroy_lock(&writelock);
+  //omp_destroy_lock(&writelock);
 }
 
 //check
