@@ -958,7 +958,7 @@ void MultiClient()
 }
 */
 
-void RunServer(string serverIP, string serverPort, int threadPool)
+void RunServer(string serverIP, string serverPort, int threadPool, int trigureNum)
 {
   //init thread pool
   ThreadPool threadPoolInstance(threadPool);
@@ -984,7 +984,7 @@ void RunServer(string serverIP, string serverPort, int threadPool)
   //todo, use configuration to represents this
   std::string topic = "INTERESTINGTOPIC1";
 
-  int subNum = 10;
+  int subNum = trigureNum;
   for (int i = 0; i < subNum; i++)
   {
     std::string testClientId = "testclientId" + std::to_string(i);
@@ -1232,8 +1232,8 @@ int main(int argc, char **argv)
   spdlog::debug("parameter length {}", argc);
 
   int threadPoolSize = 32;
-
-  if (argc == 9)
+  int trigerTastNum = 2;
+  if (argc == 10)
   {
     waitTime = atoi(argv[1]);
     spdlog::debug("chechNotify wait period {}", waitTime);
@@ -1268,6 +1268,9 @@ int main(int argc, char **argv)
     {
       spdlog::set_level(spdlog::level::debug);
     }
+
+    trigerTastNum = atoi(argv[9]);
+
   }
   else
   {
@@ -1310,7 +1313,7 @@ int main(int argc, char **argv)
   //wait all server to write data into dir
   sleep(1);
 
-  thread runServer(RunServer, ServerIP, ServerPort, threadPoolSize);
+  thread runServer(RunServer, ServerIP, ServerPort, threadPoolSize, trigerTastNum);
   runServer.join();
   return 0;
 }
