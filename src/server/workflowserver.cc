@@ -295,9 +295,9 @@ void startTask(string peerURL, string metadatats, string clientidstr)
 
   char command[200];
 
-  sprintf(command, "%s %s", "./anastartbyevent", metadatats.data());
+  sprintf(command, "%s %s", "srun --mpi=pmix_v2 --mem-per-cpu=1000 -n 8 ./anastartbyevent", metadatats.data());
 
-  printf("execute command by local way:(%s)\n", command);
+  std::cout<< "execute command by local way: " << command << std::endl;
 
   //test using
 
